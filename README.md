@@ -2,16 +2,31 @@
 
 Two-day portfolio prototype for legal AI data-loop governance.
 
+Target role: professional-domain AI data product manager.
+
+Core problem: how to turn risky legal Agent outputs into reusable data assets for `eval`, `sft`, `preference`, `badcase`, and `human_review`.
+
+Final artifacts: PRD, labeling SOP, leakage-safe dataset, rubric-based Judge, normalized run log, data router, tests, dashboard, and interview-ready case study.
+
 The project is intentionally scoped: no RAG, no Web UI, no database, and no automatic legal citation retrieval. It focuses on data-product capabilities: leakage-safe datasets, multi-task legal evaluation, rubric-based judging, human review queueing, error taxonomy, error-to-data routing, and dashboard-driven data production decisions.
 
 It is not a legal advice system and not a model leaderboard.
 
 ![Dashboard preview](assets/dashboard_preview.png)
 
+Three dashboard takeaways:
+
+- V3 workflow responses improve structured risk-control behavior over V0 in the deterministic diagnostic run.
+- The largest operational queue is human review, which is expected for high-risk or low-confidence legal outputs.
+- Top data actions are preference pairs for overclaim control, evidence-risk SFT samples, and high-risk review calibration.
+
 ## Open First
 
+- Product PRD: [docs/product_prd.md](docs/product_prd.md)
+- Labeling SOP: [docs/labeling_sop.md](docs/labeling_sop.md)
 - Portfolio narrative: [docs/portfolio_case_study.md](docs/portfolio_case_study.md)
 - Resume and pitch notes: [docs/resume_pitch.md](docs/resume_pitch.md)
+- API smoke run plan: [docs/api_smoke_run.md](docs/api_smoke_run.md)
 - Reproducible dashboard: [outputs/executive_dashboard.xlsx](outputs/executive_dashboard.xlsx)
 - Dataset design: [data/eval_input.csv](data/eval_input.csv), [data/gold_labels.csv](data/gold_labels.csv), [data/rubric_items.csv](data/rubric_items.csv)
 - Reproduction steps: [docs/runbook.md](docs/runbook.md)

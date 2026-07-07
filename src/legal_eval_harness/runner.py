@@ -36,7 +36,15 @@ def build_run_plan(bundle: DatasetBundle, config: dict[str, Any]) -> list[RunSpe
     full_versions = run_plan.get("full_versions") or ["V0", "V3"]
     deep_versions = run_plan.get("deep_versions") or ["V0", "V1", "V2", "V3"]
     skip_existing = set(run_plan.get("deep_run_skip_existing_versions") or ["V0", "V3"])
-    sample_ids = list(bundle.eval_input["sample_id"])
+    all_sample_ids = list(bundle.eval_input["sample_id"])
+    full_samples = run_plan.get("full_samples", "all")
+    if full_samples == "all" or full_samples is None:
+        sample_ids = all_sample_ids
+    else:
+        sample_ids = [str(sample_id) for sample_id in full_samples]
+        unknown = sorted(set(sample_ids) - set(all_sample_ids))
+        if unknown:
+            raise ValueError(f"full_samples contains unknown sample_id: {unknown}")
     deep_samples = run_plan.get("deep_samples") or sample_ids[:5]
 
     specs: list[RunSpec] = []

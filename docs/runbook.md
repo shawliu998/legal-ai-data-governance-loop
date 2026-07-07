@@ -175,6 +175,8 @@ Then run:
 
 API mode is optional. For a two-day portfolio submission, mock mode is enough to demonstrate the full data loop.
 
+For a small DeepSeek-compatible smoke test, use `config.deepseek.smoke.yaml`. It selects 12 samples and 30 model runs to validate provider integration without turning the project into a model leaderboard. See `docs/api_smoke_run.md`.
+
 ## 8. Common Checks
 
 Confirm output row counts:
