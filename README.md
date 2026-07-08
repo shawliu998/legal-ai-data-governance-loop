@@ -1,10 +1,19 @@
-# Legal Agent Eval Harness
+# Legal AI Product Boundary Eval & Data Governance Harness
 
-A leakage-safe evaluation harness for legal AI data governance and error-to-data routing.
+A portfolio project for DeepSeek-style professional-domain data product roles.
 
-Core problem: how to turn risky legal Agent outputs into reusable data assets for `eval`, `sft`, `preference`, `badcase`, and `human_review`.
+This project evaluates legal AI model-workflow configurations under realistic legal product conditions:
 
-Core artifacts: PRD, labeling SOP, leakage-safe dataset, rubric-based Judge, normalized run log, data router, tests, dashboard, and technical case study.
+- Can the model answer?
+- Should it answer?
+- Should it ask clarifying questions?
+- Should it use grounded sources?
+- Should it route to human review?
+- What data asset should each failure become?
+
+The goal is not to rank models. The goal is to turn legal AI behavior into product launch policy, risk-control policy, and next-round data production decisions.
+
+Core artifacts: PRD, labeling SOP, leakage-safe dataset, controlled RAG corpus, rubric-based Judge, judge ensemble, normalized run log, data router, human calibration queue, release gate, dashboard, and technical case study.
 
 The project is intentionally scoped: controlled local RAG, no Web UI, no database, and no open-web legal retrieval. It focuses on data-product capabilities: leakage-safe datasets, multi-task legal evaluation, rubric-based judging, retrieval/citation verification, human review queueing, error taxonomy, error-to-data routing, and dashboard-driven data production decisions.
 
