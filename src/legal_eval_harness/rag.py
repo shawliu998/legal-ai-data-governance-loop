@@ -518,7 +518,7 @@ def summarize_claim_entailment(rows: pd.DataFrame, output_path: str | Path) -> p
             "out_of_scope_source",
             "fabricated_citation",
         }
-        release_blockers = {"contradicted", "fabricated_citation"}
+        release_blockers = {"contradicted", "fabricated_citation", "out_of_scope_source"}
         result = pd.DataFrame(
             [
                 {

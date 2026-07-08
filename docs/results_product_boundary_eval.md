@@ -137,6 +137,8 @@ These are deployment signals from a Qwen3.5-27B judge baseline, not a public lea
 
 Citation verification produced 92 `unsupported_claim`, 24 `missing_citation`, 3 `citation_supported`, and 1 `fabricated_citation` labels. This is a triage signal, not a final legal entailment judgment.
 
+After adding claim-level citation entailment into the release gate, 12 blocked model-workflow-task combinations contain claim-level or source-boundary blockers.
+
 ### Claim-Level Citation Entailment
 
 After the first human calibration pass, the pipeline added a deterministic claim-level citation entailment triage layer. It extracts material claims from RAG-enabled outputs, maps each claim to cited source IDs, checks allowed-source boundaries from the product-boundary JSONL, and assigns a product action.
@@ -148,7 +150,7 @@ This is a conservative review-queue signal, not a final legal conclusion.
 | Total extracted claim rows | 3597 |
 | Reviewable legal claim rows | 741 |
 | Citation-gate issue rows | 698 |
-| Release-blocker rows | 4 |
+| Release-blocker rows | 60 |
 | Supported rows | 53 |
 | Partially supported rows | 23 |
 | Unsupported rows | 72 |
@@ -162,7 +164,7 @@ Product interpretation:
 - The high `no_citation` count confirms that RAG prompts need stricter material-claim citation coverage.
 - `out_of_scope_source` rows identify source-boundary failures where answers used sources outside a source-limited task.
 - `unsupported` rows are good candidates for citation-grounding regression evals.
-- `fabricated_citation` and `contradicted` rows should stay release blockers pending human review.
+- `out_of_scope_source`, `fabricated_citation`, and `contradicted` rows should stay release blockers pending human review.
 
 ### Human Calibration Results
 

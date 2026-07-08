@@ -654,6 +654,7 @@ Generate release gates:
   --runs outputs/product_boundary_api_pilot_v1/model_run_log.csv \
   --scores outputs/product_boundary_api_pilot_v1/judge_scores.csv \
   --routing outputs/product_boundary_api_pilot_v1/data_routing.csv \
+  --claim-entailment outputs/product_boundary_api_pilot_v1/claim_entailment.csv \
   --output outputs/product_boundary_api_pilot_v1/release_gate.csv
 ```
 

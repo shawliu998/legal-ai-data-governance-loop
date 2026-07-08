@@ -73,6 +73,7 @@ Current implementation status:
 - A deterministic first-pass command is implemented as `build-claim-entailment`.
 - It emits `claim_entailment.csv` and `claim_entailment_summary.csv`.
 - It supports allowed-source boundary checks through `--cases-jsonl`.
+- It can be passed into `release-gate` through `--claim-entailment`.
 - It should be treated as triage before human review, not as final legal entailment.
 
 ## Retrieval Metrics

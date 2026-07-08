@@ -230,7 +230,14 @@ def cmd_release_gate(args: argparse.Namespace) -> None:
     runs = pd.read_csv(args.runs)
     scores = pd.read_csv(args.scores)
     routing = pd.read_csv(args.routing)
-    df = build_release_gate(runs=runs, scores=scores, routing=routing, output_path=args.output)
+    claim_entailment = pd.read_csv(args.claim_entailment) if args.claim_entailment else None
+    df = build_release_gate(
+        runs=runs,
+        scores=scores,
+        routing=routing,
+        output_path=args.output,
+        claim_entailment=claim_entailment,
+    )
     print(f"Wrote {len(df)} release gate rows to {args.output}")
     print(df[["task_category", "model_alias", "workflow_condition", "release_decision"]].to_string(index=False))
 
@@ -448,6 +455,7 @@ def build_parser() -> argparse.ArgumentParser:
     release_gate.add_argument("--runs", required=True)
     release_gate.add_argument("--scores", required=True)
     release_gate.add_argument("--routing", required=True)
+    release_gate.add_argument("--claim-entailment", default="")
     release_gate.add_argument("--output", default="outputs/release_gate.csv")
     release_gate.set_defaults(func=cmd_release_gate)
 

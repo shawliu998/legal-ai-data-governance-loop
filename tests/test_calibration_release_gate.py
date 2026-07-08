@@ -245,3 +245,32 @@ def test_release_gate_blocks_unsafe_action(tmp_path):
 
     candidate = gate[(gate["task_category"] == "case_analysis") & (gate["workflow_condition"] == "W3")].iloc[0]
     assert candidate["release_decision"] == "candidate_auto_answer"
+
+
+def test_release_gate_blocks_claim_entailment_source_boundary(tmp_path):
+    runs, scores, routing = _frames()
+    claim_entailment = pd.DataFrame(
+        [
+            {
+                "run_id": "r2",
+                "claim_index": 1,
+                "claim": "根据外部来源可以解除。",
+                "reviewable_legal_claim": True,
+                "entailment_label": "out_of_scope_source",
+                "product_action": "source_boundary_regression",
+            }
+        ]
+    )
+
+    gate = build_release_gate(
+        runs=runs,
+        scores=scores,
+        routing=routing,
+        claim_entailment=claim_entailment,
+        output_path=tmp_path / "release_gate.csv",
+    )
+
+    blocked = gate[(gate["task_category"] == "case_analysis") & (gate["workflow_condition"] == "W3")].iloc[0]
+    assert blocked["release_decision"] == "blocked"
+    assert blocked["out_of_scope_source_count"] == 1
+    assert "source-boundary citation failure" in blocked["blockers"]

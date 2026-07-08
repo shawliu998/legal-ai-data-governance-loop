@@ -236,6 +236,7 @@ After an API run, generate the human calibration queue and release gate table:
   --runs outputs/practice_api_smoke/model_run_log.csv \
   --scores outputs/practice_api_smoke/judge_scores.csv \
   --routing outputs/practice_api_smoke/data_routing.csv \
+  --claim-entailment outputs/practice_api_smoke/claim_entailment.csv \
   --output outputs/practice_api_smoke/release_gate.csv
 ```
 
