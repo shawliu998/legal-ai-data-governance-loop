@@ -229,6 +229,18 @@ After the API pilot, report:
 | Ignored material fact change | `eval_holdout` | Preserve counterfactual pair as holdout. |
 | Weak clarification | `sft_candidate` | Add intake checklist examples. |
 
+## Next Iteration
+
+The next iteration should focus on RAG reliability rather than broader model ranking:
+
+- Expand the controlled corpus with precise statute, contract, policy, case-rule, and evidence snippets.
+- Add claim-level citation entailment labels: `supported`, `partially_supported`, `unsupported`, `contradicted`, `no_citation`, and `out_of_scope_source`.
+- Separate retrieval metrics from answer metrics: context recall, context precision, source-boundary precision, citation coverage, and citation entailment.
+- Run a focused citation/document pilot instead of a full rerun: 8-12 cases, 2-3 models, W1/W4/W5 workflows.
+- Treat unsupported or contradicted material claims as release blockers.
+
+See [rag_v2_improvement_plan.md](rag_v2_improvement_plan.md) for the detailed plan.
+
 ## Final Result Format
 
 The final API result should not be written as:

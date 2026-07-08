@@ -64,6 +64,8 @@ The API pilot showed that strong models do not remove product-boundary risk. The
 - Project entry point: [README.md](../README.md)
 - Results page: [results_product_boundary_eval.md](results_product_boundary_eval.md)
 - Model policy memo: [model_boundary_memo.md](model_boundary_memo.md)
+- RAG V2 improvement plan: [rag_v2_improvement_plan.md](rag_v2_improvement_plan.md)
+- Interview talk track: [interview_talk_track.md](interview_talk_track.md)
 - Product PRD: [product_prd.md](product_prd.md)
 - Runbook: [runbook.md](runbook.md)
 

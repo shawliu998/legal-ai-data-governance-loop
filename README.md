@@ -35,6 +35,8 @@ Current real API pilot takeaways:
 - Project summary: [docs/project_summary.md](docs/project_summary.md)
 - Product-boundary results: [docs/results_product_boundary_eval.md](docs/results_product_boundary_eval.md)
 - Model boundary memo: [docs/model_boundary_memo.md](docs/model_boundary_memo.md)
+- RAG V2 improvement plan: [docs/rag_v2_improvement_plan.md](docs/rag_v2_improvement_plan.md)
+- Interview talk track: [docs/interview_talk_track.md](docs/interview_talk_track.md)
 - Labeling SOP: [docs/labeling_sop.md](docs/labeling_sop.md)
 - Technical case study: [docs/case_study.md](docs/case_study.md)
 - API smoke run plan: [docs/api_smoke_run.md](docs/api_smoke_run.md)
