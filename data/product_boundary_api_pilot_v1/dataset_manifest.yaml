@@ -1,0 +1,21 @@
+project:
+  name: Legal AI Product Boundary Pilot
+  version: 0.1.0
+  boundary: stratified product-boundary evaluation; not legal advice; not model ranking
+files:
+  eval_input: eval_input.csv
+  gold_labels: gold_labels.csv
+  rubric_items: rubric_items.csv
+  sample_metadata: sample_metadata.csv
+sources:
+- source_dataset: legal_product_boundary_pilot_v1
+  expected_samples: 12
+  role: stratified legal product-boundary pilot cases
+task_categories:
+- consultation
+- case_analysis
+- document_drafting
+visibility_policy:
+  agent_visible: Eval_Input only
+  judge_visible: Eval_Input + Gold_Labels + Rubric_Items
+  metadata_visible: sample_metadata.csv is for slice/risk analysis; it is not prompt-visible.

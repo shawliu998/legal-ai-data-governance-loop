@@ -507,7 +507,91 @@ After review, summarize agreement and confirmed issues:
 
 Mock release-gate decisions are only pipeline diagnostics. Do not interpret them as real deployment readiness until API outputs and human calibration are available.
 
-## 12. Common Checks
+## 12. Qianfan API Pilot
+
+Do not start with the full 1250-output run. Use the 12-case API pilot first:
+
+- 2 `normal_practice`
+- 2 `hard_legal_reasoning`
+- 2 `risk_calibration`
+- 2 `citation_grounding`
+- 2 `adversarial_trap`
+- 2 `counterfactual_pair`
+
+Validate the pilot dataset and run plan:
+
+```bash
+.venv/bin/python -m legal_eval_harness.cli validate \
+  --input data/product_boundary_api_pilot_v1/dataset_manifest.yaml \
+  --config config.qianfan_product_boundary_api_pilot.yaml
+```
+
+Expected planned run count:
+
+```text
+12 cases × 4 models × 5 workflows = 240 normalized runs
+```
+
+Run the real API pilot after setting Qianfan environment variables in `.env`:
+
+```bash
+.venv/bin/python -m legal_eval_harness.cli all \
+  --input data/product_boundary_api_pilot_v1/dataset_manifest.yaml \
+  --config config.qianfan_product_boundary_api_pilot.yaml \
+  --mode api \
+  --output-dir outputs/product_boundary_api_pilot_v1
+```
+
+Run judge ensemble on the API outputs:
+
+```bash
+.venv/bin/python -m legal_eval_harness.cli run-judge-ensemble \
+  --input data/product_boundary_api_pilot_v1/dataset_manifest.yaml \
+  --config config.qianfan_product_boundary_api_pilot.yaml \
+  --runs outputs/product_boundary_api_pilot_v1/model_run_log.csv \
+  --mode api \
+  --output-dir outputs/product_boundary_api_pilot_v1
+```
+
+Build the API human-review calibration queue:
+
+```bash
+.venv/bin/python -m legal_eval_harness.cli sample-human-review \
+  --runs outputs/product_boundary_api_pilot_v1/model_run_log.csv \
+  --scores outputs/product_boundary_api_pilot_v1/judge_scores.csv \
+  --routing outputs/product_boundary_api_pilot_v1/data_routing.csv \
+  --citation-verification outputs/product_boundary_api_pilot_v1/citation_verification.csv \
+  --ensemble-summary outputs/product_boundary_api_pilot_v1/judge_ensemble_summary.csv \
+  --output outputs/product_boundary_api_pilot_v1/human_review_calibration.csv \
+  --sample-rate 0.25 \
+  --min-samples 60 \
+  --random-calibration-min 40
+```
+
+After legal review, summarize the calibration:
+
+```bash
+.venv/bin/python -m legal_eval_harness.cli summarize-human-calibration \
+  --input outputs/product_boundary_api_pilot_v1/human_review_calibration.csv \
+  --output outputs/product_boundary_api_pilot_v1/human_calibration_summary.csv
+```
+
+Generate release gates:
+
+```bash
+.venv/bin/python -m legal_eval_harness.cli release-gate \
+  --runs outputs/product_boundary_api_pilot_v1/model_run_log.csv \
+  --scores outputs/product_boundary_api_pilot_v1/judge_scores.csv \
+  --routing outputs/product_boundary_api_pilot_v1/data_routing.csv \
+  --output outputs/product_boundary_api_pilot_v1/release_gate.csv
+```
+
+Use the API outputs to update:
+
+- `docs/results_product_boundary_eval.md`
+- `docs/model_boundary_memo.md`
+
+## 13. Common Checks
 
 Confirm output row counts:
 
@@ -542,7 +626,7 @@ Allowed values:
 eval, sft, preference, badcase, human_review
 ```
 
-## 13. Walkthrough Script
+## 14. Walkthrough Script
 
 For review discussion:
 

@@ -1,0 +1,13 @@
+﻿sample_id,source_dataset,task_category,legal_domain,difficulty,risk_level,visibility_policy,core_sample_flag,deep_badcase_flag,human_review_required
+LPB-NORMAL-001,legal_product_boundary_pilot_v1,consultation,normal_practice,normal,low,Eval_Input visible to agent; gold/rubric visible only to judge and human review.,yes,no,no
+LPB-NORMAL-002,legal_product_boundary_pilot_v1,consultation,normal_practice,normal,low,Eval_Input visible to agent; gold/rubric visible only to judge and human review.,yes,no,no
+LPB-HARD-001,legal_product_boundary_pilot_v1,case_analysis,hard_legal_reasoning,hard,high,Eval_Input visible to agent; gold/rubric visible only to judge and human review.,no,no,yes
+LPB-HARD-002,legal_product_boundary_pilot_v1,case_analysis,hard_legal_reasoning,hard,high,Eval_Input visible to agent; gold/rubric visible only to judge and human review.,no,no,yes
+LPB-RISK-001,legal_product_boundary_pilot_v1,consultation,risk_calibration,hard,high,Eval_Input visible to agent; gold/rubric visible only to judge and human review.,no,yes,yes
+LPB-RISK-002,legal_product_boundary_pilot_v1,document_drafting,risk_calibration,hard,high,Eval_Input visible to agent; gold/rubric visible only to judge and human review.,no,yes,yes
+LPB-CITE-001,legal_product_boundary_pilot_v1,case_analysis,citation_grounding,medium,medium,Eval_Input visible to agent; gold/rubric visible only to judge and human review.,no,no,no
+LPB-CITE-002,legal_product_boundary_pilot_v1,case_analysis,citation_grounding,medium,high,Eval_Input visible to agent; gold/rubric visible only to judge and human review.,no,no,yes
+LPB-ADV-001,legal_product_boundary_pilot_v1,document_drafting,adversarial_trap,hard,high,Eval_Input visible to agent; gold/rubric visible only to judge and human review.,no,yes,yes
+LPB-ADV-002,legal_product_boundary_pilot_v1,document_drafting,adversarial_trap,hard,high,Eval_Input visible to agent; gold/rubric visible only to judge and human review.,no,yes,yes
+LPB-CF-001A,legal_product_boundary_pilot_v1,consultation,counterfactual_pair,hard,medium,Eval_Input visible to agent; gold/rubric visible only to judge and human review.,no,no,no
+LPB-CF-001B,legal_product_boundary_pilot_v1,consultation,counterfactual_pair,hard,high,Eval_Input visible to agent; gold/rubric visible only to judge and human review.,no,no,yes
