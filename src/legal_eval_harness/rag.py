@@ -296,6 +296,10 @@ def _is_reviewable_legal_claim(claim: str) -> bool:
         "保证",
         "劳动关系",
         "可以要求",
+        "可给予",
+        "可主张",
+        "可解除",
+        "可要求",
         "不能主张",
         "不能排除",
         "不当然",
@@ -338,6 +342,203 @@ def verify_claims(output_text: str, contexts: list[dict[str, Any]]) -> list[dict
             }
         )
     return checks
+
+
+def _has_contradiction_signal(claim: str, source_text: str) -> bool:
+    claim_text = safe_text(claim)
+    source = safe_text(source_text)
+    if not claim_text or not source:
+        return False
+    limitation_markers = [
+        "需另行证明",
+        "需要另行证明",
+        "不等于",
+        "不能直接",
+        "并非自动",
+        "必须额外证明",
+        "不构成法律咨询",
+        "不构成最终法律意见",
+        "若",
+    ]
+    if any(marker in claim_text for marker in limitation_markers):
+        return False
+    positive_claim = any(
+        marker in claim_text
+        for marker in ["可以", "应当", "直接要求", "直接认定", "构成", "属于", "可主张", "可要求", "具备主张"]
+    )
+    negative_source = any(marker in source for marker in ["不得", "不能", "不支持", "未规定", "需另行证明", "不足以", "未显示"])
+    return positive_claim and negative_source
+
+
+def _entailment_product_action(label: str) -> str:
+    if label == "supported":
+        return "pass_citation_gate"
+    if label == "partially_supported":
+        return "human_review_or_revision"
+    if label == "unsupported":
+        return "badcase_and_regression_eval"
+    if label == "contradicted":
+        return "release_blocker"
+    if label == "no_citation":
+        return "human_review_and_prompt_fix"
+    if label == "out_of_scope_source":
+        return "source_boundary_regression"
+    if label == "fabricated_citation":
+        return "release_blocker_and_badcase"
+    return "not_applicable"
+
+
+def _entailment_reason(label: str, *, best_score: float, out_of_scope: list[str], fabricated: list[str]) -> str:
+    if label == "fabricated_citation":
+        return f"cited source IDs are not available in provided or retrieved context: {fabricated}"
+    if label == "out_of_scope_source":
+        return f"claim cites source IDs outside the allowed source boundary: {out_of_scope}"
+    if label == "no_citation":
+        return "reviewable legal claim has no explicit citation"
+    if label == "contradicted":
+        return "source text contains lexical contradiction or limitation signals against the claim"
+    if label == "supported":
+        return f"best lexical support score {best_score:.3f} meets supported threshold"
+    if label == "partially_supported":
+        return f"best lexical support score {best_score:.3f} is partial and needs legal review"
+    if label == "unsupported":
+        return f"best lexical support score {best_score:.3f} is below support threshold"
+    return "non-reviewable risk-control, procedural, or nonlegal statement"
+
+
+def build_claim_entailment_rows(
+    *,
+    run_row: dict[str, Any],
+    contexts: list[dict[str, Any]],
+    output_text: str,
+    allowed_source_ids: list[str] | None = None,
+    provided_contexts: list[dict[str, Any]] | None = None,
+) -> list[dict[str, Any]]:
+    """Build one row per extracted claim for citation entailment triage.
+
+    This is a deterministic triage layer. It does not replace legal review; it
+    creates a claim/source/action table that reviewers can audit.
+    """
+    allowed_set = {safe_text(source_id) for source_id in (allowed_source_ids or []) if safe_text(source_id)}
+    source_rows: dict[str, dict[str, Any]] = {}
+    for source in contexts:
+        source_id = safe_text(source.get("source_id"))
+        if source_id:
+            source_rows[source_id] = dict(source, source_origin=safe_text(source.get("source_origin")) or "retrieved")
+    for source in provided_contexts or []:
+        source_id = safe_text(source.get("source_id"))
+        if source_id and source_id not in source_rows:
+            source_rows[source_id] = {
+                "source_id": source_id,
+                "text": safe_text(source.get("text")),
+                "source_type": safe_text(source.get("source_type")) or "provided_context",
+                "title": safe_text(source.get("title")) or source_id,
+                "source_origin": "provided_context",
+            }
+
+    available_ids = set(source_rows)
+    all_source_text = "\n".join(safe_text(source.get("text")) for source in source_rows.values())
+    rows: list[dict[str, Any]] = []
+    for claim_index, claim in enumerate(split_claims(output_text), start=1):
+        reviewable = _is_reviewable_legal_claim(claim)
+        cited_ids = _parse_source_ids(claim)
+        fabricated = sorted([source_id for source_id in cited_ids if source_id not in available_ids])
+        out_of_scope = sorted([source_id for source_id in cited_ids if allowed_set and source_id not in allowed_set])
+        checked_ids = cited_ids or sorted(available_ids)
+        scores = {
+            source_id: _claim_support_score(claim, safe_text(source_rows.get(source_id, {}).get("text")))
+            for source_id in checked_ids
+            if source_id in source_rows
+        }
+        best_source_id = max(scores, key=scores.get) if scores else ""
+        best_score = scores.get(best_source_id, _claim_support_score(claim, all_source_text))
+        best_source_text = safe_text(source_rows.get(best_source_id, {}).get("text"))
+        if fabricated:
+            label = "fabricated_citation"
+        elif out_of_scope:
+            label = "out_of_scope_source"
+        elif not reviewable:
+            label = "not_reviewable"
+        elif not cited_ids:
+            label = "no_citation"
+        elif best_source_id and _has_contradiction_signal(claim, best_source_text):
+            label = "contradicted"
+        elif best_score >= 0.45:
+            label = "supported"
+        elif best_score >= 0.25:
+            label = "partially_supported"
+        else:
+            label = "unsupported"
+        rows.append(
+            {
+                "run_id": run_row["run_id"],
+                "sample_id": safe_text(run_row.get("sample_id")),
+                "model_alias": safe_text(run_row.get("model_alias")),
+                "version": safe_text(run_row.get("version")),
+                "workflow_condition": safe_text(run_row.get("workflow_condition")),
+                "claim_index": claim_index,
+                "claim": claim,
+                "reviewable_legal_claim": reviewable,
+                "cited_source_ids": json_dumps(cited_ids),
+                "checked_source_ids": json_dumps(checked_ids),
+                "allowed_source_ids": json_dumps(sorted(allowed_set)),
+                "fabricated_source_ids": json_dumps(fabricated),
+                "out_of_scope_source_ids": json_dumps(out_of_scope),
+                "best_source_id": best_source_id,
+                "best_source_type": safe_text(source_rows.get(best_source_id, {}).get("source_type")),
+                "best_source_origin": safe_text(source_rows.get(best_source_id, {}).get("source_origin")),
+                "support_score": best_score,
+                "entailment_label": label,
+                "product_action": _entailment_product_action(label),
+                "entailment_reason": _entailment_reason(
+                    label, best_score=best_score, out_of_scope=out_of_scope, fabricated=fabricated
+                ),
+            }
+        )
+    return rows
+
+
+def summarize_claim_entailment(rows: pd.DataFrame, output_path: str | Path) -> pd.DataFrame:
+    if rows.empty:
+        result = pd.DataFrame(
+            [
+                {
+                    "total_claim_rows": 0,
+                    "reviewable_claim_rows": 0,
+                    "citation_gate_issue_rows": 0,
+                    "release_blocker_rows": 0,
+                }
+            ]
+        )
+    else:
+        issue_labels = {
+            "unsupported",
+            "contradicted",
+            "no_citation",
+            "out_of_scope_source",
+            "fabricated_citation",
+        }
+        release_blockers = {"contradicted", "fabricated_citation"}
+        result = pd.DataFrame(
+            [
+                {
+                    "total_claim_rows": len(rows),
+                    "reviewable_claim_rows": int(rows["reviewable_legal_claim"].fillna(False).astype(bool).sum()),
+                    "citation_gate_issue_rows": int(rows["entailment_label"].isin(issue_labels).sum()),
+                    "release_blocker_rows": int(rows["entailment_label"].isin(release_blockers).sum()),
+                    "supported_rows": int((rows["entailment_label"] == "supported").sum()),
+                    "partially_supported_rows": int((rows["entailment_label"] == "partially_supported").sum()),
+                    "unsupported_rows": int((rows["entailment_label"] == "unsupported").sum()),
+                    "no_citation_rows": int((rows["entailment_label"] == "no_citation").sum()),
+                    "out_of_scope_source_rows": int((rows["entailment_label"] == "out_of_scope_source").sum()),
+                    "fabricated_citation_rows": int((rows["entailment_label"] == "fabricated_citation").sum()),
+                    "contradicted_rows": int((rows["entailment_label"] == "contradicted").sum()),
+                }
+            ]
+        )
+    Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+    result.to_csv(output_path, index=False, encoding="utf-8-sig")
+    return result
 
 
 def verify_output_citations(

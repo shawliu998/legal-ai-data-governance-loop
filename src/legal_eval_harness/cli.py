@@ -17,6 +17,7 @@ from .practice_benchmark_importer import prepare_practice_benchmark_dataset
 from .product_boundary_dataset import load_product_boundary_cases, validate_product_boundary_cases
 from .product_boundary_importer import prepare_product_boundary_dataset
 from .prompt_builder import PromptBuilder
+from .rag import build_claim_entailment_rows, summarize_claim_entailment
 from .release_gate import build_release_gate
 from .runner import build_run_plan, run_models
 from .router import route_scores
@@ -234,6 +235,48 @@ def cmd_release_gate(args: argparse.Namespace) -> None:
     print(df[["task_category", "model_alias", "workflow_condition", "release_decision"]].to_string(index=False))
 
 
+def cmd_build_claim_entailment(args: argparse.Namespace) -> None:
+    runs = pd.read_csv(args.runs).fillna("")
+    contexts_df = pd.read_csv(args.contexts).fillna("")
+    case_by_id: dict[str, dict] = {}
+    if args.cases_jsonl:
+        case_by_id = {str(case.get("case_id")): case for case in load_product_boundary_cases(args.cases_jsonl)}
+
+    contexts_by_run: dict[str, list[dict]] = {}
+    if not contexts_df.empty:
+        contexts_by_run = {
+            str(run_id): group.to_dict(orient="records") for run_id, group in contexts_df.groupby("run_id", sort=False)
+        }
+
+    rows: list[dict] = []
+    for _, run in runs.iterrows():
+        run_row = run.to_dict()
+        run_id = str(run_row.get("run_id", ""))
+        contexts = contexts_by_run.get(run_id, [])
+        if args.rag_only and not contexts:
+            continue
+        case = case_by_id.get(str(run_row.get("sample_id", "")), {})
+        rows.extend(
+            build_claim_entailment_rows(
+                run_row=run_row,
+                contexts=contexts,
+                output_text=str(run_row.get("output_text", "")),
+                allowed_source_ids=case.get("allowed_sources") or [],
+                provided_contexts=case.get("provided_context") or [],
+            )
+        )
+
+    output = Path(args.output)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    df = pd.DataFrame(rows)
+    df.to_csv(output, index=False, encoding="utf-8-sig")
+    summary_path = args.summary_output or str(output.with_name(output.stem + "_summary.csv"))
+    summary = summarize_claim_entailment(df, summary_path)
+    print(f"Wrote {len(df)} claim entailment rows to {output}")
+    print(f"Wrote claim entailment summary to {summary_path}")
+    print(summary.to_string(index=False))
+
+
 def cmd_merge_model_outputs(args: argparse.Namespace) -> None:
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -407,6 +450,15 @@ def build_parser() -> argparse.ArgumentParser:
     release_gate.add_argument("--routing", required=True)
     release_gate.add_argument("--output", default="outputs/release_gate.csv")
     release_gate.set_defaults(func=cmd_release_gate)
+
+    claim_entailment = sub.add_parser("build-claim-entailment")
+    claim_entailment.add_argument("--runs", required=True)
+    claim_entailment.add_argument("--contexts", required=True)
+    claim_entailment.add_argument("--cases-jsonl", default="")
+    claim_entailment.add_argument("--output", default="outputs/claim_entailment.csv")
+    claim_entailment.add_argument("--summary-output", default="")
+    claim_entailment.add_argument("--rag-only", action="store_true")
+    claim_entailment.set_defaults(func=cmd_build_claim_entailment)
 
     merge_outputs = sub.add_parser("merge-model-outputs")
     merge_outputs.add_argument("--input-dirs", nargs="+", required=True)

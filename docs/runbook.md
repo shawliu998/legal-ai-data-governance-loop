@@ -448,6 +448,24 @@ Expected RAG outputs:
 - `rag_contexts.csv`: source chunks injected into each RAG-enabled run.
 - `citation_verification.csv`: cited source IDs, valid source IDs, fabricated source IDs, claim-level support checks, unsupported-claim counts, and citation-fidelity label.
 
+Build claim-level citation entailment triage after model outputs exist:
+
+```bash
+PYTHONPATH=src .venv/bin/python -m legal_eval_harness.cli build-claim-entailment \
+  --runs outputs/product_boundary_pilot_mock/model_run_log.csv \
+  --contexts outputs/product_boundary_pilot_mock/rag_contexts.csv \
+  --cases-jsonl data/eval_sets/legal_product_boundary_pilot_v1.jsonl \
+  --rag-only \
+  --output outputs/product_boundary_pilot_mock/claim_entailment.csv
+```
+
+This produces:
+
+- `claim_entailment.csv`: one row per extracted claim, with cited source IDs, allowed source IDs, best source, support score, entailment label, and product action.
+- `claim_entailment_summary.csv`: counts for reviewable claims, citation-gate issues, release blockers, supported claims, unsupported claims, no-citation claims, out-of-scope source usage, fabricated citations, and contradiction signals.
+
+The entailment labels are deterministic triage signals for review queues and release gates. They are not final legal conclusions.
+
 Run judge ensemble calibration after `model_run_log.csv` exists:
 
 ```bash

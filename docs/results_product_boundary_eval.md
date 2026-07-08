@@ -78,6 +78,8 @@ The API pilot was run as split jobs rather than one monolithic `all` command, be
 | Retrieval log | `outputs/product_boundary_api_pilot_v1/retrieval_log.csv` |
 | RAG contexts | `outputs/product_boundary_api_pilot_v1/rag_contexts.csv` |
 | Citation verification | `outputs/product_boundary_api_pilot_v1/citation_verification.csv` |
+| Claim entailment triage | `outputs/product_boundary_api_pilot_v1/claim_entailment.csv` |
+| Claim entailment summary | `outputs/product_boundary_api_pilot_v1/claim_entailment_summary.csv` |
 | Qwen judge scores | `outputs/product_boundary_api_pilot_v1/judge_scores.csv` |
 | Data routing | `outputs/product_boundary_api_pilot_v1/data_routing.csv` |
 | Release gate | `outputs/product_boundary_api_pilot_v1/release_gate.csv` |
@@ -98,6 +100,7 @@ The API pilot was run as split jobs rather than one monolithic `all` command, be
 | RAG retrieval rows | 120 |
 | RAG context rows | 480 |
 | Citation verification rows | 120 |
+| Claim entailment rows | 3597 |
 
 ### Model-Level Signals
 
@@ -133,6 +136,33 @@ These are deployment signals from a Qwen3.5-27B judge baseline, not a public lea
 | Blocked release gates | 31 |
 
 Citation verification produced 92 `unsupported_claim`, 24 `missing_citation`, 3 `citation_supported`, and 1 `fabricated_citation` labels. This is a triage signal, not a final legal entailment judgment.
+
+### Claim-Level Citation Entailment
+
+After the first human calibration pass, the pipeline added a deterministic claim-level citation entailment triage layer. It extracts material claims from RAG-enabled outputs, maps each claim to cited source IDs, checks allowed-source boundaries from the product-boundary JSONL, and assigns a product action.
+
+This is a conservative review-queue signal, not a final legal conclusion.
+
+| Metric | Result |
+| --- | ---: |
+| Total extracted claim rows | 3597 |
+| Reviewable legal claim rows | 741 |
+| Citation-gate issue rows | 698 |
+| Release-blocker rows | 4 |
+| Supported rows | 53 |
+| Partially supported rows | 23 |
+| Unsupported rows | 72 |
+| No-citation rows | 566 |
+| Out-of-scope source rows | 56 |
+| Fabricated citation rows | 3 |
+| Contradicted rows | 1 |
+
+Product interpretation:
+
+- The high `no_citation` count confirms that RAG prompts need stricter material-claim citation coverage.
+- `out_of_scope_source` rows identify source-boundary failures where answers used sources outside a source-limited task.
+- `unsupported` rows are good candidates for citation-grounding regression evals.
+- `fabricated_citation` and `contradicted` rows should stay release blockers pending human review.
 
 ### Human Calibration Results
 

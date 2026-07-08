@@ -341,6 +341,18 @@ RAG component outputs:
 - `retrieval_log.csv`: retrieved source IDs, expected-source recall, and context precision.
 - `rag_contexts.csv`: per-run source chunks injected into V3/V4 prompts.
 - `citation_verification.csv`: cited source IDs, fabricated citation IDs, claim-level support checks, unsupported-claim counts, and citation-fidelity labels.
+- `claim_entailment.csv`: one row per extracted claim with cited source IDs, allowed-source boundary checks, support label, and product action.
+
+Build claim-level citation entailment triage after RAG outputs exist:
+
+```bash
+PYTHONPATH=src .venv/bin/python -m legal_eval_harness.cli build-claim-entailment \
+  --runs outputs/product_boundary_api_pilot_v1/model_run_log.csv \
+  --contexts outputs/product_boundary_api_pilot_v1/rag_contexts.csv \
+  --cases-jsonl data/eval_sets/legal_product_boundary_api_pilot_v1.jsonl \
+  --rag-only \
+  --output outputs/product_boundary_api_pilot_v1/claim_entailment.csv
+```
 
 Build a legal-review calibration queue:
 

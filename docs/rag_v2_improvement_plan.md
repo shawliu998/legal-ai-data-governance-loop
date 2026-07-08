@@ -68,6 +68,13 @@ Minimal implementation:
 - Ask a structured judge to label support using only the cited source text.
 - Route unsupported or contradicted claims to badcase and regression eval.
 
+Current implementation status:
+
+- A deterministic first-pass command is implemented as `build-claim-entailment`.
+- It emits `claim_entailment.csv` and `claim_entailment_summary.csv`.
+- It supports allowed-source boundary checks through `--cases-jsonl`.
+- It should be treated as triage before human review, not as final legal entailment.
+
 ## Retrieval Metrics
 
 Add retrieval-level checks before generation scoring:
