@@ -1,93 +1,109 @@
 project:
   name: Legal AI Qianfan Multi-Vendor Smoke Eval
   experiment_id: EXP-QIANFAN-VENDOR-SMOKE
-  boundary: Qianfan-hosted multi-vendor deployment-eval pilot; not legal advice; not model ranking
+  boundary: Qianfan-hosted multi-vendor deployment-eval pilot; not legal advice; not
+    model ranking
   jurisdiction: 中国大陆
-  law_snapshot_date: "2026-07-07"
+  law_snapshot_date: '2026-07-07'
   legal_advice_boundary: 仅用于法律 AI 诊断评测和数据治理工作流，不构成法律咨询或最终法律意见。
-
 models:
-  - alias: Qianfan_ERNIE
-    vendor: Baidu
-    family: ERNIE 5.1
-    provider: openai_compatible
-    base_url: ${QIANFAN_BASE_URL}
-    api_key: ${QIANFAN_API_KEY}
-    model: ${QIANFAN_MODEL_ERNIE_51}
-    input_cost_per_1k: ${QIANFAN_ERNIE_51_INPUT_COST_PER_1K}
-    output_cost_per_1k: ${QIANFAN_ERNIE_51_OUTPUT_COST_PER_1K}
-    cost_currency: CNY
-  - alias: Qianfan_DeepSeek
-    vendor: DeepSeek
-    family: DeepSeek V4 Pro
-    provider: openai_compatible
-    base_url: ${QIANFAN_BASE_URL}
-    api_key: ${QIANFAN_API_KEY}
-    model: ${QIANFAN_MODEL_DEEPSEEK_V4_PRO}
-    input_cost_per_1k: ${QIANFAN_DEEPSEEK_V4_PRO_INPUT_COST_PER_1K}
-    output_cost_per_1k: ${QIANFAN_DEEPSEEK_V4_PRO_OUTPUT_COST_PER_1K}
-    cost_currency: CNY
-  - alias: Qianfan_Qwen
-    vendor: Alibaba
-    family: Qwen3.5 27B
-    provider: openai_compatible
-    base_url: ${QIANFAN_BASE_URL}
-    api_key: ${QIANFAN_API_KEY}
-    model: ${QIANFAN_MODEL_QWEN35_27B}
-    input_cost_per_1k: ${QIANFAN_QWEN35_27B_INPUT_COST_PER_1K}
-    output_cost_per_1k: ${QIANFAN_QWEN35_27B_OUTPUT_COST_PER_1K}
-    cost_currency: CNY
-  - alias: Qianfan_GLM
-    vendor: Zhipu
-    family: GLM 5.2
-    provider: openai_compatible
-    base_url: ${QIANFAN_BASE_URL}
-    api_key: ${QIANFAN_API_KEY}
-    model: ${QIANFAN_MODEL_GLM_52}
-    input_cost_per_1k: ${QIANFAN_GLM_52_INPUT_COST_PER_1K}
-    output_cost_per_1k: ${QIANFAN_GLM_52_OUTPUT_COST_PER_1K}
-    cost_currency: CNY
-
+- alias: Qianfan_ERNIE
+  vendor: Baidu
+  family: ERNIE 5.0
+  provider: openai_compatible
+  base_url: ${QIANFAN_BASE_URL}
+  api_key: ${QIANFAN_API_KEY}
+  model: ${QIANFAN_MODEL_ERNIE_50}
+  input_cost_per_1k: ${QIANFAN_ERNIE_50_INPUT_COST_PER_1K}
+  output_cost_per_1k: ${QIANFAN_ERNIE_50_OUTPUT_COST_PER_1K}
+  cost_currency: CNY
+- alias: Qianfan_DeepSeek
+  vendor: DeepSeek
+  family: DeepSeek V4 Pro
+  provider: openai_compatible
+  base_url: ${QIANFAN_BASE_URL}
+  api_key: ${QIANFAN_API_KEY}
+  model: ${QIANFAN_MODEL_DEEPSEEK_V4_PRO}
+  input_cost_per_1k: ${QIANFAN_DEEPSEEK_V4_PRO_INPUT_COST_PER_1K}
+  output_cost_per_1k: ${QIANFAN_DEEPSEEK_V4_PRO_OUTPUT_COST_PER_1K}
+  cost_currency: CNY
+- alias: Qianfan_Qwen
+  vendor: Alibaba
+  family: Qwen3.5 27B
+  provider: openai_compatible
+  base_url: ${QIANFAN_BASE_URL}
+  api_key: ${QIANFAN_API_KEY}
+  model: ${QIANFAN_MODEL_QWEN35_27B}
+  input_cost_per_1k: ${QIANFAN_QWEN35_27B_INPUT_COST_PER_1K}
+  output_cost_per_1k: ${QIANFAN_QWEN35_27B_OUTPUT_COST_PER_1K}
+  cost_currency: CNY
+- alias: Qianfan_GLM
+  vendor: Zhipu
+  family: GLM 5.2
+  provider: openai_compatible
+  base_url: ${QIANFAN_BASE_URL}
+  api_key: ${QIANFAN_API_KEY}
+  model: ${QIANFAN_MODEL_GLM_52}
+  input_cost_per_1k: ${QIANFAN_GLM_52_INPUT_COST_PER_1K}
+  output_cost_per_1k: ${QIANFAN_GLM_52_OUTPUT_COST_PER_1K}
+  cost_currency: CNY
+- alias: qianfan_kimi_k26
+  role: target_vendor_candidate
+  vendor: Moonshot
+  family: Kimi K2.6
+  provider: openai_compatible
+  base_url: ${QIANFAN_BASE_URL}
+  api_key: ${QIANFAN_API_KEY}
+  model: ${QIANFAN_MODEL_KIMI_K26}
+  input_cost_per_1k: ${QIANFAN_KIMI_K26_INPUT_COST_PER_1K}
+  output_cost_per_1k: ${QIANFAN_KIMI_K26_OUTPUT_COST_PER_1K}
+  cost_currency: CNY
 judge:
   provider: openai_compatible
   base_url: ${QIANFAN_BASE_URL}
   api_key: ${QIANFAN_API_KEY}
   model: ${QIANFAN_JUDGE_MODEL}
   temperature: 0.0
-
 run_plan:
   full_samples:
-    - PB-CASE-001
-    - PB-CASE-002
-    - PB-CASE-003
-    - PB-CONS-001
-    - PB-CONS-002
-    - PB-DOC-D-001
-    - PB-DOC-P-001
-    - PB-CASE-004
-  full_versions: [V0, V1, V3]
+  - PB-CASE-001
+  - PB-CASE-002
+  - PB-CASE-003
+  - PB-CONS-001
+  - PB-CONS-002
+  - PB-DOC-D-001
+  - PB-DOC-P-001
+  - PB-CASE-004
+  full_versions:
+  - V0
+  - V1
+  - V3
   deep_samples: []
-  deep_versions: [V0, V1, V2, V3]
-  deep_run_skip_existing_versions: [V0, V1, V3]
-
+  deep_versions:
+  - V0
+  - V1
+  - V2
+  - V3
+  deep_run_skip_existing_versions:
+  - V0
+  - V1
+  - V3
 generation:
   temperature: 0.2
   max_output_tokens: 2200
   retry_attempts: 3
   timeout_seconds: 90
-
 scoring:
   dimensions:
-    - missing_facts_awareness
-    - clarification_quality
-    - legal_grounding
-    - fact_rule_application
-    - conditional_reasoning
-    - risk_coverage
-    - overclaim_control
-    - hallucination_control
-    - data_tag_usability
-
+  - missing_facts_awareness
+  - clarification_quality
+  - legal_grounding
+  - fact_rule_application
+  - conditional_reasoning
+  - risk_coverage
+  - overclaim_control
+  - hallucination_control
+  - data_tag_usability
 routing:
   high_risk_threshold: high
   low_judge_confidence: low

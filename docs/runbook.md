@@ -319,10 +319,11 @@ QIANFAN_BASE_URL=https://qianfan.baidubce.com/v2
 QIANFAN_API_KEY=
 QIANFAN_JUDGE_MODEL=
 
-QIANFAN_MODEL_ERNIE_51=
+QIANFAN_MODEL_ERNIE_50=
 QIANFAN_MODEL_DEEPSEEK_V4_PRO=
 QIANFAN_MODEL_QWEN35_27B=
 QIANFAN_MODEL_GLM_52=
+QIANFAN_MODEL_KIMI_K26=
 ```
 
 Use exact model names from the Qianfan model center. If one vendor slot is unavailable, remove that model block from `config.qianfan_vendors_smoke.yaml` or leave only the vendors you can call.
@@ -340,9 +341,9 @@ Run:
 Expected default shape:
 
 - 8 practice samples
-- 4 Qianfan-hosted model vendor slots: ERNIE 5.1, DeepSeek V4 Pro, Qwen3.5-27B, GLM 5.2
+- 5 Qianfan-hosted model slots: ERNIE 5.0, DeepSeek V4 Pro, Qwen3.5-27B, GLM 5.2, Kimi K2.6
 - 3 workflow conditions: `W0`, `W1`, `W3`
-- 96 model outputs
+- 120 model outputs
 
 Generate calibration and release-gate files:
 
@@ -464,7 +465,7 @@ Expected ensemble outputs:
 - `judge_disagreements.csv`: score gap, critical-failure mismatch, route mismatch, arbitration trigger, and arbiter used.
 - `judge_ensemble_summary.csv`: per-run stable/arbitrated/human-calibration status and final risk route.
 
-For API mode, set the Qianfan model env vars in `config.qianfan_product_boundary_runnable.yaml`. The default design uses DeepSeek V4 Pro and GLM-5.2 as primary judges, ERNIE 5.1 as arbiter, and blocks judge self-evaluation.
+For API mode, set the Qianfan model env vars in `config.qianfan_product_boundary_runnable.yaml`. The default design uses DeepSeek V4 Pro and GLM-5.2 as primary judges, Kimi K2.6 as arbiter, and blocks judge self-evaluation.
 
 Build the legal-review calibration queue:
 
@@ -581,7 +582,7 @@ Validate the pilot dataset and run plan:
 Expected planned run count:
 
 ```text
-12 cases × 4 models × 5 workflows = 240 normalized runs
+12 cases × 5 models × 5 workflows = 300 normalized runs
 ```
 
 Run the real API pilot after setting Qianfan environment variables in `.env`:

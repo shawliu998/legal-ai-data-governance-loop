@@ -111,7 +111,7 @@ The ensemble design is:
 
 - DeepSeek V4 Pro and GLM-5.2 act as primary judges.
 - Judge self-evaluation is excluded, so a DeepSeek output is not scored by the DeepSeek judge and a GLM output is not scored by the GLM judge.
-- ERNIE 5.1 acts as an arbiter when the primary judges disagree on score, critical failures, or data route.
+- Kimi K2.6 acts as an arbiter when the primary judges disagree on score, critical failures, or data route.
 - Single-primary cases created by self-evaluation exclusion are marked for arbitration or human calibration.
 
 The goal is not to hide behind automatic judging. The goal is to produce a review queue that identifies which cases need arbitration, which cases need human calibration, and which judge labels are stable enough to drive data routing.

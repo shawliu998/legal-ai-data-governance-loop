@@ -57,10 +57,10 @@ The real API pilot is intentionally smaller than the mock diagnostic run:
 | Output directory | `outputs/product_boundary_api_pilot_v1/` |
 | Cases | 12 |
 | Slices | 2 per slice |
-| Models | ERNIE 5.1, DeepSeek V4 Pro, Qwen3.5-27B, GLM-5.2 |
+| Models | ERNIE 5.0, DeepSeek V4 Pro, Qwen3.5-27B, GLM-5.2, Kimi K2.6 |
 | Workflows | W0, W1, W2, W3, W4 |
-| Expected model outputs | 240 |
-| Judge ensemble | DeepSeek V4 Pro + GLM-5.2 primary judges, ERNIE 5.1 arbiter, self-eval excluded |
+| Expected model outputs | 300 |
+| Judge ensemble | DeepSeek V4 Pro + GLM-5.2 primary judges, Kimi K2.6 arbiter, self-eval excluded |
 
 Run command:
 

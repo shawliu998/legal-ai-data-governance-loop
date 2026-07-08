@@ -1,22 +1,22 @@
 project:
   name: Legal AI Product Boundary API Pilot - Qianfan
   experiment_id: EXP-QIANFAN-LEGAL-PRODUCT-BOUNDARY-API-PILOT-V1
-  boundary: 12-case real API pilot across 4 Qianfan vendor models and 5 legal product
+  boundary: 12-case real API pilot across 5 Qianfan-hosted models and 5 legal product
     workflows; not legal advice; not model ranking
   jurisdiction: 中国大陆
   law_snapshot_date: '2026-07-08'
   legal_advice_boundary: 仅用于法律 AI 产品边界评测和数据治理工作流，不构成法律咨询或最终法律意见。
 models:
-- alias: qianfan_ernie_51
+- alias: qianfan_ernie_50
   role: target_vendor_candidate
   vendor: Baidu
-  family: ERNIE 5.1
+  family: ERNIE 5.0
   provider: openai_compatible
   base_url: ${QIANFAN_BASE_URL}
   api_key: ${QIANFAN_API_KEY}
-  model: ${QIANFAN_MODEL_ERNIE_51}
-  input_cost_per_1k: ${QIANFAN_ERNIE_51_INPUT_COST_PER_1K}
-  output_cost_per_1k: ${QIANFAN_ERNIE_51_OUTPUT_COST_PER_1K}
+  model: ${QIANFAN_MODEL_ERNIE_50}
+  input_cost_per_1k: ${QIANFAN_ERNIE_50_INPUT_COST_PER_1K}
+  output_cost_per_1k: ${QIANFAN_ERNIE_50_OUTPUT_COST_PER_1K}
   cost_currency: CNY
 - alias: qianfan_deepseek_v4_pro
   role: target_vendor_candidate
@@ -51,6 +51,17 @@ models:
   input_cost_per_1k: ${QIANFAN_GLM_52_INPUT_COST_PER_1K}
   output_cost_per_1k: ${QIANFAN_GLM_52_OUTPUT_COST_PER_1K}
   cost_currency: CNY
+- alias: qianfan_kimi_k26
+  role: target_vendor_candidate
+  vendor: Moonshot
+  family: Kimi K2.6
+  provider: openai_compatible
+  base_url: ${QIANFAN_BASE_URL}
+  api_key: ${QIANFAN_API_KEY}
+  model: ${QIANFAN_MODEL_KIMI_K26}
+  input_cost_per_1k: ${QIANFAN_KIMI_K26_INPUT_COST_PER_1K}
+  output_cost_per_1k: ${QIANFAN_KIMI_K26_OUTPUT_COST_PER_1K}
+  cost_currency: CNY
 judge:
   provider: openai_compatible
   base_url: ${QIANFAN_BASE_URL}
@@ -81,14 +92,14 @@ judge_ensemble:
     model: ${QIANFAN_MODEL_GLM_52}
     temperature: 0.0
   arbiter:
-    alias: judge_ernie_51
+    alias: judge_kimi_k26
     role: arbiter
-    vendor: Baidu
-    family: ERNIE 5.1
+    vendor: Moonshot
+    family: Kimi K2.6
     provider: openai_compatible
     base_url: ${QIANFAN_BASE_URL}
     api_key: ${QIANFAN_API_KEY}
-    model: ${QIANFAN_MODEL_ERNIE_51}
+    model: ${QIANFAN_MODEL_KIMI_K26}
     temperature: 0.0
   disagreement:
     score_gap_threshold: 0.15
@@ -159,14 +170,14 @@ api_pilot:
   dataset: data/product_boundary_api_pilot_v1/dataset_manifest.yaml
   output_dir: outputs/product_boundary_api_pilot_v1
   case_count: 12
-  model_count: 4
+  model_count: 5
   workflow_versions:
   - V0
   - V1
   - V4
   - V3
   - V5
-  expected_model_outputs: 240
+  expected_model_outputs: 300
   slice_plan:
     normal_practice: 2
     hard_legal_reasoning: 2

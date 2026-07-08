@@ -70,10 +70,11 @@ def test_qianfan_product_boundary_config_covers_models_workflows_and_slices():
     config = yaml.safe_load(CONFIG.read_text(encoding="utf-8"))
     aliases = {model["alias"] for model in config["models"]}
     assert {
-        "qianfan_ernie_51",
+        "qianfan_ernie_50",
         "qianfan_deepseek_v4_pro",
         "qianfan_qwen35_27b",
         "qianfan_glm_52",
+        "qianfan_kimi_k26",
         "qianfan_lite_baseline",
     }.issubset(aliases)
 
@@ -94,7 +95,7 @@ def test_qianfan_product_boundary_config_covers_models_workflows_and_slices():
         "judge_deepseek_v4_pro",
         "judge_glm_52",
     }
-    assert config["judge_ensemble"]["arbiter"]["alias"] == "judge_ernie_51"
+    assert config["judge_ensemble"]["arbiter"]["alias"] == "judge_kimi_k26"
     assert config["rag"]["enabled"] is True
     assert config["rag"]["corpus_path"] == "data/rag_corpus/legal_sources.csv"
 

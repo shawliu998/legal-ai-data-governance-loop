@@ -19,7 +19,7 @@ Core question:
 | Platform | Baidu Qianfan ModelBuilder |
 | Base URL | `https://qianfan.baidubce.com/v2` |
 | Sample count | 8 |
-| Vendor slots | ERNIE 5.1, DeepSeek V4 Pro, Qwen3.5-27B, GLM 5.2 |
+| Vendor slots | ERNIE 5.0, DeepSeek V4 Pro, Qwen3.5-27B, GLM 5.2, Kimi K2.6 |
 | Workflows | W0 closed-book, W1 structured legal prompt, W3 risk-control workflow |
 | Total model outputs | 96 |
 | Judge model | TODO |

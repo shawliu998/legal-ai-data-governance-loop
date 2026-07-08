@@ -2,10 +2,11 @@
 
 ## Compared Models
 
-- ERNIE 5.1
+- ERNIE 5.0
 - DeepSeek V4 Pro
 - Qwen3.5-27B
 - GLM-5.2
+- Kimi K2.6
 
 The comparison is model-workflow based, not a public leaderboard. The unit of decision is whether a model-workflow configuration is suitable for a legal product policy: auto-answer, grounded answer, clarification-first, human review, or blocked.
 
@@ -75,8 +76,8 @@ Run the 12-case pilot before finalizing model-specific claims:
 Expected output scale:
 
 - 12 cases
-- 4 models
+- 5 models
 - 5 workflows
-- 240 model outputs
+- 300 model outputs
 
 After the API pilot, update this memo with observed model-workflow recommendations instead of average-score rankings.

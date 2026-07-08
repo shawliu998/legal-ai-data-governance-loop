@@ -23,15 +23,15 @@ The project does not ask only which model scores highest. It asks:
 - 50 product-boundary legal cases.
 - 6 slices: normal practice, hard legal reasoning, risk calibration, citation grounding, adversarial trap, and counterfactual pair.
 - 5 workflow conditions: closed-book, structured prompt, RAG-grounded, RAG plus risk-control/verifier, and clarification-first.
-- 5 mock model slots for full diagnostics, with a 4-model Qianfan API pilot config for ERNIE 5.1, DeepSeek V4 Pro, Qwen3.5-27B, and GLM-5.2.
+- 5 mock model slots for full diagnostics, with a 5-model Qianfan API pilot config for ERNIE 5.0, DeepSeek V4 Pro, Qwen3.5-27B, GLM-5.2, and Kimi K2.6.
 - 1250 mock model outputs for pipeline verification.
-- 12-case API pilot dataset prepared for 240 real model outputs.
+- 12-case API pilot dataset prepared for 300 real model outputs.
 
 ## Implementation Highlights
 
 - Designed leakage-safe data separation: `Eval_Input` is visible to the agent, while `Gold_Labels` and `Rubric_Items` are visible only to judge and human review.
 - Built controlled local RAG with a small legal corpus, retrieval logs, context injection, source-id citation verification, and claim-level support triage.
-- Added judge ensemble calibration: DeepSeek V4 Pro and GLM-5.2 as primary judges, ERNIE 5.1 as arbiter, with self-evaluation exclusion.
+- Added judge ensemble calibration: DeepSeek V4 Pro and GLM-5.2 as primary judges, Kimi K2.6 as arbiter, with self-evaluation exclusion.
 - Implemented data routing into `eval`, `sft`, `preference`, `badcase`, and `human_review`.
 - Generated human calibration queues, including a 370-row stratified Chinese legal-review file marked as completed human review.
 - Added release-gate outputs for blocked, limited-release, and candidate auto-answer policies.

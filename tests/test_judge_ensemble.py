@@ -62,7 +62,7 @@ def test_judge_ensemble_excludes_self_eval_and_writes_outputs(tmp_path):
     deepseek_answer_scores = scores[scores["answer_model_alias"] == "qianfan_deepseek_v4_pro"]
     assert "judge_deepseek_v4_pro" not in set(deepseek_answer_scores["judge_model_alias"])
     assert "judge_glm_52" in set(deepseek_answer_scores["judge_model_alias"])
-    assert "judge_ernie_51" in set(deepseek_answer_scores["judge_model_alias"])
+    assert "judge_kimi_k26" in set(deepseek_answer_scores["judge_model_alias"])
 
     qwen_answer_scores = scores[
         (scores["answer_model_alias"] == "qianfan_qwen35_27b") & (scores["judge_role"] == "primary")

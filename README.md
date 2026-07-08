@@ -246,10 +246,11 @@ QIANFAN_BASE_URL=https://qianfan.baidubce.com/v2
 Fill model names from the Qianfan model center into `.env`, for example:
 
 ```text
-QIANFAN_MODEL_ERNIE_51=
+QIANFAN_MODEL_ERNIE_50=
 QIANFAN_MODEL_DEEPSEEK_V4_PRO=
 QIANFAN_MODEL_QWEN35_27B=
 QIANFAN_MODEL_GLM_52=
+QIANFAN_MODEL_KIMI_K26=
 QIANFAN_JUDGE_MODEL=
 ```
 
@@ -266,9 +267,9 @@ Then run the Qianfan-hosted vendor comparison:
 Default shape:
 
 - 8 practice samples
-- 4 Qianfan-hosted model vendor slots: ERNIE 5.1, DeepSeek V4 Pro, Qwen3.5-27B, GLM 5.2
+- 5 Qianfan-hosted model slots: ERNIE 5.0, DeepSeek V4 Pro, Qwen3.5-27B, GLM 5.2, Kimi K2.6
 - 3 workflow conditions: W0, W1, W3
-- 96 model outputs
+- 120 model outputs
 
 This compares deployment behavior by task slice, workflow, risk route, latency, and cost. It should still be reported as a product policy experiment, not a vendor leaderboard.
 
@@ -321,7 +322,7 @@ Run cross-judge calibration on the same model outputs:
   --output-dir outputs/product_boundary_pilot_mock
 ```
 
-The ensemble layer uses DeepSeek V4 Pro and GLM-5.2 as primary judges, excludes self-evaluation, and uses ERNIE 5.1 as an arbiter when score, critical-failure, or routing labels disagree.
+The ensemble layer uses DeepSeek V4 Pro and GLM-5.2 as primary judges, excludes self-evaluation, and uses Kimi K2.6 as an arbiter when score, critical-failure, or routing labels disagree.
 
 Current runnable workflow mapping:
 
