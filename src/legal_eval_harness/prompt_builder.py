@@ -81,7 +81,7 @@ class PromptBuilder:
                 "run_id": run_id,
                 "version": version,
                 "task_category": task_category,
-                "model_output": model_output,
+                "model_output": safe_text(model_output)[:3000],
                 "key_missing_facts": safe_text(gold_row.get("key_missing_facts", "")),
                 "expected_clarification_questions": safe_text(
                     gold_row.get("expected_clarification_questions", "")

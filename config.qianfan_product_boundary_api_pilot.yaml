@@ -73,33 +73,33 @@ judge_ensemble:
   purpose: cross-judge calibration for deployment decisions; not a public model leaderboard
   self_eval_exclusion: true
   primary_judges:
-  - alias: judge_glm_52
+  - alias: judge_ernie_50
     role: primary
-    vendor: Zhipu
-    family: GLM-5.2
+    vendor: Baidu
+    family: ERNIE 5.0
     provider: openai_compatible
     base_url: ${QIANFAN_BASE_URL}
     api_key: ${QIANFAN_API_KEY}
-    model: ${QIANFAN_MODEL_GLM_52}
+    model: ${QIANFAN_MODEL_ERNIE_50}
     temperature: 0.0
-  - alias: judge_kimi_k26
+  - alias: judge_qwen35_27b
     role: primary
-    vendor: Moonshot
-    family: Kimi K2.6
-    provider: openai_compatible
-    base_url: ${QIANFAN_BASE_URL}
-    api_key: ${QIANFAN_API_KEY}
-    model: ${QIANFAN_MODEL_KIMI_K26}
-    temperature: 0.0
-  arbiter:
-    alias: judge_qwen35_27b
-    role: arbiter
     vendor: Alibaba
     family: Qwen3.5-27B
     provider: openai_compatible
     base_url: ${QIANFAN_BASE_URL}
     api_key: ${QIANFAN_API_KEY}
     model: ${QIANFAN_MODEL_QWEN35_27B}
+    temperature: 0.0
+  arbiter:
+    alias: judge_kimi_k26
+    role: arbiter
+    vendor: Moonshot
+    family: Kimi K2.6
+    provider: openai_compatible
+    base_url: ${QIANFAN_BASE_URL}
+    api_key: ${QIANFAN_API_KEY}
+    model: ${QIANFAN_MODEL_KIMI_K26}
     temperature: 0.0
   disagreement:
     score_gap_threshold: 0.15

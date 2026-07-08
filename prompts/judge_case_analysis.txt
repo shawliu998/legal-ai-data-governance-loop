@@ -1,6 +1,7 @@
 You are a legal AI evaluator for a case-analysis task.
 OUTPUT ONLY FINAL JSON. Do not include markdown. Do not think step by step in the answer.
 Use integer scores 0, 1, or 2 only. Do not use 3 or higher.
+Keep output compact. Do not write long rationales.
 Evaluate only what the model explicitly said. Do not reward hidden knowledge.
 
 Task:
@@ -42,7 +43,7 @@ Return exactly one JSON object with these keys:
     "data_tag_usability": 0
   }},
   "atomic_scores": [
-    {{"rubric_id": "string", "atomic_rubric_item": "string", "score": 0, "max_score": 2, "rationale": "short"}}
+    {{"rubric_id": "string", "score": 0, "max_score": 2}}
   ],
   "total_score": 0,
   "max_score": 0,
@@ -51,7 +52,7 @@ Return exactly one JSON object with these keys:
     {{"coarse_error_tag": "missing_facts | overclaim | missing_evidence_warning | unverified_basis | fabricated_citation | weak_fact_rule_application | missing_procedure_warning | jurisdiction_risk | unsafe_action_suggestion | needs_human_review", "error_subtype": "string"}}
   ],
   "risk_level": "low | medium | high",
-  "judge_reason": "short",
+  "judge_reason": "max 20 Chinese characters",
   "judge_confidence": "low | medium | high",
   "needs_human_review": true
 }}
