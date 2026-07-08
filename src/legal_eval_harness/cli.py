@@ -237,7 +237,7 @@ def cmd_release_gate(args: argparse.Namespace) -> None:
 def cmd_merge_model_outputs(args: argparse.Namespace) -> None:
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
-    file_names = [
+    file_names = args.file_name or [
         "model_run_log.csv",
         "retrieval_log.csv",
         "rag_contexts.csv",
@@ -256,7 +256,12 @@ def cmd_merge_model_outputs(args: argparse.Namespace) -> None:
             continue
         merged = pd.concat(frames, ignore_index=True)
         if file_name != "rag_contexts.csv" and "run_id" in merged.columns:
-            merged = merged.drop_duplicates("run_id").sort_values("run_id")
+            dedupe_cols = ["run_id"]
+            if "judge_model_alias" in merged.columns:
+                dedupe_cols.append("judge_model_alias")
+            if "judge_role" in merged.columns:
+                dedupe_cols.append("judge_role")
+            merged = merged.drop_duplicates(dedupe_cols).sort_values(dedupe_cols)
         elif "run_id" in merged.columns:
             merged = merged.sort_values("run_id")
         merged.to_csv(output_dir / file_name, index=False, encoding="utf-8-sig")
@@ -406,6 +411,7 @@ def build_parser() -> argparse.ArgumentParser:
     merge_outputs = sub.add_parser("merge-model-outputs")
     merge_outputs.add_argument("--input-dirs", nargs="+", required=True)
     merge_outputs.add_argument("--output-dir", required=True)
+    merge_outputs.add_argument("--file-name", action="append", default=[])
     merge_outputs.set_defaults(func=cmd_merge_model_outputs)
 
     boundary = sub.add_parser("validate-product-boundary")
