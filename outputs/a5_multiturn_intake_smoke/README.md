@@ -19,10 +19,12 @@ The smoke test evaluates trace-level behavior: material-fact elicitation, bad-pr
 - `turn_level_summary.csv`: redacted turn-level latency, token, status, and hash summary.
 - `risk_route_summary.csv`: release decision counts by user behavior and legal domain.
 - `redacted_trace_samples.csv`: one row per trace with output hashes only.
+- `redacted_trace_example.md`: one manually redacted trace summary for reviewer inspection.
 - `artifact_manifest.yaml`: machine-readable manifest and caveats.
 
 ## Caveats
 
 - This is a small API smoke test, not a full benchmark.
+- The 100% pass rate is deterministic smoke-gate success, not human-validated product readiness.
 - Deterministic trace checks are triage signals and need human calibration before production release.
 - Full raw model outputs remain local/ignored.

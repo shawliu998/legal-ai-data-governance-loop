@@ -51,10 +51,10 @@ The main finding was not simply "which model won." A1 structured legal counsel a
 | Confirmed citation or evidence-support issues | 45 |
 | Human route overrides | 47 |
 | RAG V2 focused outputs | 72 / 72 |
-| RAG V2 citation-gate issue rate | 88.1% |
+| RAG V2 citation-gate issue rate | 88.1% strict release-risk gate |
 | A5 multi-turn intake cases | 8 |
 | A5 API smoke traces / turns | 6 / 18 |
-| A5 smoke bad-premise challenge rate | 100% |
+| A5 smoke bad-premise challenge rate | 100% deterministic smoke check |
 
 ## What I Would Emphasize
 
@@ -78,6 +78,8 @@ I would state these directly:
 - The RAG corpus is controlled and still small.
 - Citation verification is stronger than source-id matching, but not yet full legal entailment.
 - Full-run scoring currently uses one stable judge plus human review, not a fully reliable multi-judge ensemble.
+- The RAG V2 88.1% citation-gate issue rate is a strict material-claim release gate, not an overall legal-answer accuracy rate.
+- The A5 100% smoke pass rate means the deterministic trace checks passed on 6 traces; it still needs human calibration with the A5 rubric.
 - The real API pilot is intentionally small, designed to prove method and product decision value rather than claim statistical superiority.
 
 These are not fatal weaknesses. They define the next data loop.
@@ -94,7 +96,7 @@ The agentic next iteration is A5:
 
 - human-calibrate the 6 completed smoke traces;
 - expand the 3-case smoke to all 8 multi-turn intake cases;
-- measure material-fact elicitation, bad-premise challenge, user-behavior adaptation, and escalation timing with an A5-specific judge;
+- measure material-fact elicitation, bad-premise challenge, user-behavior adaptation, and escalation timing with the A5-specific judge rubric;
 - route trace failures into SFT, preference, badcase, and regression eval assets.
 
 ## Strong Closing

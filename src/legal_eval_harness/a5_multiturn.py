@@ -395,6 +395,7 @@ def build_a5_evidence_package(
         redaction_note="full turn text and model outputs omitted; raw trace_log.jsonl remains local/ignored"
     ).to_csv(output / "redacted_trace_samples.csv", index=False, encoding="utf-8-sig")
 
+    _write_redacted_trace_example(output, redacted[redacted_cols], turns)
     _write_readme(output, metrics)
     manifest = {
         "package": "a5_multiturn_intake_smoke_lightweight_evidence",
@@ -407,6 +408,7 @@ def build_a5_evidence_package(
         },
         "methodology_caveats": [
             "This is a small A5 smoke test, not a statistically powered benchmark.",
+            "A 100% trace pass rate means deterministic smoke-gate success, not human-validated product readiness.",
             "Trace-level checks are deterministic triage signals and should be human-calibrated before release decisions.",
             "Raw full model outputs remain local/ignored; this package commits summaries and redacted hashes only.",
         ],
@@ -417,6 +419,7 @@ def build_a5_evidence_package(
             "turn_level_summary.csv",
             "risk_route_summary.csv",
             "redacted_trace_samples.csv",
+            "redacted_trace_example.md",
         ],
         "excluded_artifacts": ["trace_log.jsonl", "turn_log.csv"],
     }
@@ -436,6 +439,66 @@ def _bool_rate(series: pd.Series) -> float:
     if series.empty:
         return 0.0
     return round(float(series.astype(bool).mean()), 4)
+
+
+def _write_redacted_trace_example(output_dir: Path, redacted: pd.DataFrame, turns: pd.DataFrame) -> None:
+    example_path = output_dir / "redacted_trace_example.md"
+    if example_path.exists():
+        return
+    if redacted.empty:
+        example = "# Redacted A5 Trace Example\n\nNo trace rows were available for this run.\n"
+        example_path.write_text(example, encoding="utf-8")
+        return
+
+    row = redacted.sort_values(["case_id", "model_alias"]).iloc[0]
+    trace_turns = turns.loc[turns["trace_id"] == row["trace_id"]].sort_values("turn_index")
+    lines = [
+        "# Redacted A5 Trace Example",
+        "",
+        "This example summarizes one A5 multi-turn legal intake trace without exposing full user text or full model output text.",
+        "",
+        "## Trace Metadata",
+        "",
+        "| Field | Value |",
+        "| --- | --- |",
+        f"| Trace ID | `{row['trace_id']}` |",
+        f"| Case ID | `{row['case_id']}` |",
+        f"| Model alias | `{row['model_alias']}` |",
+        f"| Legal domain | {row['legal_domain']} |",
+        f"| User behavior | {row['user_behavior']} |",
+        f"| Release decision | `{row['release_decision']}` |",
+        f"| Trace pass | `{row['trace_pass']}` |",
+        f"| Material fact coverage | `{row['material_fact_coverage']}` |",
+        "",
+        "## Turn Summary",
+        "",
+        "| Turn | Expected Agent Move | Output Hash | Product Signal |",
+        "| ---: | --- | --- | --- |",
+    ]
+    for _, turn in trace_turns.iterrows():
+        lines.append(
+            f"| {turn.get('turn_index', '')} | {turn.get('expected_agent_move', '')} | "
+            f"`{turn.get('agent_message_sha256_12', '')}` | Redacted turn available as hash only. |"
+        )
+    lines.extend(
+        [
+            "",
+            "## Trace-Level Checks",
+            "",
+            "| Check | Result |",
+            "| --- | --- |",
+            f"| Bad premise challenged | {row['bad_premise_challenged']} |",
+            f"| Human review recommended | {row['human_review_recommended']} |",
+            f"| Safe redirection | {row['safe_redirection']} |",
+            f"| Overclaim detected | {row['overclaim_detected']} |",
+            f"| Release decision | `{row['release_decision']}` |",
+            "",
+            "## Caveat",
+            "",
+            "This generated example is intentionally redacted. Full turn text and model outputs remain local and ignored by Git.",
+        ]
+    )
+    example_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
 def _write_readme(output_dir: Path, metrics: dict[str, Any]) -> None:
@@ -461,11 +524,13 @@ def _write_readme(output_dir: Path, metrics: dict[str, Any]) -> None:
         "- `turn_level_summary.csv`: redacted turn-level latency, token, status, and hash summary.",
         "- `risk_route_summary.csv`: release decision counts by user behavior and legal domain.",
         "- `redacted_trace_samples.csv`: one row per trace with output hashes only.",
+        "- `redacted_trace_example.md`: one manually redacted trace summary for reviewer inspection.",
         "- `artifact_manifest.yaml`: machine-readable manifest and caveats.",
         "",
         "## Caveats",
         "",
         "- This is a small API smoke test, not a full benchmark.",
+        "- A 100% pass rate means deterministic smoke-gate success, not human-validated product readiness.",
         "- Deterministic trace checks are triage signals and need human calibration before production release.",
         "- Full raw model outputs remain local/ignored.",
     ]

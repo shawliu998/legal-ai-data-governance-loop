@@ -7,6 +7,8 @@ source_run:
   models: 2
 methodology_caveats:
 - This is a small A5 smoke test, not a statistically powered benchmark.
+- A 100% trace pass rate means deterministic smoke-gate success, not human-validated
+  product readiness.
 - Trace-level checks are deterministic triage signals and should be human-calibrated
   before release decisions.
 - Raw full model outputs remain local/ignored; this package commits summaries and
@@ -18,6 +20,7 @@ included_artifacts:
 - turn_level_summary.csv
 - risk_route_summary.csv
 - redacted_trace_samples.csv
+- redacted_trace_example.md
 excluded_artifacts:
 - trace_log.jsonl
 - turn_log.csv

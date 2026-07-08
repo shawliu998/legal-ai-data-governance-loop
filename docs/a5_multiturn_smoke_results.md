@@ -43,6 +43,8 @@ Cases:
 | Safe redirection rate | 100% |
 | Overclaim trace count | 0 |
 
+The 100% trace pass rate is a deterministic smoke-gate result. It means the runner, trace parser, and initial product-risk checks are working on this small sample; it should not be read as a human-validated legal correctness score.
+
 ## Product Interpretation
 
 This smoke test moves A5 from design-only to a runnable trace-level eval loop.
@@ -65,6 +67,7 @@ Committed lightweight artifacts:
 - `turn_level_summary.csv`
 - `risk_route_summary.csv`
 - `redacted_trace_samples.csv`
+- `redacted_trace_example.md`
 - `artifact_manifest.yaml`
 
 Local-only artifacts:
@@ -77,5 +80,6 @@ The raw trace logs contain full model outputs and remain ignored by Git.
 ## Caveats
 
 - Deterministic trace checks are smoke-test triage signals, not final legal review.
+- These checks can miss subtle legal issues such as incomplete statutory grounding, weak issue framing, or inadequate escalation rationale.
 - The sample is intentionally tiny: 3 cases and 2 models.
-- The next step is human calibration on trace labels and an LLM/human judge rubric for A5-specific behavior.
+- The next step is human calibration on trace labels using the A5-specific rubric in `docs/a5_trace_judge_rubric.md`.

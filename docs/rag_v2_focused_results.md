@@ -41,6 +41,8 @@ Full raw outputs remain local and ignored by Git. The committed package contains
 | Claim-level release blocker rate | 11.9% |
 | Human-review rate under Qwen judge baseline | 54.2% |
 
+The 88.1% citation-gate issue rate is a strict material-claim citation gate. It is designed to surface claims that would need citation repair, source-boundary filtering, human review, or data routing before release; it is not an overall model accuracy rate.
+
 Interpretation:
 
 - Retrieval was good at finding the expected allowed sources.
@@ -71,6 +73,7 @@ Product conclusion:
 - Source-limited tasks need retrieval filtering, not just retrieval ranking.
 - Material legal claims should be forced into a claim-citation schema before final answer.
 - Out-of-scope source use should remain a release blocker even when the source itself is legally plausible.
+- The project value is the ability to locate unreleasable RAG behavior and convert it into hard-negative retrieval pairs, SFT examples, preference pairs, and regression evals.
 
 ## Deployment Policy
 

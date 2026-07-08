@@ -231,6 +231,8 @@ Main finding:
 
 Retrieval found the expected sources, but generation still produced too many uncited material claims and out-of-scope source uses. W4/RAG improved citation coverage versus W1 and W5, but it also introduced source-boundary release blockers. The product policy should be: RAG is required for source-specific tasks, but RAG output is not releasable unless it passes claim-level citation and source-boundary gates.
 
+The 88.1% citation-gate issue rate is a strict material-claim release gate, not an overall answer-accuracy rate. Its purpose is to identify outputs that need citation repair, source-boundary filtering, human review, or data routing before release.
+
 Detailed results:
 
 `docs/rag_v2_focused_results.md`
@@ -260,9 +262,15 @@ Main finding:
 
 A5 can now be evaluated as a trace rather than a single final answer. The smoke set intentionally used cooperative, dependent, and adversarial users. All traces routed to `human_review_required`, which is the expected conservative product posture for labor coercion and adversarial debt-collection scenarios.
 
+The 100% trace pass rate is deterministic smoke-gate success on 6 traces. It validates the A5 runner, parser, and first-pass product-risk checks; it is not a human-validated legal correctness score.
+
 Detailed results:
 
 `docs/a5_multiturn_smoke_results.md`
+
+A5 rubric:
+
+`docs/a5_trace_judge_rubric.md`
 
 ## Product Policy Conclusions
 

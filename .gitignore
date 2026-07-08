@@ -51,6 +51,7 @@ outputs/a5_multiturn_intake_smoke/*
 !outputs/a5_multiturn_intake_smoke/turn_level_summary.csv
 !outputs/a5_multiturn_intake_smoke/risk_route_summary.csv
 !outputs/a5_multiturn_intake_smoke/redacted_trace_samples.csv
+!outputs/a5_multiturn_intake_smoke/redacted_trace_example.md
 outputs/a5_multiturn_intake_smoke_mock/
 
 data/practice_benchmark_pilot/source/

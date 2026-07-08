@@ -63,7 +63,7 @@ RAG V2 focused pilot takeaways:
 
 - 72 / 72 Qianfan outputs completed on 8 source-limited citation/document cases across ERNIE 5.0, DeepSeek V4 Pro, and Qwen3.5-27B.
 - Retrieval found all expected allowed sources for W4/RAG runs, but average source-boundary precision was only 0.50 because top-k also included extra sources.
-- Claim-level triage found 555 citation-gate issues among 630 reviewable legal claims; the largest failure mode was uncited material claims.
+- Claim-level triage found 555 citation-gate issues among 630 reviewable legal claims; this is a strict material-claim citation gate designed to expose release risk, not an overall answer-accuracy rate.
 - A2/RAG improved citation coverage versus A1 and A4, but also produced 74 out-of-scope source claims, so RAG must be paired with source-boundary and claim-level verification.
 - RAG V2 evidence package: [outputs/rag_v2_focused_pilot_v1/](outputs/rag_v2_focused_pilot_v1/)
 
@@ -72,9 +72,11 @@ A5 and trace-level eval additions:
 - A0-A5 architecture design: [docs/legal_agent_product_eval_v2_design.md](docs/legal_agent_product_eval_v2_design.md)
 - Trace-level eval schema: [docs/trace_level_eval_schema.md](docs/trace_level_eval_schema.md)
 - A5 multi-turn intake smoke completed: 6 traces / 18 turns across Qwen3.5-27B and DeepSeek V4 Pro.
-- A5 trace smoke pass rate was 100% under deterministic triage checks, with 83.3% average material-fact coverage and 100% bad-premise challenge / human-review / safe-redirection rates.
+- A5 trace smoke pass rate was 100% under deterministic triage checks, with 83.3% average material-fact coverage and 100% bad-premise challenge / human-review / safe-redirection rates; this proves the runner and trace checks work, not production readiness.
 - A5 smoke evidence package: [outputs/a5_multiturn_intake_smoke/](outputs/a5_multiturn_intake_smoke/)
 - A5 multi-turn intake pilot design: [docs/multiturn_intake_pilot.md](docs/multiturn_intake_pilot.md)
+- A5 trace judge rubric: [docs/a5_trace_judge_rubric.md](docs/a5_trace_judge_rubric.md)
+- Redacted A5 trace example: [outputs/a5_multiturn_intake_smoke/redacted_trace_example.md](outputs/a5_multiturn_intake_smoke/redacted_trace_example.md)
 - 8 multi-turn intake cases: [data/eval_sets/legal_agent_multiturn_intake_pilot_v1.jsonl](data/eval_sets/legal_agent_multiturn_intake_pilot_v1.jsonl)
 
 ## Open First
@@ -86,6 +88,8 @@ A5 and trace-level eval additions:
 - Product-boundary results: [docs/results_product_boundary_eval.md](docs/results_product_boundary_eval.md)
 - RAG V2 focused results: [docs/rag_v2_focused_results.md](docs/rag_v2_focused_results.md)
 - A5 smoke results: [docs/a5_multiturn_smoke_results.md](docs/a5_multiturn_smoke_results.md)
+- A5 trace judge rubric: [docs/a5_trace_judge_rubric.md](docs/a5_trace_judge_rubric.md)
+- Redacted A5 trace example: [outputs/a5_multiturn_intake_smoke/redacted_trace_example.md](outputs/a5_multiturn_intake_smoke/redacted_trace_example.md)
 - A5 multi-turn intake pilot: [docs/multiturn_intake_pilot.md](docs/multiturn_intake_pilot.md)
 - Model boundary memo: [docs/model_boundary_memo.md](docs/model_boundary_memo.md)
 - Real API pilot evidence package: [outputs/product_boundary_api_pilot_v1/](outputs/product_boundary_api_pilot_v1/)
