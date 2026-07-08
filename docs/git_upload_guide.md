@@ -71,7 +71,7 @@ git check-ignore -v \
 创建 commit：
 
 ```bash
-git commit -m "Build legal AI data governance eval harness"
+git commit -m "Build legal AI product eval data governance system"
 ```
 
 ## 3. 在 GitHub 创建空仓库
@@ -142,7 +142,7 @@ git push -u origin codex/legal-data-governance-eval
 中文：
 
 ```text
-项目：Legal AI Data Governance Eval Harness
+项目：Legal AI Product Eval & Data Governance System
 链接：https://github.com/<your-username>/legal-ai-data-governance-eval-harness
 说明：构建法律 AI 数据闭环治理评测工作流，覆盖 gold label 防泄漏、多任务 rubric 评测、normalized run log、错误标签标准化、人审队列和 badcase-to-data routing。
 ```
@@ -150,8 +150,8 @@ git push -u origin codex/legal-data-governance-eval
 英文：
 
 ```text
-Legal AI Data Governance Eval Harness
-Built a leakage-safe legal AI evaluation and data-loop governance harness with 85 samples, 380 rubric items, 546 normalized model runs, task-specific LLM judges, standardized error taxonomy, human review queueing, and error-to-data routing.
+Legal AI Product Eval & Data Governance System
+Built a leakage-safe legal AI evaluation and data-loop governance system with 85 samples, 380 rubric items, 546 normalized model runs, task-specific LLM judges, standardized error taxonomy, human review queueing, and error-to-data routing.
 ```
 
 ## 8. 常见问题

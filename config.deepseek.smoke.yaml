@@ -1,5 +1,5 @@
 project:
-  name: Legal Agent Eval Harness - DeepSeek Smoke Run
+  name: Legal AI Product Eval System - DeepSeek Smoke Run
   experiment_id: EXP-DEEPSEEK-SMOKE-EVAL
   boundary: small-sample API smoke evaluation for data-governance workflow validation; not legal advice; not model ranking
   jurisdiction: 中国大陆

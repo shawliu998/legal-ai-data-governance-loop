@@ -1,4 +1,4 @@
-# Legal Agent Product Eval & Data Governance Harness
+# Legal AI Product Boundary Eval & Data Governance System
 
 A portfolio project for DeepSeek-style professional-domain data product roles.
 
@@ -14,6 +14,8 @@ This project evaluates legal AI model-agent configurations under realistic legal
 The goal is not to rank models. The goal is to turn legal agent behavior into product launch policy, risk-control policy, and next-round data production decisions.
 
 Core artifacts: PRD, labeling SOP, leakage-safe dataset, controlled RAG corpus, rubric-based Judge, judge ensemble, normalized run log, data router, human calibration queue, release gate, dashboard, and technical case study.
+
+The implementation includes a reproducible eval harness for running model calls, RAG checks, judge scoring, release gates, and data-routing reports. The product framing is the legal AI product-boundary and data-governance system.
 
 The project is intentionally scoped: controlled local RAG, no Web UI, no database, and no open-web legal retrieval. It focuses on data-product capabilities: leakage-safe datasets, legal agent architecture evaluation, trace-level evaluation design, retrieval/citation verification, human review queueing, error taxonomy, error-to-data routing, and dashboard-driven data production decisions.
 

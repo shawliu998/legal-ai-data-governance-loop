@@ -2,7 +2,7 @@
 
 ## 30-Second Version
 
-I built a legal agent product-boundary eval and data governance harness. Instead of ranking models by average score, it evaluates whether a legal AI product should answer, ask clarifying questions, use grounded sources, route to human review, or block release. I ran a real Qianfan API pilot across ERNIE 5.0, DeepSeek V4 Pro, Qwen3.5-27B, GLM-5.2, and Kimi K2.6, then human-reviewed 80 priority outputs and added RAG V2 plus a 24-trace A5 multi-turn intake pilot. The output is not just scores; it is model-agent routing policy, trace-level risk signals, release gates, and next-round data production actions.
+I built a legal AI product-boundary evaluation and data governance system. Instead of ranking models by average score, it evaluates whether a legal AI product should answer, ask clarifying questions, use grounded sources, route to human review, or block release. I ran a real Qianfan API pilot across ERNIE 5.0, DeepSeek V4 Pro, Qwen3.5-27B, GLM-5.2, and Kimi K2.6, then human-reviewed 80 priority outputs and added RAG V2 plus a 24-trace A5 multi-turn intake pilot. The output is not just scores; it is model-agent routing policy, trace-level risk signals, release gates, and next-round data production actions.
 
 ## 2-Minute Version
 

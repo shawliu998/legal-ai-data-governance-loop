@@ -2,7 +2,7 @@
 
 ## Positioning
 
-This is a compact evaluation harness for legal AI data-loop governance.
+This is a compact evaluation framework for legal AI data-loop governance.
 It is designed to support data product decisions through a self-contained diagnostic dataset.
 
 The workflow uses a compact legal task set and rubric-based judging structure, then implements a lightweight data loop:

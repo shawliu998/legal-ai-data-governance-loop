@@ -2,7 +2,7 @@
 
 ## One-Line Summary
 
-Built a legal agent product-boundary evaluation and data governance harness that turns model-agent behavior into deployment policy, human-review policy, release gates, trace-level risk signals, and next-round data production actions.
+Built a legal AI product-boundary evaluation and data governance system that turns model-agent behavior into deployment policy, human-review policy, release gates, trace-level risk signals, and next-round data production actions.
 
 中文一句话：
 
@@ -96,7 +96,7 @@ The API pilot showed that strong models do not remove product-boundary risk. The
 
 ## Interview Pitch
 
-I built a legal agent eval-driven data governance harness. The core is not ranking models by average score, but evaluating whether a legal AI product should answer, ask clarifying questions, use grounded sources, route to human review, or block release. I ran a real Qianfan API pilot across ERNIE 5.0, DeepSeek V4 Pro, Qwen3.5-27B, GLM-5.2, and Kimi K2.6, then added human review on 80 priority outputs, a RAG V2 focused pilot, and a 24-trace A5 multi-turn intake pilot. The result is a model-agent boundary memo and data loop: failures become eval holdout, SFT candidates, preference pairs, badcases, regression evals, or human review items.
+I built a legal AI product-boundary evaluation and data governance system. The core is not ranking models by average score, but evaluating whether a legal AI product should answer, ask clarifying questions, use grounded sources, route to human review, or block release. I ran a real Qianfan API pilot across ERNIE 5.0, DeepSeek V4 Pro, Qwen3.5-27B, GLM-5.2, and Kimi K2.6, then added human review on 80 priority outputs, a RAG V2 focused pilot, and a 24-trace A5 multi-turn intake pilot. The result is a model-agent boundary memo and data loop: failures become eval holdout, SFT candidates, preference pairs, badcases, regression evals, or human review items.
 
 ## Next Step
 

@@ -1,6 +1,6 @@
 # Runbook
 
-This runbook explains how to reproduce the Legal AI Data Governance & Eval Harness from a fresh checkout.
+This runbook explains how to reproduce the Legal AI Product Eval & Data Governance System from a fresh checkout.
 
 The project is a diagnostic data-loop workflow. It is not a legal advice system, not a model leaderboard, and not an automatic legal correctness engine.
 

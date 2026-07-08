@@ -2,7 +2,7 @@
 
 ## Positioning
 
-This project should be read as a legal agent product-boundary evaluation harness, not as a prompt leaderboard.
+This project should be read as a legal agent product-boundary evaluation system, not as a prompt leaderboard.
 
 The core unit of evaluation is:
 

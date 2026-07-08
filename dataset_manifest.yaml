@@ -1,5 +1,5 @@
 project:
-  name: Legal AI Data-Loop Governance Eval Harness
+  name: Legal AI Product Eval & Data Governance System
   version: "0.3.0"
   boundary: diagnostic evaluation and data production decision support; not legal advice; not model ranking
 

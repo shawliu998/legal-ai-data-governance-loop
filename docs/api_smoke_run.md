@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The API smoke run validates that the harness can connect to an OpenAI-compatible provider and process real model outputs through the same data-governance loop.
+The API smoke run validates that the evaluation system can connect to an OpenAI-compatible provider and process real model outputs through the same data-governance loop.
 
 It is intentionally small:
 

@@ -1,4 +1,4 @@
-# Case Study: Legal AI Data Governance Eval Harness
+# Case Study: Legal AI Product Eval & Data Governance System
 
 ## 30 秒项目摘要
 
@@ -138,11 +138,11 @@ Badcase 信号：
 
 ## Project Summary
 
-Legal AI Data Governance Eval Harness: built a leakage-safe evaluation harness for legal AI data-loop governance. The system separates agent-visible inputs from gold labels, supports multi-task legal evaluation, runs normalized multi-model experiments, applies task-specific rubric-based judging, standardizes error taxonomy, routes failures into eval/SFT/preference/badcase/human-review queues, and generates an executive dashboard for data production decisions rather than model ranking.
+Legal AI Product Eval & Data Governance System: built a leakage-safe evaluation workflow for legal AI data-loop governance. The system separates agent-visible inputs from gold labels, supports multi-task legal evaluation, runs normalized multi-model experiments, applies task-specific rubric-based judging, standardizes error taxonomy, routes failures into eval/SFT/preference/badcase/human-review queues, and generates an executive dashboard for data production decisions rather than model ranking.
 
 ## Implementation Highlights
 
-- Built a leakage-safe Legal AI Data Governance Eval Harness with 85 diagnostic legal samples, 380 rubric items, and 546 normalized model runs across consultation, case analysis, and document drafting tasks.
+- Built a leakage-safe Legal AI Product Eval & Data Governance System with 85 diagnostic legal samples, 380 rubric items, and 546 normalized model runs across consultation, case analysis, and document drafting tasks.
 - Designed strict `Eval_Input` / `Gold_Labels` / `Rubric_Items` separation so tested agents cannot access gold labels while Judge and Human Review can use full annotation context.
 - Implemented multi-version prompt evaluation including direct answer, structured answer protocol, blind review agent, and workflow agent, with V2 restricted from gold label access.
 - Created task-specific rubric-based judge prompts and unified scoring dimensions covering missing facts, clarification quality, legal grounding, fact-rule application, risk coverage, overclaim control, hallucination control, and data tag usability.

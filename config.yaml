@@ -1,5 +1,5 @@
 project:
-  name: Legal Agent Eval Harness
+  name: Legal AI Product Eval & Data Governance System
   experiment_id: EXP-LEGAL-DATA-LOOP-EVAL
   boundary: small-sample diagnostic evaluation and data-loop governance; not legal advice; not model ranking
   jurisdiction: 中国大陆
