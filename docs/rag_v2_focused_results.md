@@ -41,7 +41,10 @@ Full raw outputs remain local and ignored by Git. The committed package contains
 | Claim-level release blocker rate | 11.9% |
 | Human-review rate under Qwen judge baseline | 54.2% |
 
-The 88.1% citation-gate issue rate is a strict material-claim citation gate. It is designed to surface claims that would need citation repair, source-boundary filtering, human review, or data routing before release; it is not an overall model accuracy rate.
+The 88.1% citation-gate issue rate is a strict material-claim citation gate.
+
+It is designed to surface claims that would need citation repair, source-boundary filtering, human review, or data routing before release.
+It is not an overall model accuracy rate.
 
 Interpretation:
 

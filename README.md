@@ -13,11 +13,37 @@ This project evaluates legal AI model-agent configurations under realistic legal
 
 The goal is not to rank models. The goal is to turn legal agent behavior into product launch policy, risk-control policy, and next-round data production decisions.
 
-Core artifacts: PRD, labeling SOP, leakage-safe dataset, controlled RAG corpus, rubric-based Judge, judge ensemble, normalized run log, data router, human calibration queue, release gate, dashboard, and technical case study.
+Core artifacts:
 
-The implementation includes a reproducible eval harness for running model calls, RAG checks, judge scoring, release gates, and data-routing reports. The product framing is the legal AI product-boundary and data-governance system.
+- PRD,
+- labeling SOP,
+- leakage-safe dataset,
+- controlled RAG corpus,
+- rubric-based Judge,
+- judge ensemble,
+- normalized run log,
+- data router,
+- human calibration queue,
+- release gate,
+- dashboard,
+- technical case study.
 
-The project is intentionally scoped: controlled local RAG, no Web UI, no database, and no open-web legal retrieval. It focuses on data-product capabilities: leakage-safe datasets, legal agent architecture evaluation, trace-level evaluation design, retrieval/citation verification, human review queueing, error taxonomy, error-to-data routing, and dashboard-driven data production decisions.
+The implementation includes a reproducible eval harness for running model calls, RAG checks, judge scoring, release gates, and data-routing reports.
+The product framing is the legal AI product-boundary and data-governance system.
+
+The project is intentionally scoped:
+controlled local RAG, no Web UI, no database, and no open-web legal retrieval.
+
+It focuses on data-product capabilities:
+
+- leakage-safe datasets,
+- legal agent architecture evaluation,
+- trace-level evaluation design,
+- retrieval/citation verification,
+- human review queueing,
+- error taxonomy,
+- error-to-data routing,
+- dashboard-driven data production decisions.
 
 It is not a legal advice system and not a model leaderboard.
 
@@ -34,6 +60,7 @@ The main track is:
 -> 24-trace A5 multi-turn intake pilot
 -> human calibration
 -> release gate and data routing
+-> final portfolio findings
 -> trace-level eval design
 ```
 
@@ -49,6 +76,29 @@ Agent architecture naming:
 | A5 multi-turn legal intake agent | Multi-turn intake with user behavior variants | New pilot |
 
 The legacy `V0` / `V1` / `V3` / `V4` / `V5` labels remain in code and artifacts for reproducibility. The product-level interpretation uses A0-A5.
+
+## Next Formal Run Plan
+
+The next focused full run is intentionally smaller than the mock diagnostic suite and cleaner than the pilot chain:
+
+```text
+50 legal product-boundary cases
+x 3 Qianfan-accessible models
+x 3 agent architectures
+= 450 model outputs
+```
+
+Planned scope:
+
+- Models: ERNIE 5.0, DeepSeek V4 Pro, Qwen3.5-27B.
+- Architectures: A1 structured legal counsel, A2 grounded retrieval counsel, A4 clarification-first intake.
+- Human calibration target: 120 rows, including priority blocker rows and a random floor.
+- Output target: a lightweight committed evidence package plus local full artifacts.
+
+Run-plan files:
+
+- [docs/legal_agent_product_eval_v2_focused_run_plan.md](docs/legal_agent_product_eval_v2_focused_run_plan.md)
+- [configs/experiments/legal_agent_product_eval_v2_focused.yaml](configs/experiments/legal_agent_product_eval_v2_focused.yaml)
 
 ## Current Evidence
 
@@ -74,7 +124,9 @@ A5 and trace-level eval additions:
 - A0-A5 architecture design: [docs/legal_agent_product_eval_v2_design.md](docs/legal_agent_product_eval_v2_design.md)
 - Trace-level eval schema: [docs/trace_level_eval_schema.md](docs/trace_level_eval_schema.md)
 - A5 multi-turn intake smoke completed: 6 traces / 18 turns across Qwen3.5-27B and DeepSeek V4 Pro.
-- A5 trace smoke pass rate was 100% under deterministic triage checks, with 83.3% average material-fact coverage and 100% bad-premise challenge / human-review / safe-redirection rates; this proves the runner and trace checks work, not production readiness.
+- A5 trace smoke pass rate was 100% under deterministic triage checks.
+- The smoke run had 83.3% average material-fact coverage and 100% bad-premise challenge / human-review / safe-redirection rates.
+- This proves the runner and trace checks work, not production readiness.
 - A5 full pilot completed: 24 traces / 72 turns across 8 cases and ERNIE 5.0, DeepSeek V4 Pro, and Qwen3.5-27B.
 - A5 full pilot trace pass rate was 75.0% under deterministic triage checks; 6 traces were flagged for overclaim review and routed into the human calibration template.
 - A5 smoke evidence package: [outputs/a5_multiturn_intake_smoke/](outputs/a5_multiturn_intake_smoke/)
@@ -87,8 +139,11 @@ A5 and trace-level eval additions:
 
 ## Open First
 
+- Final portfolio findings: [docs/final_portfolio_findings.md](docs/final_portfolio_findings.md)
 - Agent product eval V2 design: [docs/legal_agent_product_eval_v2_design.md](docs/legal_agent_product_eval_v2_design.md)
 - Trace-level eval schema: [docs/trace_level_eval_schema.md](docs/trace_level_eval_schema.md)
+- Focused V2 run plan: [docs/legal_agent_product_eval_v2_focused_run_plan.md](docs/legal_agent_product_eval_v2_focused_run_plan.md)
+- Focused V2 planned config: [configs/experiments/legal_agent_product_eval_v2_focused.yaml](configs/experiments/legal_agent_product_eval_v2_focused.yaml)
 - Product PRD: [docs/product_prd.md](docs/product_prd.md)
 - Project summary: [docs/project_summary.md](docs/project_summary.md)
 - Product-boundary results: [docs/results_product_boundary_eval.md](docs/results_product_boundary_eval.md)
@@ -139,7 +194,7 @@ flowchart LR
 
 - Gold label leakage prevention: Agents only see `Eval_Input`; Judge/Human Review can see `Gold_Labels` and `Rubric_Items`.
 - Multi-task legal evaluation: `consultation`, `case_analysis`, and `document_drafting`.
-- Normalized run logs: one row per model run, supporting multiple model aliases, prompt versions, data sources, and task categories.
+- Normalized run logs: one row per model run, supporting multiple model aliases, agent architectures, data sources, and task categories.
 - Agent architecture comparison: A0-A5 product configurations, with legacy V aliases preserved for reproducibility.
 - Trace-level eval design: turns, retrieval, citation checks, claim checks, risk checks, release gate, and data route.
 - A5 multi-turn intake pilot: cooperative, dependent, withdrawn, and adversarial user behavior variants.
@@ -325,7 +380,7 @@ After an API run, generate the human calibration queue and release gate table:
   --output outputs/practice_api_smoke/release_gate.csv
 ```
 
-### Qianfan Multi-Vendor Run
+### Supporting Qianfan Vendor Smoke
 
 If using Baidu Qianfan ModelBuilder, use the OpenAI-compatible endpoint:
 
@@ -344,7 +399,7 @@ QIANFAN_MODEL_KIMI_K26=
 QIANFAN_JUDGE_MODEL=
 ```
 
-Then run the Qianfan-hosted vendor comparison:
+Then run the Qianfan-hosted vendor smoke:
 
 ```bash
 .venv/bin/python -m legal_eval_harness.cli all \
@@ -361,7 +416,8 @@ Default shape:
 - 3 workflow conditions: W0, W1, W3
 - 120 model outputs
 
-This compares deployment behavior by task slice, workflow, risk route, latency, and cost. It should still be reported as a product policy experiment, not a vendor leaderboard.
+This compares deployment behavior by task slice, workflow, risk route, latency, and cost.
+It is a supporting availability and routing check, not the primary product story and not a vendor leaderboard.
 
 ## Stratified Legal Product Boundary Eval
 
@@ -414,13 +470,18 @@ Run cross-judge calibration on the same model outputs:
 
 The ensemble layer uses DeepSeek V4 Pro and GLM-5.2 as primary judges, excludes self-evaluation, and uses Kimi K2.6 as an arbiter when score, critical-failure, or routing labels disagree.
 
-Current runnable workflow mapping:
+Legacy implementation alias mapping:
 
-- `V0`: `w0_closed_book`
-- `V1`: `w1_structured_legal_prompt`
-- `V4`: `w2_rag_grounded` using local corpus retrieval and retrieved context injection
-- `V3`: `w3_risk_control_workflow`
-- `V5`: `w4_clarification_first`
+| Product architecture | Legacy alias | Runnable workflow |
+| --- | --- | --- |
+| A0 baseline closed-book | `V0` | `w0_closed_book` |
+| A1 structured legal counsel | `V1` | `w1_structured_legal_prompt` |
+| A2 grounded retrieval counsel | `V4` | `w2_rag_grounded` with local corpus retrieval and context injection |
+| A3 verifier-router policy layer | `V3` | `w3_risk_control_workflow` |
+| A4 clarification-first intake | `V5` | `w4_clarification_first` |
+
+The `V*` names remain in configs and artifacts for reproducibility.
+Portfolio and interview discussion should use the A0-A5 product architecture names.
 
 RAG component outputs:
 

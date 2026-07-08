@@ -194,4 +194,10 @@ Trace-level metrics:
 
 ## Current Status
 
-The existing pipeline already produces most trace components as separate tables. The next implementation step is to materialize one joined `trace_log.jsonl` artifact from those tables and add A5 multi-turn traces.
+The existing A0-A4 pipeline produces most trace components as separate tables.
+
+The A5 pilot now produces multi-turn trace artifacts in:
+
+`outputs/a5_multiturn_intake_pilot_v1/`
+
+The next implementation step is to materialize one joined A0-A4 `trace_log.jsonl` artifact from the existing run, retrieval, citation, claim, release-gate, and data-routing tables.

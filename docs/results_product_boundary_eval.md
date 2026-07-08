@@ -151,7 +151,9 @@ After adding claim-level citation entailment into the release gate, 12 blocked m
 
 ### Claim-Level Citation Entailment
 
-After the first human calibration pass, the pipeline added a deterministic claim-level citation entailment triage layer. It extracts material claims from RAG-enabled outputs, maps each claim to cited source IDs, checks allowed-source boundaries from the product-boundary JSONL, and assigns a product action.
+After the first human calibration pass, the pipeline added a deterministic claim-level citation entailment triage layer.
+
+It extracts material claims from RAG-enabled outputs, maps each claim to cited source IDs, checks allowed-source boundaries from the product-boundary JSONL, and assigns a product action.
 
 This is a conservative review-queue signal, not a final legal conclusion.
 
@@ -229,9 +231,13 @@ Evidence package:
 
 Main finding:
 
-Retrieval found the expected sources, but generation still produced too many uncited material claims and out-of-scope source uses. W4/RAG improved citation coverage versus W1 and W5, but it also introduced source-boundary release blockers. The product policy should be: RAG is required for source-specific tasks, but RAG output is not releasable unless it passes claim-level citation and source-boundary gates.
+Retrieval found the expected sources, but generation still produced too many uncited material claims and out-of-scope source uses.
+W4/RAG improved citation coverage versus W1 and W5, but it also introduced source-boundary release blockers.
 
-The 88.1% citation-gate issue rate is a strict material-claim release gate, not an overall answer-accuracy rate. Its purpose is to identify outputs that need citation repair, source-boundary filtering, human review, or data routing before release.
+The product policy should be: RAG is required for source-specific tasks, but RAG output is not releasable unless it passes claim-level citation and source-boundary gates.
+
+The 88.1% citation-gate issue rate is a strict material-claim release gate, not an overall answer-accuracy rate.
+Its purpose is to identify outputs that need citation repair, source-boundary filtering, human review, or data routing before release.
 
 Detailed results:
 
@@ -260,7 +266,9 @@ Evidence package:
 
 Main finding:
 
-A5 can now be evaluated as a trace rather than a single final answer. The smoke set intentionally used cooperative, dependent, and adversarial users. All traces routed to `human_review_required`, which is the expected conservative product posture for labor coercion and adversarial debt-collection scenarios.
+A5 can now be evaluated as a trace rather than a single final answer.
+The smoke set intentionally used cooperative, dependent, and adversarial users.
+All traces routed to `human_review_required`, which is the expected conservative product posture for labor coercion and adversarial debt-collection scenarios.
 
 The 100% trace pass rate is deterministic smoke-gate success on 6 traces. It validates the A5 runner, parser, and first-pass product-risk checks; it is not a human-validated legal correctness score.
 
@@ -295,7 +303,11 @@ Evidence package:
 
 Main finding:
 
-A5 is now evaluated as a real multi-turn pilot, not just a smoke test. The deterministic trace checks show that all three models maintained refusal/redirection and human-review posture, but material-fact elicitation and overclaim control still need human calibration. The 6 overclaim-flagged traces are priority review rows, not confirmed legal errors.
+A5 is now evaluated as a real multi-turn pilot, not just a smoke test.
+The deterministic trace checks show that all three models maintained refusal/redirection and human-review posture.
+
+Material-fact elicitation and overclaim control still need human calibration.
+The 6 overclaim-flagged traces are priority review rows, not confirmed legal errors.
 
 Detailed results:
 
@@ -315,21 +327,23 @@ Auto-answer eligible:
 - No critical failure.
 - No fabricated citation or unsupported claim.
 - No unresolved judge disagreement.
-- Prefer W1/W3 over W0.
+- Prefer A1 structured counsel, with A3 verifier-router only as a policy layer.
+- Do not use A0 closed-book as a high-risk release candidate.
 
 Grounding required:
 
 - `citation_grounding` slice.
 - Contract, document, or source-specific interpretation.
 - Any answer that claims a rule, clause, or document basis.
-- Prefer W2/W3 with citation verification.
+- Prefer A2 grounded retrieval counsel with citation verification and source-boundary gates.
 
 Clarification-first required:
 
 - Missing material facts.
 - Ambiguous labor, contract, family, or procedural posture.
 - Win-rate, lawsuit outcome, or probability questions.
-- Prefer W4 when facts are insufficient.
+- Prefer A4 clarification-first when facts are insufficient.
+- Use A5 multi-turn intake for behavior-sensitive intake scenarios after human trace calibration.
 
 Human review required:
 
@@ -368,14 +382,15 @@ After the API pilot, report:
 | Ignored material fact change | `eval_holdout` | Preserve counterfactual pair as holdout. |
 | Weak clarification | `sft_candidate` | Add intake checklist examples. |
 
-## Next Iteration
+## Further RAG Iteration
 
-The next iteration should focus on RAG reliability rather than broader model ranking:
+The next RAG iteration should focus on reliability rather than broader model ranking:
 
 - Expand the controlled corpus with precise statute, contract, policy, case-rule, and evidence snippets.
 - Add claim-level citation entailment labels: `supported`, `partially_supported`, `unsupported`, `contradicted`, `no_citation`, and `out_of_scope_source`.
 - Separate retrieval metrics from answer metrics: context recall, context precision, source-boundary precision, citation coverage, and citation entailment.
-- Run a focused citation/document pilot instead of a full rerun: 8-12 cases, 2-3 models, W1/W4/W5 workflows.
+- Extend the focused citation/document pilot before any full rerun.
+- Keep A1, A2, and A4 as the primary comparison set for source-boundary tasks.
 - Treat unsupported or contradicted material claims as release blockers.
 
 See [rag_v2_improvement_plan.md](rag_v2_improvement_plan.md) for the detailed plan.

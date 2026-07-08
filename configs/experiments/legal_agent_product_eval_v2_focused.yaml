@@ -1,0 +1,110 @@
+experiment:
+  id: legal_agent_product_eval_v2_focused
+  name: Legal Agent Product Eval V2 Focused Run
+  status: planned
+  purpose: >
+    Formalize the next focused experiment after the current pilots.
+    The goal is product-boundary decision making, not model leaderboard ranking.
+
+scope:
+  formula: "50 cases x 3 models x 3 agent architectures = 450 model outputs"
+  cases: 50
+  models: 3
+  agent_architectures: 3
+  expected_model_outputs: 450
+  note: >
+    This config is a run plan for the next formal experiment.
+    It should not be described as completed until the output artifacts exist.
+
+dataset:
+  source_jsonl: data/eval_sets/legal_product_boundary_pilot_v1.jsonl
+  prepared_manifest: data/product_boundary_pilot/dataset_manifest.yaml
+  slices:
+    - normal_practice
+    - hard_legal_reasoning
+    - risk_calibration
+    - citation_grounding
+    - adversarial_trap
+    - counterfactual_pair
+
+models:
+  - alias: qianfan_ernie_50
+    provider: qianfan_openai_compatible
+    env_model: QIANFAN_MODEL_ERNIE_50
+  - alias: qianfan_deepseek_v4_pro
+    provider: qianfan_openai_compatible
+    env_model: QIANFAN_MODEL_DEEPSEEK_V4_PRO
+  - alias: qianfan_qwen35_27b
+    provider: qianfan_openai_compatible
+    env_model: QIANFAN_MODEL_QWEN35_27B
+
+agent_architectures:
+  - architecture: A1_structured_legal_counsel
+    legacy_alias: V1
+    workflow_condition: w1_structured_legal_prompt
+    reason: Low-risk structured answer baseline.
+  - architecture: A2_grounded_retrieval_counsel
+    legacy_alias: V4
+    workflow_condition: w2_rag_grounded
+    reason: Source-specific answer with controlled retrieval and citation checks.
+  - architecture: A4_clarification_first_intake
+    legacy_alias: V5
+    workflow_condition: w4_clarification_first
+    reason: Missing-fact and risk-calibration intake behavior.
+
+judging:
+  baseline_judge: qianfan_qwen35_27b
+  caveat: >
+    Qwen-judge scores are baseline triage signals.
+    Qwen-scored Qwen outputs require human review or non-Qwen judge sampling.
+  targeted_cross_judge_sampling:
+    enabled: true
+    sample_policy:
+      - judge_disagreement
+      - release_blocker
+      - high_risk
+      - citation_gate_issue
+
+human_calibration:
+  target_rows: 120
+  sampling_policy:
+    priority_rows:
+      - fabricated_citation
+      - unsupported_material_claim
+      - out_of_scope_source
+      - release_blocked
+      - high_risk_human_review
+      - counterfactual_pair
+    random_floor: 40
+  metrics:
+    - judge_human_agreement
+    - critical_failure_agreement
+    - citation_support_agreement
+    - route_override_rate
+
+expected_artifacts:
+  output_dir: outputs/legal_agent_product_eval_v2_focused/
+  committed_lightweight_package:
+    - README.md
+    - artifact_manifest.yaml
+    - metrics_summary.csv
+    - release_gate_summary.csv
+    - human_calibration_summary.csv
+    - redacted_sample_outputs.csv
+  local_full_artifacts:
+    - model_run_log.csv
+    - retrieval_log.csv
+    - rag_contexts.csv
+    - citation_verification.csv
+    - claim_entailment.csv
+    - judge_scores.csv
+    - data_routing.csv
+    - release_gate.csv
+    - executive_dashboard.xlsx
+
+methodology_caveats:
+  no_public_leaderboard_claim: true
+  no_statistical_superiority_claim: true
+  controlled_rag_corpus_not_full_legal_knowledge_base: true
+  claim_entailment_is_triage_not_final_legal_correctness: true
+  human_calibration_required_before_release_claim: true

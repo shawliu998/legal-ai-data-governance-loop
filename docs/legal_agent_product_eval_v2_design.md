@@ -77,6 +77,7 @@ The evaluation object is no longer only the final answer. It is the full path fr
 | A5 multi-turn intake smoke | `outputs/a5_multiturn_intake_smoke/` | 6 traces / 18 turns completed |
 | A5 multi-turn intake full pilot | `outputs/a5_multiturn_intake_pilot_v1/` | 24 traces / 72 turns completed |
 | Trace-level schema | `docs/trace_level_eval_schema.md` | Design-level schema added |
+| Focused V2 full-run plan | `configs/experiments/legal_agent_product_eval_v2_focused.yaml` | Planned 450-output formal experiment |
 
 ## A5 Multi-Turn Intake Goals
 
@@ -100,4 +101,7 @@ A3 is a policy layer, not a user-facing answer mode. It is useful when release g
 
 A4 is appropriate when the first user message lacks material facts.
 
-A5 is required before claiming the product supports legal intake agents. It should be evaluated on trace quality, not only final answer quality.
+A5 is required before claiming the product supports legal intake agents.
+The current A5 pilot proves the trace-level eval pipeline can run, but it does not prove release readiness.
+
+A5 should be evaluated on trace quality, material-fact elicitation, overclaim control, and human-review timing, not only final answer quality.

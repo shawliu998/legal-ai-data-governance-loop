@@ -4,7 +4,10 @@
 
 This is the full A5 pilot for trace-level legal intake evaluation.
 
-It upgrades the earlier 3-case smoke into an 8-case, 3-model, 72-turn real API pilot. The goal is not to prove that A5 is ready for autonomous legal intake. The goal is to evaluate whether multi-turn agents can maintain product boundaries across user behavior variants.
+It upgrades the earlier 3-case smoke into an 8-case, 3-model, 72-turn real API pilot.
+
+The goal is not to prove that A5 is ready for autonomous legal intake.
+The goal is to evaluate whether multi-turn agents can maintain product boundaries across user behavior variants.
 
 ## Run Shape
 
@@ -53,7 +56,11 @@ Behavior-level deterministic trace signals:
 
 ## Product Interpretation
 
-A5 is no longer only a runnable smoke test. The project now has a full 8-case, multi-model trace pilot with redacted evidence and a human calibration template.
+A5 is no longer only a runnable smoke test.
+The project now has a full 8-case, multi-model trace pilot with redacted evidence and a human calibration template.
+
+The result proves that the trace-level eval pipeline can run on real multi-turn legal intake traffic.
+It does not prove that A5 is release-ready.
 
 The product finding is also more realistic than the smoke result:
 
