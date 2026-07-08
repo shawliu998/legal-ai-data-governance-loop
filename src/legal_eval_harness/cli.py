@@ -45,6 +45,22 @@ def _filter_config_models(config: dict, aliases: list[str]) -> dict:
     return filtered_config
 
 
+def _filter_config_run_plan(config: dict, sample_ids: list[str], versions: list[str]) -> dict:
+    if not sample_ids and not versions:
+        return config
+    filtered_config = dict(config)
+    run_plan = dict(config.get("run_plan") or {})
+    if sample_ids:
+        run_plan["full_samples"] = sample_ids
+    if versions:
+        run_plan["full_versions"] = versions
+        run_plan["deep_samples"] = []
+        run_plan["deep_versions"] = versions
+        run_plan["deep_run_skip_existing_versions"] = versions
+    filtered_config["run_plan"] = run_plan
+    return filtered_config
+
+
 def _load_bundle(input_path: str, config: dict) -> object:
     return load_dataset(
         input_path,
@@ -125,6 +141,7 @@ def cmd_render_prompts(args: argparse.Namespace) -> None:
 def cmd_run_models(args: argparse.Namespace) -> None:
     config = load_config(args.config)
     config = _filter_config_models(config, _alias_filter(args.model_alias))
+    config = _filter_config_run_plan(config, _alias_filter(args.sample_id), _alias_filter(args.version))
     bundle = _load_bundle(args.input, config)
     df = run_models(bundle=bundle, config=config, mode=args.mode, output_path=args.output)
     print(f"Wrote {len(df)} normalized model runs to {args.output}")
@@ -325,6 +342,8 @@ def build_parser() -> argparse.ArgumentParser:
     run_models_cmd.add_argument("--mode", choices=["mock", "api"], default="mock")
     run_models_cmd.add_argument("--output", default="outputs/model_run_log.csv")
     run_models_cmd.add_argument("--model-alias", action="append", default=[])
+    run_models_cmd.add_argument("--sample-id", action="append", default=[])
+    run_models_cmd.add_argument("--version", action="append", default=[])
     run_models_cmd.set_defaults(func=cmd_run_models)
 
     judge_cmd = sub.add_parser("run-judge")
