@@ -66,22 +66,13 @@ judge:
   provider: openai_compatible
   base_url: ${QIANFAN_BASE_URL}
   api_key: ${QIANFAN_API_KEY}
-  model: ${QIANFAN_JUDGE_MODEL}
+  model: ${QIANFAN_MODEL_QWEN35_27B}
   temperature: 0.0
 judge_ensemble:
   enabled: true
   purpose: cross-judge calibration for deployment decisions; not a public model leaderboard
   self_eval_exclusion: true
   primary_judges:
-  - alias: judge_deepseek_v4_pro
-    role: primary
-    vendor: DeepSeek
-    family: DeepSeek V4 Pro
-    provider: openai_compatible
-    base_url: ${QIANFAN_BASE_URL}
-    api_key: ${QIANFAN_API_KEY}
-    model: ${QIANFAN_MODEL_DEEPSEEK_V4_PRO}
-    temperature: 0.0
   - alias: judge_glm_52
     role: primary
     vendor: Zhipu
@@ -91,15 +82,24 @@ judge_ensemble:
     api_key: ${QIANFAN_API_KEY}
     model: ${QIANFAN_MODEL_GLM_52}
     temperature: 0.0
-  arbiter:
-    alias: judge_kimi_k26
-    role: arbiter
+  - alias: judge_kimi_k26
+    role: primary
     vendor: Moonshot
     family: Kimi K2.6
     provider: openai_compatible
     base_url: ${QIANFAN_BASE_URL}
     api_key: ${QIANFAN_API_KEY}
     model: ${QIANFAN_MODEL_KIMI_K26}
+    temperature: 0.0
+  arbiter:
+    alias: judge_qwen35_27b
+    role: arbiter
+    vendor: Alibaba
+    family: Qwen3.5-27B
+    provider: openai_compatible
+    base_url: ${QIANFAN_BASE_URL}
+    api_key: ${QIANFAN_API_KEY}
+    model: ${QIANFAN_MODEL_QWEN35_27B}
     temperature: 0.0
   disagreement:
     score_gap_threshold: 0.15

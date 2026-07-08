@@ -156,6 +156,79 @@ def _mock_judge_payload(run_row: dict[str, Any], gold_row: dict[str, Any]) -> di
     }
 
 
+def normalize_judge_payload(payload: dict[str, Any]) -> dict[str, Any]:
+    dimension_scores_raw = payload.get("dimension_scores") or {}
+    dimension_scores: dict[str, int] = {}
+    for dim in SCORE_DIMENSIONS:
+        try:
+            score = int(dimension_scores_raw.get(dim, 0))
+        except (TypeError, ValueError):
+            score = 0
+        dimension_scores[dim] = max(0, min(2, score))
+
+    atomic_scores = []
+    for item in payload.get("atomic_scores") or []:
+        if not isinstance(item, dict):
+            continue
+        try:
+            max_score = int(item.get("max_score", 2))
+        except (TypeError, ValueError):
+            max_score = 2
+        max_score = max(1, min(2, max_score))
+        try:
+            score = int(item.get("score", 0))
+        except (TypeError, ValueError):
+            score = 0
+        atomic_scores.append(
+            {
+                "rubric_id": safe_text(item.get("rubric_id")),
+                "atomic_rubric_item": safe_text(item.get("atomic_rubric_item")),
+                "score": max(0, min(max_score, score)),
+                "max_score": max_score,
+                "rationale": safe_text(item.get("rationale")),
+            }
+        )
+
+    total_score = sum(dimension_scores.values()) + sum(item["score"] for item in atomic_scores)
+    max_score = len(SCORE_DIMENSIONS) * 2 + sum(item["max_score"] for item in atomic_scores)
+    score_rate = round(total_score / max_score, 3) if max_score else 0.0
+
+    tags = payload.get("error_tags") or []
+    normalized_tags = []
+    for tag in tags:
+        if not isinstance(tag, dict):
+            continue
+        coarse = safe_text(tag.get("coarse_error_tag"))
+        subtype = safe_text(tag.get("error_subtype"))
+        if coarse not in COARSE_ERROR_TAGS:
+            coarse = "needs_human_review"
+            subtype = subtype or "non_standard_error_tag"
+        normalized_tags.append({"coarse_error_tag": coarse, "error_subtype": subtype})
+
+    risk_level = safe_text(payload.get("risk_level")).lower()
+    if risk_level not in {"low", "medium", "high"}:
+        risk_level = "high" if score_rate < 0.45 else "medium" if score_rate < 0.72 else "low"
+    judge_confidence = safe_text(payload.get("judge_confidence")).lower()
+    if judge_confidence not in {"low", "medium", "high"}:
+        judge_confidence = "medium"
+    needs_human_review = payload.get("needs_human_review")
+    if isinstance(needs_human_review, str):
+        needs_human_review = needs_human_review.strip().lower() in {"true", "yes", "1", "是"}
+
+    return {
+        "dimension_scores": dimension_scores,
+        "atomic_scores": atomic_scores,
+        "total_score": total_score,
+        "max_score": max_score,
+        "score_rate": score_rate,
+        "error_tags": normalized_tags,
+        "risk_level": risk_level,
+        "judge_reason": safe_text(payload.get("judge_reason")),
+        "judge_confidence": judge_confidence,
+        "needs_human_review": bool(needs_human_review),
+    }
+
+
 def _api_judge_payload(
     *,
     prompt: str,
@@ -163,7 +236,10 @@ def _api_judge_payload(
     config: dict[str, Any],
 ) -> tuple[dict[str, Any] | None, str]:
     client = LLMClient(config, mode="api")
-    text = client.generate(prompt=prompt, model_config=judge_config, version="JUDGE", sample_id="judge")
+    try:
+        text = client.generate(prompt=prompt, model_config=judge_config, version="JUDGE", sample_id="judge")
+    except Exception as exc:
+        return None, f"API_ERROR: {type(exc).__name__}: {safe_text(exc)}"
     try:
         return extract_first_json_object(text), text
     except Exception:
@@ -242,6 +318,7 @@ def run_judge(
             if tag.get("coarse_error_tag") not in COARSE_ERROR_TAGS:
                 tag["coarse_error_tag"] = "needs_human_review"
                 tag["error_subtype"] = tag.get("error_subtype") or "non_standard_error_tag"
+        payload = normalize_judge_payload(payload)
 
         rows.append(
             {

@@ -60,4 +60,4 @@ def test_judge_prompt_is_task_specific():
     )
 
     assert prompt_id == "JUDGE_DOCUMENT_DRAFTING"
-    assert "document structure" in prompt
+    assert "Clear and usable structure" in prompt

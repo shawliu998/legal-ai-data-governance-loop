@@ -9,7 +9,7 @@ import pandas as pd
 from tqdm import tqdm
 
 from .io_excel import DatasetBundle, find_eval_row, find_gold_row
-from .judge import _api_judge_payload, _mock_judge_payload
+from .judge import _api_judge_payload, _mock_judge_payload, normalize_judge_payload
 from .prompt_builder import PromptBuilder
 from .router import route_one
 from .schemas import COARSE_ERROR_TAGS, SCORE_DIMENSIONS
@@ -169,6 +169,8 @@ def _score_row(
         if tag.get("coarse_error_tag") not in COARSE_ERROR_TAGS:
             tag["coarse_error_tag"] = "needs_human_review"
             tag["error_subtype"] = tag.get("error_subtype") or "non_standard_error_tag"
+    payload = normalize_judge_payload(payload)
+    tags = payload.get("error_tags", [])
     judge_alias = _judge_alias(judge_config)
     return {
         "run_id": run_row["run_id"],
