@@ -2,10 +2,10 @@
 
 ## Positioning
 
-This is a two-day portfolio prototype for legal AI data-loop governance.
-It is designed to show data product thinking through a compact, self-contained diagnostic dataset.
+This is a compact evaluation harness for legal AI data-loop governance.
+It is designed to support data product decisions through a self-contained diagnostic dataset.
 
-The prototype uses a compact legal task set and rubric-based judging structure, then implements a lightweight data loop:
+The workflow uses a compact legal task set and rubric-based judging structure, then implements a lightweight data loop:
 
 1. Normalize legal samples.
 2. Prevent gold label leakage.
@@ -14,7 +14,7 @@ The prototype uses a compact legal task set and rubric-based judging structure, 
 5. Route failures into data-use buckets.
 6. Generate a dashboard for data production decisions.
 
-No RAG, Web UI, database, or automatic legal citation verification is included.
+The current product-boundary extension includes controlled local RAG and citation verification. It still excludes Web UI, database storage, and open-web legal retrieval.
 
 ## Dataset Layers
 
@@ -46,7 +46,7 @@ This separation is the primary leakage-control design.
 
 ## Dataset Scale
 
-The current portfolio dataset contains 85 samples:
+The current diagnostic dataset contains 85 samples:
 
 - `self_authored_core_40`: 40 high-quality core samples.
 - `extended_diagnostic_45`: 45 internal extended diagnostic samples.
@@ -67,7 +67,7 @@ It contains 30 licensed adapted practice samples by default:
 - 4 `document_drafting` samples
 - 155 rubric rows
 
-This pilot is intentionally not merged into the default 85-sample manifest. It is used for higher-difficulty real-practice evaluation and API runs while keeping the portfolio MVP deterministic and stable.
+This pilot is intentionally not merged into the default 85-sample manifest. It is used for higher-difficulty real-practice evaluation and API runs while keeping the default diagnostic run deterministic and stable.
 
 ## Agent Versions
 

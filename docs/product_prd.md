@@ -1,10 +1,10 @@
-# Product PRD: Legal AI Data Governance Platform MVP
+# Product PRD: Legal AI Data Governance Platform
 
 ## 1. Product Positioning
 
-This MVP is a legal AI data governance workflow, not a legal question-answering product and not a model leaderboard.
+This product is a legal AI data governance workflow, not a legal question-answering product and not a model leaderboard.
 
-Target role signal:
+Primary operating roles:
 
 - Professional-domain data product manager
 - Legal AI evaluation and annotation workflow owner
@@ -56,7 +56,7 @@ Legal AI outputs are difficult to operationalize because:
 
 ## 4. Goals
 
-MVP goals:
+Workflow goals:
 
 - Prevent gold label leakage in model-facing prompts.
 - Support three legal task categories: consultation, case analysis, document drafting.
@@ -76,11 +76,11 @@ Success criteria:
 
 ## 5. Non-Goals
 
-This MVP will not:
+This workflow will not:
 
 - Provide legal advice to end users.
 - Rank models as winners or losers.
-- Perform RAG or automatic legal citation retrieval.
+- Perform open-web legal retrieval or unsupervised automatic legal citation discovery.
 - Build a Web UI.
 - Store data in a database.
 - Replace lawyer or legal expert review.
@@ -143,9 +143,9 @@ Expected dashboard questions:
 - Which badcases should become regression tests?
 - Which patterns should become SFT or preference data?
 
-## 7. MVP Feature List
+## 7. Feature List
 
-| Feature | User Value | Priority | MVP Status |
+| Feature | User Value | Priority | Status |
 | --- | --- | --- | --- |
 | Eval/Gold/Rubric split | Prevents leakage and clarifies data ownership | P0 | Done |
 | Prompt visibility control | Enforces model-facing field restrictions | P0 | Done |
@@ -307,7 +307,7 @@ Week 1:
 
 - Add product PRD and labeling SOP.
 - Run 12-sample API smoke test if API key is available.
-- Curate 5 badcase cards for interview presentation.
+- Curate 5 badcase cards for review and calibration discussion.
 
 Week 2:
 

@@ -17,11 +17,12 @@ Core question:
 | Source JSONL | `data/eval_sets/legal_product_boundary_pilot_v1.jsonl` |
 | Config | `config.qianfan_product_boundary_runnable.yaml` |
 | Output directory | TODO |
-| Cases | 32 |
+| Cases | 50 |
 | Workflows | V0/W0, V1/W1, V4/W2, V3/W3, V5/W4 |
 | Model slots | ERNIE 5.1, DeepSeek V4 Pro, Qwen3.5-27B, GLM-5.2, Lite baseline |
-| Total planned outputs | 800 |
+| Total planned outputs | 1250 |
 | Judge mode | TODO |
+| Judge ensemble | DeepSeek V4 Pro + GLM-5.2 primary judges, ERNIE 5.1 arbiter, self-eval excluded |
 | Human calibration file | TODO |
 | Release gate file | TODO |
 
@@ -42,8 +43,8 @@ Core question:
 | --- | --- | --- | --- | --- |
 | W0 closed-book | Raw model behavior. | TODO | TODO | TODO |
 | W1 structured legal prompt | Structured legal analysis. | TODO | TODO | TODO |
-| W2 provided-context grounded | Source-constrained answer. | TODO | TODO | TODO |
-| W3 risk-control workflow | Risk checker and routing behavior. | TODO | TODO | TODO |
+| W2 RAG grounded | Local-corpus retrieval plus source-constrained answer. | TODO | TODO | TODO |
+| W3 RAG + risk-control workflow | Retrieval, workflow answer, citation verification, and routing behavior. | TODO | TODO | TODO |
 | W4 clarification-first | Intake before final answer. | TODO | TODO | TODO |
 
 ## Release Gate Summary
@@ -68,6 +69,11 @@ Use `release_gate.csv`.
 ## Human Calibration
 
 Use `human_review_calibration.csv`.
+
+Use `judge_disagreements.csv` and `judge_ensemble_summary.csv` to prioritize calibration before sampling routine rows.
+
+Use `retrieval_log.csv` and `citation_verification.csv` to separate retrieval failures from generation grounding failures.
+Use `claim_checks` for legal-review triage, not as final legal correctness.
 
 Report:
 

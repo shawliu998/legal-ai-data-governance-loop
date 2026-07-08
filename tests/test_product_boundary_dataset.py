@@ -22,19 +22,19 @@ def test_product_boundary_dataset_schema_and_slice_counts():
 
     case_ids = [case["case_id"] for case in cases]
     assert len(case_ids) == len(set(case_ids))
-    assert len(cases) == 32
+    assert len(cases) == 50
 
     slice_counts = {}
     for case in cases:
         slice_counts[case["slice"]] = slice_counts.get(case["slice"], 0) + 1
     assert set(slice_counts) == ALLOWED_BOUNDARY_SLICES
     assert slice_counts == {
-        "normal_practice": 6,
-        "hard_legal_reasoning": 6,
-        "risk_calibration": 5,
-        "citation_grounding": 5,
-        "adversarial_trap": 4,
-        "counterfactual_pair": 6,
+        "normal_practice": 10,
+        "hard_legal_reasoning": 9,
+        "risk_calibration": 8,
+        "citation_grounding": 8,
+        "adversarial_trap": 7,
+        "counterfactual_pair": 8,
     }
 
 
@@ -51,6 +51,7 @@ def test_product_boundary_counterfactual_pairs_are_complete():
         "LPB-CF-001": {"A", "B"},
         "LPB-CF-002": {"A", "B"},
         "LPB-CF-003": {"A", "B"},
+        "LPB-CF-004": {"A", "B"},
     }
 
 
@@ -88,6 +89,14 @@ def test_qianfan_product_boundary_config_covers_models_workflows_and_slices():
     assert set(config["dataset"]["stratified_slices"]) == ALLOWED_BOUNDARY_SLICES
     assert config["scoring"]["critical_failure_blocks_release"] is True
     assert config["judge"]["mock_compatible"] is True
+    assert config["judge_ensemble"]["self_eval_exclusion"] is True
+    assert {judge["alias"] for judge in config["judge_ensemble"]["primary_judges"]} == {
+        "judge_deepseek_v4_pro",
+        "judge_glm_52",
+    }
+    assert config["judge_ensemble"]["arbiter"]["alias"] == "judge_ernie_51"
+    assert config["rag"]["enabled"] is True
+    assert config["rag"]["corpus_path"] == "data/rag_corpus/legal_sources.csv"
 
 
 def test_qianfan_product_boundary_runnable_config_maps_all_current_workflows():
@@ -100,3 +109,6 @@ def test_qianfan_product_boundary_runnable_config_maps_all_current_workflows():
         "V3": "w3_risk_control_workflow",
         "V5": "w4_clarification_first",
     }
+    assert config["judge_ensemble"]["enabled"] is True
+    assert config["judge_ensemble"]["self_eval_exclusion"] is True
+    assert config["rag"]["retrieval_versions"] == ["V4", "V3"]

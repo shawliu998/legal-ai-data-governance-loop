@@ -184,14 +184,13 @@ def load_dataset(
     if missing:
         raise ValueError(f"Task_Set missing required columns: {missing}")
 
-    meta_cols = [col for col in ["sample_id", "task_type", "legal_domain", "portfolio_use"] if col in sample_index.columns]
+    meta_cols = [col for col in ["sample_id", "task_type", "legal_domain"] if col in sample_index.columns]
     task_type = sample_index[meta_cols].copy() if meta_cols else None
     if task_type is not None:
         task_set = task_set.merge(task_type, on="sample_id", how="left")
     else:
         task_set["task_type"] = ""
         task_set["legal_domain"] = ""
-        task_set["portfolio_use"] = ""
 
     eval_input = pd.DataFrame(
         {

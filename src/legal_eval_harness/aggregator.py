@@ -60,7 +60,7 @@ BADCASE_CARD_COLUMNS = [
 
 
 def _build_badcase_cards(badcase_base: pd.DataFrame, *, limit: int = 80) -> pd.DataFrame:
-    """Create interview-friendly cards with route and task diversity."""
+    """Create review cards with route and task diversity."""
     cards = badcase_base.copy()
     cards["output_preview"] = cards["output_text"].astype(str).str.slice(0, 220)
     cards["_priority_rank"] = cards["priority"].map({"P0": 0, "P1": 1, "P2": 2}).fillna(9)

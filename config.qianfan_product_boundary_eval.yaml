@@ -4,7 +4,7 @@ project:
   boundary: stratified legal product-boundary evaluation; not legal advice; not model leaderboard
   jurisdiction: CN
   law_snapshot_date: "2026-07-08"
-  legal_advice_boundary: 仅用于法律 AI 产品边界评测和数据治理原型，不构成法律咨询或最终法律意见。
+  legal_advice_boundary: 仅用于法律 AI 产品边界评测和数据治理工作流，不构成法律咨询或最终法律意见。
 
 dataset:
   path: data/eval_sets/legal_product_boundary_pilot_v1.jsonl
@@ -18,12 +18,12 @@ dataset:
     - adversarial_trap
     - counterfactual_pair
   slice_target_counts:
-    normal_practice: 6
-    hard_legal_reasoning: 6
-    risk_calibration: 5
-    citation_grounding: 5
-    adversarial_trap: 4
-    counterfactual_pair: 6
+    normal_practice: 10
+    hard_legal_reasoning: 9
+    risk_calibration: 8
+    citation_grounding: 8
+    adversarial_trap: 7
+    counterfactual_pair: 8
 
 models:
   - alias: qianfan_ernie_51
@@ -96,7 +96,7 @@ workflow_conditions:
     current_prompt_version: V4
     product_shape: answer only using provided statutes, cases, contracts, or policy snippets
     mock_compatible: true
-    implementation_note: First version uses provided_context grounding, not automatic retrieval.
+    implementation_note: Uses controlled local corpus retrieval, retrieved context injection, and citation verification.
   - id: w3_rag_verifier_router
     current_prompt_version: V3
     product_shape: grounded answer plus citation verifier, risk checker, and human-review routing
@@ -116,6 +116,69 @@ judge:
   llm_judge_supported: true
   mock_compatible: true
   human_review_sample_rate: 0.2
+
+judge_ensemble:
+  enabled: true
+  self_eval_exclusion: true
+  design:
+    primary: DeepSeek V4 Pro and GLM-5.2 cross-review target model outputs
+    arbitration: ERNIE 5.1 adjudicates disagreement when score, critical-failure, or route labels diverge
+    calibration: 20 percent random human review plus 100 percent critical/disagreement review
+  primary_judges:
+    - alias: judge_deepseek_v4_pro
+      role: primary
+      vendor: DeepSeek
+      family: DeepSeek V4 Pro
+      provider: openai_compatible
+      base_url: ${QIANFAN_BASE_URL}
+      api_key: ${QIANFAN_API_KEY}
+      model: ${QIANFAN_MODEL_DEEPSEEK_V4_PRO}
+      temperature: 0.0
+    - alias: judge_glm_52
+      role: primary
+      vendor: Zhipu
+      family: GLM-5.2
+      provider: openai_compatible
+      base_url: ${QIANFAN_BASE_URL}
+      api_key: ${QIANFAN_API_KEY}
+      model: ${QIANFAN_MODEL_GLM_52}
+      temperature: 0.0
+  arbiter:
+    alias: judge_ernie_51
+    role: arbiter
+    vendor: Baidu
+    family: ERNIE 5.1
+    provider: openai_compatible
+    base_url: ${QIANFAN_BASE_URL}
+    api_key: ${QIANFAN_API_KEY}
+    model: ${QIANFAN_MODEL_ERNIE_51}
+    temperature: 0.0
+  disagreement:
+    score_gap_threshold: 0.15
+    critical_failure_mismatch: true
+    route_mismatch: true
+    single_primary_after_self_eval_exclusion: true
+
+rag:
+  enabled: true
+  corpus_path: data/rag_corpus/legal_sources.csv
+  retrieval_versions: [V4, V3]
+  top_k: 4
+  min_score: 0.0
+  retrieval_method: local_bm25_char_bigram_plus_metadata_rerank
+  component_eval:
+    retrieval_log: retrieval_log.csv
+    contexts: rag_contexts.csv
+    citation_verification: citation_verification.csv
+    metrics:
+      - context_recall
+      - context_precision
+      - expected_source_hit_count
+      - citation_fidelity_label
+      - fabricated_citation_count
+      - missing_citation_count
+      - unsupported_claim_count
+      - claim_checks
 
 scoring:
   primary_dimensions:
@@ -142,8 +205,13 @@ scoring:
 outputs:
   capture_cost_latency: true
   capture_data_routing: true
+  capture_retrieval_quality: true
+  capture_citation_verification: true
   expected_files:
     - model_run_log.csv
+    - retrieval_log.csv
+    - rag_contexts.csv
+    - citation_verification.csv
     - judge_scores.csv
     - data_routing.csv
     - human_review_calibration.csv

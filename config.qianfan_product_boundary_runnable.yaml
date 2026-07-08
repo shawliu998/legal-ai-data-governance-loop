@@ -4,7 +4,7 @@ project:
   boundary: runnable stratified legal product-boundary evaluation using current V0/V1/V3 workflow mappings; not legal advice; not model ranking
   jurisdiction: 中国大陆
   law_snapshot_date: "2026-07-08"
-  legal_advice_boundary: 仅用于法律 AI 产品边界评测和数据治理原型，不构成法律咨询或最终法律意见。
+  legal_advice_boundary: 仅用于法律 AI 产品边界评测和数据治理工作流，不构成法律咨询或最终法律意见。
 
 models:
   - alias: qianfan_ernie_51
@@ -70,6 +70,45 @@ judge:
   model: ${QIANFAN_JUDGE_MODEL}
   temperature: 0.0
 
+judge_ensemble:
+  enabled: true
+  purpose: cross-judge calibration for deployment decisions; not a public model leaderboard
+  self_eval_exclusion: true
+  primary_judges:
+    - alias: judge_deepseek_v4_pro
+      role: primary
+      vendor: DeepSeek
+      family: DeepSeek V4 Pro
+      provider: openai_compatible
+      base_url: ${QIANFAN_BASE_URL}
+      api_key: ${QIANFAN_API_KEY}
+      model: ${QIANFAN_MODEL_DEEPSEEK_V4_PRO}
+      temperature: 0.0
+    - alias: judge_glm_52
+      role: primary
+      vendor: Zhipu
+      family: GLM-5.2
+      provider: openai_compatible
+      base_url: ${QIANFAN_BASE_URL}
+      api_key: ${QIANFAN_API_KEY}
+      model: ${QIANFAN_MODEL_GLM_52}
+      temperature: 0.0
+  arbiter:
+    alias: judge_ernie_51
+    role: arbiter
+    vendor: Baidu
+    family: ERNIE 5.1
+    provider: openai_compatible
+    base_url: ${QIANFAN_BASE_URL}
+    api_key: ${QIANFAN_API_KEY}
+    model: ${QIANFAN_MODEL_ERNIE_51}
+    temperature: 0.0
+  disagreement:
+    score_gap_threshold: 0.15
+    critical_failure_mismatch: true
+    route_mismatch: true
+    single_primary_after_self_eval_exclusion: true
+
 run_plan:
   full_samples: all
   full_versions: [V0, V1, V4, V3, V5]
@@ -82,6 +121,18 @@ generation:
   max_output_tokens: 2200
   retry_attempts: 3
   timeout_seconds: 90
+
+rag:
+  enabled: true
+  corpus_path: data/rag_corpus/legal_sources.csv
+  retrieval_versions: [V4, V3]
+  top_k: 4
+  min_score: 0.0
+  retrieval_method: local_bm25_char_bigram_plus_metadata_rerank
+  outputs:
+    retrieval_log: retrieval_log.csv
+    contexts: rag_contexts.csv
+    citation_verification: citation_verification.csv
 
 scoring:
   dimensions:

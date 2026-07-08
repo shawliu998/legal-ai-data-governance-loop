@@ -1,0 +1,46 @@
+source_id,title,source_type,jurisdiction,effective_date,source_url,tags,text
+STAT-CIVIL-CONTRACT-001,民法典合同履行与违约责任规则摘要,statute_summary,CN,2021-01-01,https://flk.npc.gov.cn/,合同 违约 迟延履行 解除 赔偿,合同争议通常需先核验合同成立、履行期限、违约事实、催告情况、合同目的是否受影响以及损失证据；迟延履行不当然等于可以解除并退全款。
+STAT-CIVIL-DEPOSIT-001,民法典定金与违约金规则摘要,statute_summary,CN,2021-01-01,https://flk.npc.gov.cn/,定金 订金 违约金 损失 调整,定金、订金和违约金需要区分；写明定金且合同成立时可能适用定金罚则，违约金是否过高需结合实际损失和履行情况判断。
+STAT-CIVIL-LOAN-001,民法典民间借贷证据规则摘要,statute_summary,CN,2021-01-01,https://flk.npc.gov.cn/,民间借贷 转账 借条 微信 还款承诺,民间借贷需要证明借款合意和款项交付；转账记录、聊天承诺、备注、催收记录和身份信息共同影响能否按借款关系主张权利。
+STAT-CIVIL-LEASE-001,民法典租赁押金与损耗规则摘要,statute_summary,CN,2021-01-01,https://flk.npc.gov.cn/,租赁 押金 正常损耗 维修 退租,租赁押金扣除通常需要结合合同约定、交接验收、照片对比、是否正常损耗、维修报价和实际损失，不能仅凭一方说法确定。
+STAT-CONSUMER-001,消费者权益保护和商品质量规则摘要,statute_summary,CN,2014-03-15,https://flk.npc.gov.cn/,消费者 商品质量 七日无理由 退换货 欺诈,消费者维权需区分七日无理由、质量瑕疵、售后承诺和欺诈；是否退换货或赔偿取决于购买时间、商品性质、检测结论和经营者承诺。
+STAT-LABOR-CONTRACT-001,劳动合同解除与用工管理规则摘要,statute_summary,CN,2008-01-01,https://flk.npc.gov.cn/,劳动合同 解除 调岗 降薪 规章制度 工会,劳动合同解除、调岗降薪和违纪处理需核验合同岗位、规章制度、公示告知、书面通知、协商过程、工会或申辩程序以及证据材料。
+STAT-LABOR-RELATION-001,劳动关系认定规则摘要,statute_summary,CN,2008-01-01,https://flk.npc.gov.cn/,劳动关系 平台用工 从属性 考勤 固定工资,劳动关系不能只看协议名称；需综合管理控制、考勤排班、报酬方式、工作工具、是否可自主接单和实际履行从属性。
+STAT-EVIDENCE-001,民事证据与事实主张规则摘要,statute_summary,CN,2024-01-01,https://flk.npc.gov.cn/,证据 举证 聊天记录 转账 合同 电子证据,民事争议中聊天记录、转账凭证、合同、订单、通知和验收材料都需要能对应争议事实；证据不足时不应给确定性结论。
+STAT-PROCEDURE-001,民事诉讼准备与管辖规则摘要,statute_summary,CN,2024-01-01,https://flk.npc.gov.cn/,起诉 管辖 主体 材料 诉讼成本,起诉准备通常需要明确被告身份、请求基础、证据目录、管辖连接点和诉讼成本；事实或主体不明时应先补齐材料。
+STAT-IP-PLATFORM-001,网络平台通知处理与损失证明规则摘要,statute_summary,CN,2021-01-01,https://flk.npc.gov.cn/,平台 侵权通知 下架 转送 损失证明,网络平台收到有效侵权通知后的处理及时性、是否知道重复侵权、通知内容是否合格和损失证明，会影响责任判断；不能仅凭通知断言平台全责。
+STAT-CIVIL-FORM-CONTRACT-001,格式条款提示说明规则摘要,statute_summary,CN,2021-01-01,https://flk.npc.gov.cn/,格式条款 提示说明 退费 免责 培训合同,涉及退费、免责或限制主要权利的格式条款，应关注经营者是否以合理方式提示并说明；不能仅凭合同写有不退费就直接排除消费者请求。
+STAT-CIVIL-TORT-001,侵权责任与损害证明规则摘要,statute_summary,CN,2021-01-01,https://flk.npc.gov.cn/,侵权 损害 因果关系 名誉权 医疗损害,侵权责任通常需要核验行为、过错、损害、因果关系和证明材料；涉及人身损害、名誉侵权或专业鉴定时应谨慎并建议人工复核。
+STAT-CIVIL-GUARANTEE-001,保证责任识别规则摘要,statute_summary,CN,2021-01-01,https://flk.npc.gov.cn/,保证 担保 借款 连带 一般保证 签字,保证责任需要有明确担保意思表示、担保范围、方式和期间；仅有介绍借款或见证签字，不当然构成担保。
+STAT-COMPANY-LIQUIDATION-001,公司清算与债权人保护规则摘要,statute_summary,CN,2024-07-01,https://flk.npc.gov.cn/,公司 注销 清算 债权人 股东 责任,公司注销、清算通知、资产处置和股东责任需要结合清算程序、债权申报、出资和恶意处置资产证据判断。
+STAT-PERSONALINFO-001,个人信息处理与数据合规规则摘要,statute_summary,CN,2021-11-01,https://flk.npc.gov.cn/,个人信息 隐私 数据 删除 同意 平台,个人信息处理需关注告知同意、处理目的、必要性、删除更正请求和敏感信息；平台拒绝删除或超范围使用时需核验证据和规则。
+STAT-MARRIAGE-PROPERTY-001,夫妻共同债务识别规则摘要,statute_summary,CN,2021-01-01,https://flk.npc.gov.cn/,夫妻共同债务 借款 家庭共同生活 签字 追认,夫妻一方举债是否属于共同债务，需要看共同签字、事后追认、是否用于家庭共同生活或共同生产经营。
+STAT-TRAFFIC-INJURY-001,交通事故人身损害规则摘要,statute_summary,CN,2021-01-01,https://flk.npc.gov.cn/,交通事故 人身损害 责任认定 医疗费 误工费,交通事故赔偿需结合事故责任认定、医疗票据、误工护理、伤残鉴定和保险情况；不应在材料不足时给固定赔偿额。
+STAT-ADMIN-PENALTY-001,行政处罚陈述申辩规则摘要,statute_summary,CN,2021-07-15,https://flk.npc.gov.cn/,行政处罚 告知 陈述申辩 复议 诉讼,行政处罚争议需核验处罚主体、告知程序、事实证据、陈述申辩、复议和诉讼期限；程序瑕疵不当然导致处罚撤销。
+CASE-LABOR-PLATFORM-001,平台用工劳动关系案例规则摘要,case_summary,CN,2024-01-01,https://www.court.gov.cn/,平台骑手 劳动关系 合作协议 从属性,平台用工案例通常强调不能仅凭合作协议否定劳动关系；统一派单、考核、区域限制和处罚规则会增强从属性判断。
+CASE-LOAN-INVEST-001,转账备注与借贷投资区分案例规则摘要,case_summary,CN,2024-01-01,https://www.court.gov.cn/,借款 投资款 转账备注 分红 风险共担,转账备注为投资款且聊天记录讨论分红和亏损风险时，不能直接按借款处理；需核验是否有保本承诺、还款合意和资金用途。
+CASE-DEPOSIT-ORDER-001,定金订金消费争议案例规则摘要,case_summary,CN,2024-01-01,https://www.court.gov.cn/,定金 订金 买车 退款 反悔,消费合同中定金与订金的文字、合同约定和实际履行都会影响退款判断；不能把订金直接套用定金罚则。
+CASE-MEDICAL-AESTHETIC-001,医美服务责任案例规则摘要,case_summary,CN,2024-01-01,https://www.court.gov.cn/,医美 广告 知情同意 鉴定 人身损害,医美争议需区分广告宣传、服务合同、知情同意、资质、病历和损害因果关系；涉及身体不适通常需要专业鉴定和人工复核。
+CASE-FORM-CONTRACT-REFUND-001,培训退费格式条款案例规则摘要,case_summary,CN,2024-01-01,https://www.court.gov.cn/,培训退费 格式条款 开课 更换老师,培训服务退费争议通常关注课程是否开始、核心师资是否构成合同目的、退费条款提示说明以及机构实际履行。
+CASE-GUARANTEE-WECHAT-001,微信担保表述案例规则摘要,case_summary,CN,2024-01-01,https://www.court.gov.cn/,担保 微信 借款 保证意思 债务加入,微信聊天中“我负责”“我协调还款”等表述是否构成保证，需要结合上下文、签字文件、债务加入意思和债权人信赖判断。
+CASE-PERSONALINFO-DELETE-001,个人信息删除请求案例规则摘要,case_summary,CN,2024-01-01,https://www.court.gov.cn/,个人信息 删除 账号 注销 平台 必要性,账号注销或个人信息删除争议需要区分法定留存、必要处理、用户授权和平台业务规则，不能直接断言全部信息必须立即删除。
+CASE-TRAFFIC-INJURY-001,交通事故赔偿证据案例规则摘要,case_summary,CN,2024-01-01,https://www.court.gov.cn/,交通事故 责任认定 伤残鉴定 赔偿 清单,交通事故赔偿案例强调责任比例、医疗票据、误工证明、伤残鉴定和保险理赔材料，缺少鉴定时不宜估算最终赔偿。
+CONTRACT-001,买卖合同逾期发货条款,contract_clause,CN,2026-01-01,self_authored,买卖合同 逾期发货 违约金 订单价款,买卖合同第8条：卖方应在付款后7日内发货；逾期发货的，每逾期一日按订单价款的0.5%向买方支付违约金。
+CONTRACT-DELIVERY-001,软件系统交付条款,contract_clause,CN,2026-05-30,self_authored,合同 迟延交付 限期改正,第5条：乙方应在2026年5月30日前交付第一版系统。乙方迟延超过15日的，甲方有权要求乙方限期改正。
+CONTRACT-PAY-001,软件项目预付款条款,contract_clause,CN,2026-05-30,self_authored,合同 预付款 解除 结算,第9条：甲方支付的预付款用于项目启动。合同解除后的费用结算由双方按已完成工作量另行确认。
+CONTRACT-TRAINING-001,摄影课程师资条款,contract_clause,CN,2026-01-01,self_authored,培训合同 老师 更换 退费 开课,课程服务协议第3条：机构应安排宣传页列明的主讲老师授课；因故更换老师的，应提前通知学员并提供同等资历老师。
+CONTRACT-TRAINING-002,摄影课程退费条款,contract_clause,CN,2026-01-01,self_authored,培训合同 退费 开课 格式条款,课程服务协议第8条：开课前学员申请退费的，机构可扣除已实际发生且能说明的材料和管理成本；开课后退费另行协商。
+CONTRACT-GUARANTEE-001,借款担保便签片段,contract_clause,CN,2026-01-01,self_authored,借款 担保 便签 保证 还款,担保便签：若借款人到期未还款，签字人愿在本金5万元范围内承担还款责任；便签未写明保证方式和保证期间。
+CONTRACT-SALE-DEFECT-001,二手车瑕疵披露条款,contract_clause,CN,2026-01-01,self_authored,二手车 瑕疵 披露 重大事故 解除,二手车买卖确认单第4条：卖方承诺车辆无重大事故、水泡或火烧记录；如承诺不实，买方可要求解除合同并协商损失。
+PLATFORM-001,平台延迟发货售后规则,policy_clause,CN,2026-01-01,self_authored,平台 售后 延迟发货 欺诈 赔付,平台售后规则：消费者申请延迟发货赔付的，应提交订单、付款和物流信息；是否构成欺诈需另行证明。
+ORDER-001,订单物流事实片段,evidence_excerpt,CN,2026-01-01,self_authored,订单 物流 延迟 发货,订单记录显示付款完成时间、承诺发货时间和实际物流揽收时间，但未显示商家存在虚假发货承诺。
+POLICY-001,员工手册迟到处理条款,policy_clause,CN,2026-01-01,self_authored,劳动 员工手册 迟到 解除 程序,员工手册第12条：连续三次无故迟到属于严重违纪，公司可视情节处理；制度已通过培训系统推送并要求员工确认。
+POLICY-002,员工手册解除复核条款,policy_clause,CN,2026-01-01,self_authored,劳动 解除 复核 申辩 程序,员工手册第20条：解除劳动合同应经人力资源部门复核，并听取员工申辩。
+POLICY-PRIVACY-001,平台隐私政策删除条款,policy_clause,CN,2026-01-01,self_authored,隐私政策 账号注销 删除 法定留存,隐私政策第6条：用户注销账号后，平台将删除或匿名化非必要个人信息；依法需留存的交易和日志信息可在法定期限内保存。
+POLICY-MARKET-001,直播平台商家违规处理规则,policy_clause,CN,2026-01-01,self_authored,直播 平台 商家 违规 扣款 申诉,直播平台规则第15条：商家被认定虚假宣传的，平台可限制活动报名并冻结争议订单款项；商家可在7日内提交申诉材料。
+NOTICE-001,平台侵权通知材料片段,evidence_excerpt,CN,2026-01-01,self_authored,平台 侵权通知 权属 商品链接,权利人向平台提交了侵权通知，通知中包含商品链接、权属证明和初步侵权比对。
+PLATFORM-RESP-001,平台响应材料片段,evidence_excerpt,CN,2026-01-01,self_authored,平台 下架 转送 48小时 响应,平台在收到通知后48小时内下架相关链接，并向商家转送通知。
+LOSS-001,损失证明材料片段,evidence_excerpt,CN,2026-01-01,self_authored,损失 销售额 调查费 律师费 证明,权利人主张损失包括销售额下降、调查费用和律师费，但未提供完整计算依据。
+AGREEMENT-001,离职协议工资结清条款,contract_clause,CN,2026-01-01,self_authored,离职协议 工资结清 加班费,离职协议第2条：双方确认工资已结清。
+AGREEMENT-002,离职协议保留权利条款,contract_clause,CN,2026-01-01,self_authored,离职协议 保留权利 未列明争议,离职协议第4条：本协议不影响员工依法就未列明争议另行主张权利。
+EVIDENCE-001,加班审批证据片段,evidence_excerpt,CN,2026-01-01,self_authored,加班 审批 截图 离职协议 附件,员工称有加班审批截图，但协议附件未列明加班费明细。

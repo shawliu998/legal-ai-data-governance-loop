@@ -6,11 +6,12 @@ from pathlib import Path
 import pandas as pd
 
 from .aggregator import build_executive_dashboard
-from .calibration import build_human_review_sample
+from .calibration import build_human_review_sample, summarize_human_calibration
 from .config import get_project_default, load_config
 from .dataset_builder import build_normalized_dataset
 from .io_excel import find_eval_row, load_dataset
 from .judge import run_judge
+from .judge_ensemble import run_judge_ensemble
 from .practice_benchmark_importer import prepare_practice_benchmark_dataset
 from .product_boundary_dataset import load_product_boundary_cases, validate_product_boundary_cases
 from .product_boundary_importer import prepare_product_boundary_dataset
@@ -113,6 +114,32 @@ def cmd_run_judge(args: argparse.Namespace) -> None:
     print(f"Wrote {len(df)} judge scores to {args.output}")
 
 
+def cmd_run_judge_ensemble(args: argparse.Namespace) -> None:
+    config = load_config(args.config)
+    bundle = _load_bundle(args.input, config)
+    runs = pd.read_csv(args.runs)
+    result = run_judge_ensemble(
+        runs=runs,
+        bundle=bundle,
+        config=config,
+        mode=args.mode,
+        output_dir=args.output_dir,
+        prompt_dir=args.prompt_dir,
+    )
+    print(
+        f"Wrote {len(result['scores'])} ensemble judge scores to "
+        f"{Path(args.output_dir) / 'judge_ensemble_scores.csv'}"
+    )
+    print(
+        f"Wrote {len(result['disagreements'])} disagreement rows to "
+        f"{Path(args.output_dir) / 'judge_disagreements.csv'}"
+    )
+    print(
+        f"Wrote {len(result['summary'])} ensemble summary rows to "
+        f"{Path(args.output_dir) / 'judge_ensemble_summary.csv'}"
+    )
+
+
 def cmd_route_data(args: argparse.Namespace) -> None:
     scores = pd.read_csv(args.scores)
     df = route_scores(judge_scores=scores, output_path=args.output)
@@ -132,16 +159,28 @@ def cmd_sample_human_review(args: argparse.Namespace) -> None:
     runs = pd.read_csv(args.runs)
     scores = pd.read_csv(args.scores)
     routing = pd.read_csv(args.routing)
+    citation_verification = pd.read_csv(args.citation_verification) if args.citation_verification else None
+    ensemble_summary = pd.read_csv(args.ensemble_summary) if args.ensemble_summary else None
     df = build_human_review_sample(
         runs=runs,
         scores=scores,
         routing=routing,
+        citation_verification=citation_verification,
+        ensemble_summary=ensemble_summary,
         output_path=args.output,
         sample_rate=args.sample_rate,
         min_samples=args.min_samples,
+        random_calibration_min=args.random_calibration_min,
         random_state=args.random_state,
     )
     print(f"Wrote {len(df)} human review calibration rows to {args.output}")
+
+
+def cmd_summarize_human_calibration(args: argparse.Namespace) -> None:
+    reviewed = pd.read_csv(args.input)
+    df = summarize_human_calibration(reviewed=reviewed, output_path=args.output)
+    print(f"Wrote human calibration summary to {args.output}")
+    print(df.to_string(index=False))
 
 
 def cmd_release_gate(args: argparse.Namespace) -> None:
@@ -190,7 +229,7 @@ def cmd_all(args: argparse.Namespace) -> None:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Legal AI data-loop governance MVP")
+    parser = argparse.ArgumentParser(description="Legal AI data-loop governance evaluation harness")
     parser.set_defaults(func=None)
     parser.add_argument("--config", default="config.yaml")
     parser.add_argument("--prompt-dir", default="prompts")
@@ -245,6 +284,14 @@ def build_parser() -> argparse.ArgumentParser:
     judge_cmd.add_argument("--output", default="outputs/judge_scores.csv")
     judge_cmd.set_defaults(func=cmd_run_judge)
 
+    judge_ensemble_cmd = sub.add_parser("run-judge-ensemble")
+    judge_ensemble_cmd.add_argument("--input", required=True)
+    judge_ensemble_cmd.add_argument("--config", default="config.yaml")
+    judge_ensemble_cmd.add_argument("--runs", required=True)
+    judge_ensemble_cmd.add_argument("--mode", choices=["mock", "api"], default="mock")
+    judge_ensemble_cmd.add_argument("--output-dir", default="outputs")
+    judge_ensemble_cmd.set_defaults(func=cmd_run_judge_ensemble)
+
     route_cmd = sub.add_parser("route-data")
     route_cmd.add_argument("--scores", required=True)
     route_cmd.add_argument("--output", default="outputs/data_routing.csv")
@@ -261,11 +308,19 @@ def build_parser() -> argparse.ArgumentParser:
     human_review.add_argument("--runs", required=True)
     human_review.add_argument("--scores", required=True)
     human_review.add_argument("--routing", required=True)
+    human_review.add_argument("--citation-verification", default="")
+    human_review.add_argument("--ensemble-summary", default="")
     human_review.add_argument("--output", default="outputs/human_review_calibration.csv")
     human_review.add_argument("--sample-rate", type=float, default=0.2)
     human_review.add_argument("--min-samples", type=int, default=20)
+    human_review.add_argument("--random-calibration-min", type=int, default=0)
     human_review.add_argument("--random-state", type=int, default=7)
     human_review.set_defaults(func=cmd_sample_human_review)
+
+    human_summary = sub.add_parser("summarize-human-calibration")
+    human_summary.add_argument("--input", required=True)
+    human_summary.add_argument("--output", default="outputs/human_calibration_summary.csv")
+    human_summary.set_defaults(func=cmd_summarize_human_calibration)
 
     release_gate = sub.add_parser("release-gate")
     release_gate.add_argument("--runs", required=True)

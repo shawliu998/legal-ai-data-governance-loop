@@ -1,5 +1,5 @@
 project:
-  name: Legal AI Data-Loop Governance Prototype
+  name: Legal AI Data-Loop Governance Eval Harness
   version: "0.3.0"
   boundary: diagnostic evaluation and data production decision support; not legal advice; not model ranking
 
@@ -12,7 +12,7 @@ files:
 sources:
   - source_dataset: self_authored_core_40
     expected_samples: 40
-    role: high-quality portfolio core samples
+    role: high-quality core diagnostic samples
     note: Upgraded self-authored core workbook with Eval_Input, Gold_Labels, Rubric_Items, metadata, taxonomy, and dashboard templates.
   - source_dataset: extended_diagnostic_45
     expected_samples: 45
