@@ -2,7 +2,7 @@
 
 ## 30-Second Version
 
-I built a legal AI product-boundary eval and data governance harness. Instead of ranking models by average score, it evaluates whether a legal AI product should answer, ask clarifying questions, use grounded sources, route to human review, or block release. I ran a real Qianfan API pilot across ERNIE 5.0, DeepSeek V4 Pro, Qwen3.5-27B, GLM-5.2, and Kimi K2.6, then human-reviewed 80 priority outputs. The output is not just scores; it is model-workflow routing policy, release gates, and next-round data production actions.
+I built a legal agent product-boundary eval and data governance harness. Instead of ranking models by average score, it evaluates whether a legal AI product should answer, ask clarifying questions, use grounded sources, route to human review, or block release. I ran a real Qianfan API pilot across ERNIE 5.0, DeepSeek V4 Pro, Qwen3.5-27B, GLM-5.2, and Kimi K2.6, then human-reviewed 80 priority outputs and added a RAG V2 focused pilot. The output is not just scores; it is model-agent routing policy, trace-level risk signals, release gates, and next-round data production actions.
 
 ## 2-Minute Version
 
@@ -17,7 +17,16 @@ So I designed the eval around product decisions:
 - Should it route to a lawyer or human reviewer?
 - What data asset should this failure become?
 
-The dataset uses legal task slices: normal consultation, hard legal reasoning, risk calibration, citation grounding, adversarial traps, and counterfactual pairs. Each output goes through rubric scoring, citation verification, risk routing, data routing, and release gate analysis.
+The dataset uses legal task slices: normal consultation, hard legal reasoning, risk calibration, citation grounding, adversarial traps, and counterfactual pairs. Each output goes through rubric scoring, citation verification, claim-level triage, risk routing, data routing, and release gate analysis.
+
+I also reframed the implementation as an A0-A5 legal agent architecture:
+
+- A0 closed-book baseline
+- A1 structured legal counsel
+- A2 grounded retrieval counsel
+- A3 verifier-router policy layer
+- A4 clarification-first intake
+- A5 multi-turn legal intake agent
 
 I ran a real Qianfan API pilot:
 
@@ -28,7 +37,7 @@ I ran a real Qianfan API pilot:
 - 300 parseable judge outputs using Qwen3.5-27B as the stable full-run judge
 - 80 priority outputs human-reviewed
 
-The main finding was not simply "which model won." W1 structured prompt and W5 clarification-first were stronger release candidates. Current RAG/verifier workflows were useful but exposed citation-boundary issues, so RAG needs claim-level entailment checks before product release.
+The main finding was not simply "which model won." A1 structured legal counsel and A4 clarification-first intake were stronger release candidates. A2/RAG was useful for source-specific tasks, but the RAG V2 pilot exposed citation-boundary issues, so grounded answers need claim-level entailment checks before product release.
 
 ## Key Numbers
 
@@ -41,6 +50,9 @@ The main finding was not simply "which model won." W1 structured prompt and W5 c
 | Judge-human agreement | 92.5% on priority-enriched sample |
 | Confirmed citation or evidence-support issues | 45 |
 | Human route overrides | 47 |
+| RAG V2 focused outputs | 72 / 72 |
+| RAG V2 citation-gate issue rate | 88.1% |
+| A5 multi-turn intake cases | 8 |
 
 ## What I Would Emphasize
 
@@ -48,9 +60,11 @@ The value is not that I called APIs. The value is that I turned model behavior i
 
 Examples:
 
-- Low-risk routine consultation can use W1 structured prompt under a limited release gate.
-- Missing-fact or risky strategy questions should use W5 clarification-first.
+- Low-risk routine consultation can use A1 structured legal counsel under a limited release gate.
+- Missing-fact or risky strategy questions should use A4 clarification-first intake.
 - Source-specific legal tasks require RAG, but RAG must pass citation verification.
+- RAG hitting the right source is not enough; the RAG V2 pilot showed source-boundary and claim-citation failures even when expected-source recall was 100%.
+- A5 multi-turn intake should be judged as a trace: prioritized questions, bad-premise challenge, bounded answer, escalation, release gate, and data route.
 - Unsupported claims, fabricated citations, and unsafe drafting requests are release blockers.
 - Passing high-risk answers are not badcases; they become calibration or preference examples.
 - Citation failures become regression evals and source-boundary badcases.
@@ -68,13 +82,18 @@ These are not fatal weaknesses. They define the next data loop.
 
 ## Next Iteration
 
-The next iteration is RAG V2:
+RAG V2 is now complete as a focused pilot. Its product lesson is:
 
-- expand the corpus with precise legal, contract, policy, and case-rule sources;
-- add claim-level citation entailment;
-- separate retrieval quality from generation quality;
-- rerun a focused citation/document API pilot;
-- update release gates based on human-calibrated citation labels.
+- retrieval recall can be high while release risk remains high;
+- source-boundary filtering is a product requirement, not a retrieval nice-to-have;
+- claim-level citation coverage must be enforced before source-specific answers are released.
+
+The agentic next iteration is A5:
+
+- materialize joined trace logs;
+- run the 8 multi-turn intake cases;
+- measure material-fact elicitation, bad-premise challenge, user-behavior adaptation, and escalation timing;
+- route trace failures into SFT, preference, badcase, and regression eval assets.
 
 ## Strong Closing
 

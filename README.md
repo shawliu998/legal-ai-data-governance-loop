@@ -1,8 +1,8 @@
-# Legal AI Product Boundary Eval & Data Governance Harness
+# Legal Agent Product Eval & Data Governance Harness
 
 A portfolio project for DeepSeek-style professional-domain data product roles.
 
-This project evaluates legal AI model-workflow configurations under realistic legal product conditions:
+This project evaluates legal AI model-agent configurations under realistic legal product conditions:
 
 - Can the model answer?
 - Should it answer?
@@ -11,22 +11,50 @@ This project evaluates legal AI model-workflow configurations under realistic le
 - Should it route to human review?
 - What data asset should each failure become?
 
-The goal is not to rank models. The goal is to turn legal AI behavior into product launch policy, risk-control policy, and next-round data production decisions.
+The goal is not to rank models. The goal is to turn legal agent behavior into product launch policy, risk-control policy, and next-round data production decisions.
 
 Core artifacts: PRD, labeling SOP, leakage-safe dataset, controlled RAG corpus, rubric-based Judge, judge ensemble, normalized run log, data router, human calibration queue, release gate, dashboard, and technical case study.
 
-The project is intentionally scoped: controlled local RAG, no Web UI, no database, and no open-web legal retrieval. It focuses on data-product capabilities: leakage-safe datasets, multi-task legal evaluation, rubric-based judging, retrieval/citation verification, human review queueing, error taxonomy, error-to-data routing, and dashboard-driven data production decisions.
+The project is intentionally scoped: controlled local RAG, no Web UI, no database, and no open-web legal retrieval. It focuses on data-product capabilities: leakage-safe datasets, legal agent architecture evaluation, trace-level evaluation design, retrieval/citation verification, human review queueing, error taxonomy, error-to-data routing, and dashboard-driven data production decisions.
 
 It is not a legal advice system and not a model leaderboard.
 
 ![Dashboard preview](assets/dashboard_preview.png)
 
-Current real API pilot takeaways:
+## Main Track
 
-- 300 / 300 Qianfan model-workflow outputs completed across ERNIE 5.0, DeepSeek V4 Pro, Qwen3.5-27B, GLM-5.2, and Kimi K2.6.
+The main track is:
+
+```text
+50-case legal product-boundary eval bank
+-> 300-output real Qianfan API pilot
+-> 72-output RAG V2 focused pilot
+-> human calibration
+-> release gate and data routing
+-> A5 multi-turn intake and trace-level eval design
+```
+
+Agent architecture naming:
+
+| Agent architecture | Product meaning | Legacy alias |
+| --- | --- | --- |
+| A0 baseline closed-book | Direct answer without product controls | V0 |
+| A1 structured legal counsel | Structured legal reasoning and risk-calibrated answer | V1 |
+| A2 grounded retrieval counsel | Retrieval-grounded answer with controlled sources | V4 |
+| A3 verifier-router policy layer | Post-generation verification, routing, and release policy | V3 |
+| A4 clarification-first intake | Single-turn clarification before answering | V5 |
+| A5 multi-turn legal intake agent | Multi-turn intake with user behavior variants | New pilot |
+
+The legacy `V0` / `V1` / `V3` / `V4` / `V5` labels remain in code and artifacts for reproducibility. The product-level interpretation uses A0-A5.
+
+## Current Evidence
+
+Real API pilot takeaways:
+
+- 300 / 300 Qianfan model-agent outputs completed across ERNIE 5.0, DeepSeek V4 Pro, Qwen3.5-27B, GLM-5.2, and Kimi K2.6.
 - Qwen3.5-27B was selected as the full-run structured judge after smoke tests; it produced 300 / 300 parseable judge outputs.
 - 80 priority real outputs were human-reviewed: 4 pass, 27 partial pass, 49 fail, with 92.5% agreement on a high-risk/blocker-enriched review sample.
-- W1 structured prompting and W5 clarification-first were stronger release candidates than closed-book or current RAG/verifier variants.
+- A1 structured counsel and A4 clarification-first were stronger release candidates than closed-book or current RAG/verifier variants.
 - RAG is still required for source-specific tasks, but the pilot showed citation-boundary and unsupported-claim failures that must be caught by verification and human review.
 - Real API pilot evidence package: [outputs/product_boundary_api_pilot_v1/](outputs/product_boundary_api_pilot_v1/)
 
@@ -35,15 +63,25 @@ RAG V2 focused pilot takeaways:
 - 72 / 72 Qianfan outputs completed on 8 source-limited citation/document cases across ERNIE 5.0, DeepSeek V4 Pro, and Qwen3.5-27B.
 - Retrieval found all expected allowed sources for W4/RAG runs, but average source-boundary precision was only 0.50 because top-k also included extra sources.
 - Claim-level triage found 555 citation-gate issues among 630 reviewable legal claims; the largest failure mode was uncited material claims.
-- W4/RAG improved citation coverage versus W1 and W5, but also produced 74 out-of-scope source claims, so RAG must be paired with source-boundary and claim-level verification.
+- A2/RAG improved citation coverage versus A1 and A4, but also produced 74 out-of-scope source claims, so RAG must be paired with source-boundary and claim-level verification.
 - RAG V2 evidence package: [outputs/rag_v2_focused_pilot_v1/](outputs/rag_v2_focused_pilot_v1/)
+
+A5 and trace-level eval additions:
+
+- A0-A5 architecture design: [docs/legal_agent_product_eval_v2_design.md](docs/legal_agent_product_eval_v2_design.md)
+- Trace-level eval schema: [docs/trace_level_eval_schema.md](docs/trace_level_eval_schema.md)
+- A5 multi-turn intake pilot: [docs/multiturn_intake_pilot.md](docs/multiturn_intake_pilot.md)
+- 8 multi-turn intake cases: [data/eval_sets/legal_agent_multiturn_intake_pilot_v1.jsonl](data/eval_sets/legal_agent_multiturn_intake_pilot_v1.jsonl)
 
 ## Open First
 
+- Agent product eval V2 design: [docs/legal_agent_product_eval_v2_design.md](docs/legal_agent_product_eval_v2_design.md)
+- Trace-level eval schema: [docs/trace_level_eval_schema.md](docs/trace_level_eval_schema.md)
 - Product PRD: [docs/product_prd.md](docs/product_prd.md)
 - Project summary: [docs/project_summary.md](docs/project_summary.md)
 - Product-boundary results: [docs/results_product_boundary_eval.md](docs/results_product_boundary_eval.md)
 - RAG V2 focused results: [docs/rag_v2_focused_results.md](docs/rag_v2_focused_results.md)
+- A5 multi-turn intake pilot: [docs/multiturn_intake_pilot.md](docs/multiturn_intake_pilot.md)
 - Model boundary memo: [docs/model_boundary_memo.md](docs/model_boundary_memo.md)
 - Real API pilot evidence package: [outputs/product_boundary_api_pilot_v1/](outputs/product_boundary_api_pilot_v1/)
 - RAG V2 evidence package: [outputs/rag_v2_focused_pilot_v1/](outputs/rag_v2_focused_pilot_v1/)
@@ -57,20 +95,23 @@ RAG V2 focused pilot takeaways:
 - Reproduction steps: [docs/runbook.md](docs/runbook.md)
 - GitHub upload guide: [docs/git_upload_guide.md](docs/git_upload_guide.md)
 
-## Data Loop
+## Trace-Level Data Loop
 
 ```mermaid
 flowchart LR
-    A[Eval_Input] --> B[Agent prompts V0/V1/V2/V3]
-    B --> C[Model_Run_Log]
-    A --> D[Task-specific Judge]
-    E[Gold_Labels] --> D
-    F[Rubric_Items] --> D
-    C --> D
-    D --> G[Judge_Scores]
-    G --> H[Error-to-Data Router]
-    H --> I[Data_Routing]
-    I --> J[Executive Dashboard]
+    A[User message or A5 turn plan] --> B[Agent architecture A0-A5]
+    B --> C[Agent trace]
+    C --> D[Retrieval events]
+    C --> E[Citation checks]
+    C --> F[Claim checks]
+    C --> G[Risk checks]
+    D --> H[Release gate]
+    E --> H
+    F --> H
+    G --> H
+    H --> I[Human review route]
+    H --> J[Data route]
+    J --> K[Eval / SFT / preference / badcase / regression]
 ```
 
 ## What It Demonstrates
@@ -78,11 +119,23 @@ flowchart LR
 - Gold label leakage prevention: Agents only see `Eval_Input`; Judge/Human Review can see `Gold_Labels` and `Rubric_Items`.
 - Multi-task legal evaluation: `consultation`, `case_analysis`, and `document_drafting`.
 - Normalized run logs: one row per model run, supporting multiple model aliases, prompt versions, data sources, and task categories.
-- Blind review: V2 can only see user question, known facts, legal concepts, and V0 output.
+- Agent architecture comparison: A0-A5 product configurations, with legacy V aliases preserved for reproducibility.
+- Trace-level eval design: turns, retrieval, citation checks, claim checks, risk checks, release gate, and data route.
+- A5 multi-turn intake pilot: cooperative, dependent, withdrawn, and adversarial user behavior variants.
 - Rubric-based LLM Judge: task-specific judge prompts for consultation, case analysis, and document drafting.
 - Human review queue: high-risk or low-confidence outputs are routed for calibration.
 - Standardized error taxonomy and fixed data routes: `eval`, `sft`, `preference`, `badcase`, `human_review`.
 - Dashboard and model-boundary memo as data decision artifacts, not ranking reports.
+
+## Supporting Tracks
+
+The main track is the legal product-boundary and legal agent eval path above. The repo also keeps supporting diagnostics:
+
+- 85-sample diagnostic dataset for pipeline stress testing and dashboard reproduction.
+- Practice benchmark pilot for adapted real-practice task coverage.
+- Qianfan vendor smoke tests for endpoint/model availability.
+
+These supporting tracks are useful for reproducibility and engineering checks, but they are not the primary product story.
 
 ## Dataset
 
@@ -396,7 +449,7 @@ When critical rows dominate the review queue, build an additional stratified cal
   --random-calibration-min 100
 ```
 
-This is not a simple leaderboard. It evaluates model-workflow configurations under realistic legal product conditions to decide product routing, release readiness, and next-round data production.
+This is not a simple leaderboard. It evaluates model-agent configurations under realistic legal product conditions to decide product routing, release readiness, and next-round data production.
 
 ## Project Boundary
 

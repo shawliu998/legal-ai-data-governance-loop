@@ -2,19 +2,20 @@
 
 ## One-Line Summary
 
-Built a legal AI product-boundary evaluation and data governance harness that turns model-workflow behavior into deployment policy, human-review policy, release gates, and next-round data production actions.
+Built a legal agent product-boundary evaluation and data governance harness that turns model-agent behavior into deployment policy, human-review policy, release gates, trace-level risk signals, and next-round data production actions.
 
 中文一句话：
 
-构建法律 AI 产品边界评测与数据闭环治理系统，用真实法律任务 slice 评估模型是否应该回答、追问、引用依据、转人工，并把失败样本路由为 eval、SFT、preference、badcase 或 human_review 数据资产。
+构建法律 AI agent 产品边界评测与数据闭环治理系统，用真实法律任务 slice 和 trace-level eval 评估模型是否应该回答、追问、引用依据、转人工或阻断发布，并把失败样本路由为 eval、SFT、preference、badcase、regression 或 human_review 数据资产。
 
 ## Why This Is Not a Leaderboard
 
 The project does not ask only which model scores highest. It asks:
 
-- Which model-workflow configuration is safe enough to answer?
+- Which model-agent architecture is safe enough to answer?
 - Which legal tasks require RAG grounding?
 - Which cases require clarification-first intake?
+- Which traces show unsafe premise-following, missing fact elicitation, or bad release decisions?
 - Which failures must enter human review or block release?
 - Which outputs should become badcases, SFT candidates, preference pairs, or eval holdout?
 
@@ -22,10 +23,12 @@ The project does not ask only which model scores highest. It asks:
 
 - 50 product-boundary legal cases.
 - 6 slices: normal practice, hard legal reasoning, risk calibration, citation grounding, adversarial trap, and counterfactual pair.
-- 5 workflow conditions: closed-book, structured prompt, RAG-grounded, RAG plus risk-control/verifier, and clarification-first.
+- A0-A5 agent architecture taxonomy: closed-book baseline, structured legal counsel, grounded retrieval counsel, verifier-router policy layer, clarification-first intake, and multi-turn legal intake.
 - 5 mock model slots for full diagnostics, with a 5-model Qianfan API pilot config for ERNIE 5.0, DeepSeek V4 Pro, Qwen3.5-27B, GLM-5.2, and Kimi K2.6.
 - 1250 mock model outputs for pipeline verification.
 - 12-case Qianfan API pilot completed for 300 real model outputs.
+- 8-case RAG V2 focused pilot completed for 72 real model outputs.
+- 8-case A5 multi-turn intake pilot added as trace-level design data.
 - 80 priority real-output human review rows completed.
 
 ## Implementation Highlights
@@ -39,10 +42,12 @@ The project does not ask only which model scores highest. It asks:
 - Generated human calibration queues, including a 370-row stratified Chinese legal-review file marked as completed human review.
 - Completed an 80-row priority human review sample for the real API pilot, with Chinese review workbook and judge-human agreement summary.
 - Added release-gate outputs for blocked, limited-release, and candidate auto-answer policies.
+- Added A0-A5 architecture documentation and trace-level eval schema to connect answer quality, retrieval quality, citation quality, risk routing, release gates, and data routes.
+- Added an A5 multi-turn legal intake pilot covering cooperative, dependent, withdrawn, and adversarial user behavior.
 
 ## Real API Pilot Results
 
-- 300 / 300 Qianfan model-workflow outputs completed.
+- 300 / 300 Qianfan model-agent outputs completed.
 - 300 / 300 Qwen judge outputs parsed successfully.
 - Human review completed on 80 priority outputs.
 - Judge-human agreement on the priority sample: 92.5%.
@@ -52,10 +57,19 @@ The project does not ask only which model scores highest. It asks:
 
 The API pilot showed that strong models do not remove product-boundary risk. The main failure patterns were insufficient human-review escalation and source-boundary problems in RAG-style workflows.
 
+## RAG V2 And Agentic Eval Additions
+
+- RAG V2 focused pilot: 72 / 72 real Qianfan outputs completed.
+- W4/A2 retrieval found all expected allowed sources, but average source-boundary precision was 0.50 because top-k retrieval included extra sources.
+- Claim-level triage found 555 citation-gate issues among 630 reviewable legal claims.
+- A5 multi-turn intake cases now test material-fact elicitation, bad-premise challenge, user-behavior adaptation, and escalation timing.
+- Trace-level schema maps user turns, retrieval, citation checks, claim checks, risk checks, human review, release gate, and data route into one product-evaluable object.
+
 ## Product Findings
 
-- Best routine-answer candidate: Qwen3.5-27B or ERNIE/Kimi under W1 structured prompt, limited to low-risk consultation and no citation defect.
-- Best intake/risk-control candidate: W5 clarification-first, especially for missing facts and adversarial drafting.
+- Best routine-answer candidate: Qwen3.5-27B or ERNIE/Kimi under A1 structured legal counsel, limited to low-risk consultation and no citation defect.
+- Best intake/risk-control candidate: A4 clarification-first, especially for missing facts and adversarial drafting.
+- Next agentic eval candidate: A5 multi-turn legal intake, especially for dependent, withdrawn, or adversarial users.
 - RAG requirement: source-specific contract, rule, or citation tasks still need RAG, but RAG output must be checked for source-boundary discipline.
 - Current RAG/verifier limitation: W3 and W4 over-produced human-review routes and surfaced unsupported-source issues in the real pilot.
 - Release policy: no configuration should be fully auto-released yet; use limited release with human review for high-risk and citation-bound cases.
@@ -64,6 +78,9 @@ The API pilot showed that strong models do not remove product-boundary risk. The
 
 - Project entry point: [README.md](../README.md)
 - Results page: [results_product_boundary_eval.md](results_product_boundary_eval.md)
+- Agent architecture design: [legal_agent_product_eval_v2_design.md](legal_agent_product_eval_v2_design.md)
+- Trace-level schema: [trace_level_eval_schema.md](trace_level_eval_schema.md)
+- A5 intake pilot: [multiturn_intake_pilot.md](multiturn_intake_pilot.md)
 - Model policy memo: [model_boundary_memo.md](model_boundary_memo.md)
 - RAG V2 improvement plan: [rag_v2_improvement_plan.md](rag_v2_improvement_plan.md)
 - Interview talk track: [interview_talk_track.md](interview_talk_track.md)
@@ -72,8 +89,8 @@ The API pilot showed that strong models do not remove product-boundary risk. The
 
 ## Interview Pitch
 
-I built a legal AI eval-driven data governance harness. The core is not ranking models by average score, but evaluating whether a legal AI product should answer, ask clarifying questions, use grounded sources, route to human review, or block release. I ran a real Qianfan API pilot across ERNIE 5.0, DeepSeek V4 Pro, Qwen3.5-27B, GLM-5.2, and Kimi K2.6, then added human review on 80 priority outputs. The result is a model-workflow boundary memo and data loop: failures become eval holdout, SFT candidates, preference pairs, badcases, or human review items.
+I built a legal agent eval-driven data governance harness. The core is not ranking models by average score, but evaluating whether a legal AI product should answer, ask clarifying questions, use grounded sources, route to human review, or block release. I ran a real Qianfan API pilot across ERNIE 5.0, DeepSeek V4 Pro, Qwen3.5-27B, GLM-5.2, and Kimi K2.6, then added human review on 80 priority outputs and a RAG V2 focused pilot. The result is a model-agent boundary memo and data loop: failures become eval holdout, SFT candidates, preference pairs, badcases, regression evals, or human review items.
 
 ## Next Step
 
-Expand the controlled RAG corpus and run a second API pilot focused on citation entailment, source-boundary control, and human-calibrated release gates.
+Materialize joined `trace_log.jsonl` artifacts and run the A5 multi-turn intake pilot through the same judge, human-review, release-gate, and data-routing loop.

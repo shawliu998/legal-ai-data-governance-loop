@@ -1,4 +1,4 @@
-# Product Boundary Eval Results
+# Legal Agent Product Boundary Eval Results
 
 ## Positioning
 
@@ -6,7 +6,9 @@ This report is a product-boundary evaluation report, not a model leaderboard.
 
 Core question:
 
-> Which model-workflow configuration should answer, ask clarifying questions, use grounded sources, route to human review, block release, or generate a reusable data asset?
+> Which model-agent architecture should answer, ask clarifying questions, use grounded sources, route to human review, block release, or generate a reusable data asset?
+
+The legacy V workflow aliases map to the product-level A0-A5 architecture taxonomy described in `docs/legal_agent_product_eval_v2_design.md`.
 
 ## Current Run Status
 
@@ -14,7 +16,7 @@ Core question:
 | --- | --- |
 | 50-case product-boundary dataset | Complete |
 | Controlled RAG corpus and retrieval | Complete |
-| Mock model-workflow diagnostic run | Complete |
+| Mock model-agent diagnostic run | Complete |
 | Judge ensemble design | Complete |
 | Human calibration file | Complete for mock diagnostic outputs |
 | 12-case Qianfan API pilot dataset | Prepared |
@@ -23,6 +25,9 @@ Core question:
 | API priority human review | Complete |
 | Multi-judge ensemble smoke | Complete; not used as full-run scoring baseline |
 | RAG V2 focused pilot | Complete |
+| A0-A5 architecture taxonomy | Complete as design layer |
+| Trace-level eval schema | Complete as design layer |
+| A5 multi-turn intake pilot cases | Complete as 8-case JSONL pilot |
 
 ## Mock Diagnostic Artifacts
 
@@ -118,15 +123,15 @@ Methodology caveat: model-level scores are Qwen-judge baseline signals, not fina
 | Kimi K2.6 | 0.730 | 0.350 | 0.783 | 87.8s |
 | GLM-5.2 | 0.462 | 0.650 | 0.833 | 28.2s |
 
-### Workflow-Level Signals
+### Agent Architecture-Level Signals
 
-| Workflow | Version | Avg score | High-risk rate | Human-review rate | Product interpretation |
+| Agent architecture | Legacy alias | Avg score | High-risk rate | Human-review rate | Product interpretation |
 | --- | --- | ---: | ---: | ---: | --- |
-| W1 structured prompt | V1 | 0.883 | 0.150 | 0.717 | Best baseline for routine structured answers. |
-| W4 clarification-first | V5 | 0.851 | 0.300 | 0.683 | Strong for intake and risk calibration. |
-| W2 RAG-grounded | V4 | 0.706 | 0.350 | 0.950 | Useful for grounding, but citation discipline still needs review. |
-| W0 closed-book baseline | V0 | 0.616 | 0.500 | 0.700 | Not suitable for high-risk autonomous release. |
-| W3 RAG verifier/router | V3 | 0.533 | 0.683 | 0.983 | Conservative but over-routes to human review under Qwen judge. |
+| A1 structured legal counsel | V1 | 0.883 | 0.150 | 0.717 | Best baseline for routine structured answers. |
+| A4 clarification-first intake | V5 | 0.851 | 0.300 | 0.683 | Strong for intake and risk calibration. |
+| A2 grounded retrieval counsel | V4 | 0.706 | 0.350 | 0.950 | Useful for grounding, but citation discipline still needs review. |
+| A0 baseline closed-book | V0 | 0.616 | 0.500 | 0.700 | Not suitable for high-risk autonomous release. |
+| A3 verifier-router policy layer | V3 | 0.533 | 0.683 | 0.983 | Conservative but over-routes to human review under Qwen judge. |
 
 ### Routing And Release Gate
 
@@ -141,7 +146,7 @@ Methodology caveat: model-level scores are Qwen-judge baseline signals, not fina
 
 Citation verification produced 92 `unsupported_claim`, 24 `missing_citation`, 3 `citation_supported`, and 1 `fabricated_citation` labels. This is a triage signal, not a final legal entailment judgment.
 
-After adding claim-level citation entailment into the release gate, 12 blocked model-workflow-task combinations contain claim-level or source-boundary blockers.
+After adding claim-level citation entailment into the release gate, 12 blocked model-agent-task combinations contain claim-level or source-boundary blockers.
 
 ### Claim-Level Citation Entailment
 
