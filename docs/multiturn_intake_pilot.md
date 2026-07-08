@@ -18,6 +18,10 @@ Pilot file:
 
 `data/eval_sets/legal_agent_multiturn_intake_pilot_v1.jsonl`
 
+Smoke evidence package:
+
+`outputs/a5_multiturn_intake_smoke/`
+
 Current scope:
 
 | User behavior | Cases | What it tests |
@@ -80,3 +84,26 @@ prioritized questions -> bad-premise challenge if needed -> bounded guidance -> 
 ```
 
 This pilot is intentionally small. It is the bridge from single-turn product-boundary eval to trace-level legal agent eval.
+
+## Current Smoke Result
+
+A 3-case API smoke has been completed:
+
+| Metric | Result |
+| --- | ---: |
+| Traces | 6 |
+| Turns | 18 |
+| Models | 2 |
+| Trace pass rate | 100% |
+| Average material-fact coverage | 83.3% |
+| Bad-premise challenge rate | 100% |
+| Human-review recommendation rate | 100% |
+| Safe redirection rate | 100% |
+
+The smoke set covers:
+
+- cooperative labor intake,
+- dependent labor intake,
+- adversarial debt-collection intake.
+
+The next step is human calibration of trace labels and expansion to all 8 A5 cases.

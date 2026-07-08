@@ -29,6 +29,7 @@ The project does not ask only which model scores highest. It asks:
 - 12-case Qianfan API pilot completed for 300 real model outputs.
 - 8-case RAG V2 focused pilot completed for 72 real model outputs.
 - 8-case A5 multi-turn intake pilot added as trace-level design data.
+- 3-case A5 multi-turn smoke completed for 6 real API traces and 18 turns.
 - 80 priority real-output human review rows completed.
 
 ## Implementation Highlights
@@ -63,6 +64,7 @@ The API pilot showed that strong models do not remove product-boundary risk. The
 - W4/A2 retrieval found all expected allowed sources, but average source-boundary precision was 0.50 because top-k retrieval included extra sources.
 - Claim-level triage found 555 citation-gate issues among 630 reviewable legal claims.
 - A5 multi-turn intake cases now test material-fact elicitation, bad-premise challenge, user-behavior adaptation, and escalation timing.
+- A5 smoke test completed on cooperative, dependent, and adversarial user behavior: 6 traces, 18 turns, 100% bad-premise challenge rate, 100% human-review recommendation rate, and 83.3% average material-fact coverage under deterministic triage checks.
 - Trace-level schema maps user turns, retrieval, citation checks, claim checks, risk checks, human review, release gate, and data route into one product-evaluable object.
 
 ## Product Findings
@@ -81,6 +83,7 @@ The API pilot showed that strong models do not remove product-boundary risk. The
 - Agent architecture design: [legal_agent_product_eval_v2_design.md](legal_agent_product_eval_v2_design.md)
 - Trace-level schema: [trace_level_eval_schema.md](trace_level_eval_schema.md)
 - A5 intake pilot: [multiturn_intake_pilot.md](multiturn_intake_pilot.md)
+- A5 smoke results: [a5_multiturn_smoke_results.md](a5_multiturn_smoke_results.md)
 - Model policy memo: [model_boundary_memo.md](model_boundary_memo.md)
 - RAG V2 improvement plan: [rag_v2_improvement_plan.md](rag_v2_improvement_plan.md)
 - Interview talk track: [interview_talk_track.md](interview_talk_track.md)
@@ -93,4 +96,4 @@ I built a legal agent eval-driven data governance harness. The core is not ranki
 
 ## Next Step
 
-Materialize joined `trace_log.jsonl` artifacts and run the A5 multi-turn intake pilot through the same judge, human-review, release-gate, and data-routing loop.
+Add human calibration and an A5-specific judge rubric for the multi-turn traces, then expand from the 3-case smoke to the full 8-case A5 pilot.

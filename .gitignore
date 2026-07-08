@@ -42,5 +42,15 @@ outputs/rag_v2_focused_pilot_v1/*
 !outputs/rag_v2_focused_pilot_v1/failure_taxonomy.csv
 !outputs/rag_v2_focused_pilot_v1/source_boundary_summary.csv
 !outputs/rag_v2_focused_pilot_v1/redacted_sample_outputs_20.csv
+outputs/a5_multiturn_intake_smoke/
+!outputs/a5_multiturn_intake_smoke/
+outputs/a5_multiturn_intake_smoke/*
+!outputs/a5_multiturn_intake_smoke/README.md
+!outputs/a5_multiturn_intake_smoke/artifact_manifest.yaml
+!outputs/a5_multiturn_intake_smoke/trace_metrics_summary.csv
+!outputs/a5_multiturn_intake_smoke/turn_level_summary.csv
+!outputs/a5_multiturn_intake_smoke/risk_route_summary.csv
+!outputs/a5_multiturn_intake_smoke/redacted_trace_samples.csv
+outputs/a5_multiturn_intake_smoke_mock/
 
 data/practice_benchmark_pilot/source/

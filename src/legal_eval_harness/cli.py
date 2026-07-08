@@ -6,6 +6,7 @@ from pathlib import Path
 import pandas as pd
 from pandas.errors import EmptyDataError
 
+from .a5_multiturn import run_a5_multiturn_smoke, summarize_a5_trace_log, validate_a5_cases
 from .aggregator import build_executive_dashboard
 from .calibration import build_human_review_sample, summarize_human_calibration
 from .config import get_project_default, load_config
@@ -337,6 +338,43 @@ def cmd_rag_v2_report(args: argparse.Namespace) -> None:
     print(result["metrics_summary"].to_string(index=False))
 
 
+def cmd_validate_a5_multiturn(args: argparse.Namespace) -> None:
+    from .a5_multiturn import load_a5_cases
+
+    cases = load_a5_cases(args.input)
+    errors = validate_a5_cases(cases)
+    if errors:
+        for error in errors:
+            print(f"ERROR: {error}")
+        raise SystemExit(1)
+    behavior_counts = pd.Series([case["user_behavior"] for case in cases]).value_counts().sort_index().to_dict()
+    domain_counts = pd.Series([case["legal_domain"] for case in cases]).value_counts().sort_index().to_dict()
+    print("A5 multi-turn dataset validation OK")
+    print(f"Cases: {len(cases)}")
+    print(f"User behaviors: {behavior_counts}")
+    print(f"Legal domains: {domain_counts}")
+
+
+def cmd_run_a5_multiturn(args: argparse.Namespace) -> None:
+    config = load_config(args.config)
+    result = run_a5_multiturn_smoke(
+        cases_path=args.cases,
+        config=config,
+        output_dir=args.output_dir,
+        mode=args.mode,
+        case_ids=_alias_filter(args.case_id) or None,
+        model_aliases=_alias_filter(args.model_alias) or None,
+    )
+    print(f"Wrote A5 multi-turn smoke outputs to {args.output_dir}")
+    print(result["trace_metrics_summary"].to_string(index=False))
+
+
+def cmd_a5_report(args: argparse.Namespace) -> None:
+    result = summarize_a5_trace_log(trace_log_path=args.trace_log, output_dir=args.output_dir, cases_path=args.cases)
+    print(f"Wrote A5 report to {args.output_dir}")
+    print(result["trace_metrics_summary"].to_string(index=False))
+
+
 def cmd_validate_product_boundary(args: argparse.Namespace) -> None:
     cases = load_product_boundary_cases(args.input)
     errors = validate_product_boundary_cases(cases)
@@ -506,6 +544,25 @@ def build_parser() -> argparse.ArgumentParser:
     rag_v2_report.add_argument("--focus-case", action="append", default=[])
     rag_v2_report.add_argument("--version", action="append", default=[])
     rag_v2_report.set_defaults(func=cmd_rag_v2_report)
+
+    validate_a5 = sub.add_parser("validate-a5-multiturn")
+    validate_a5.add_argument("--input", default="data/eval_sets/legal_agent_multiturn_intake_pilot_v1.jsonl")
+    validate_a5.set_defaults(func=cmd_validate_a5_multiturn)
+
+    run_a5 = sub.add_parser("run-a5-multiturn")
+    run_a5.add_argument("--cases", default="data/eval_sets/legal_agent_multiturn_intake_pilot_v1.jsonl")
+    run_a5.add_argument("--config", default="config.qianfan_a5_multiturn_smoke.yaml")
+    run_a5.add_argument("--mode", choices=["mock", "api"], default="mock")
+    run_a5.add_argument("--output-dir", default="outputs/a5_multiturn_intake_smoke")
+    run_a5.add_argument("--case-id", action="append", default=[])
+    run_a5.add_argument("--model-alias", action="append", default=[])
+    run_a5.set_defaults(func=cmd_run_a5_multiturn)
+
+    a5_report = sub.add_parser("a5-report")
+    a5_report.add_argument("--trace-log", required=True)
+    a5_report.add_argument("--output-dir", default="outputs/a5_multiturn_intake_smoke")
+    a5_report.add_argument("--cases", default="")
+    a5_report.set_defaults(func=cmd_a5_report)
 
     boundary = sub.add_parser("validate-product-boundary")
     boundary.add_argument("--input", default="data/eval_sets/legal_product_boundary_pilot_v1.jsonl")

@@ -1,0 +1,4 @@
+﻿user_behavior,legal_domain,release_decision,trace_count
+adversarial_client,debt_collection,human_review_required,2
+cooperative_client,labor,human_review_required,2
+dependent_client,labor,human_review_required,2

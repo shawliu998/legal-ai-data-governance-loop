@@ -2,7 +2,7 @@
 
 ## 30-Second Version
 
-I built a legal agent product-boundary eval and data governance harness. Instead of ranking models by average score, it evaluates whether a legal AI product should answer, ask clarifying questions, use grounded sources, route to human review, or block release. I ran a real Qianfan API pilot across ERNIE 5.0, DeepSeek V4 Pro, Qwen3.5-27B, GLM-5.2, and Kimi K2.6, then human-reviewed 80 priority outputs and added a RAG V2 focused pilot. The output is not just scores; it is model-agent routing policy, trace-level risk signals, release gates, and next-round data production actions.
+I built a legal agent product-boundary eval and data governance harness. Instead of ranking models by average score, it evaluates whether a legal AI product should answer, ask clarifying questions, use grounded sources, route to human review, or block release. I ran a real Qianfan API pilot across ERNIE 5.0, DeepSeek V4 Pro, Qwen3.5-27B, GLM-5.2, and Kimi K2.6, then human-reviewed 80 priority outputs and added RAG V2 plus A5 multi-turn intake smoke tests. The output is not just scores; it is model-agent routing policy, trace-level risk signals, release gates, and next-round data production actions.
 
 ## 2-Minute Version
 
@@ -53,6 +53,8 @@ The main finding was not simply "which model won." A1 structured legal counsel a
 | RAG V2 focused outputs | 72 / 72 |
 | RAG V2 citation-gate issue rate | 88.1% |
 | A5 multi-turn intake cases | 8 |
+| A5 API smoke traces / turns | 6 / 18 |
+| A5 smoke bad-premise challenge rate | 100% |
 
 ## What I Would Emphasize
 
@@ -90,9 +92,9 @@ RAG V2 is now complete as a focused pilot. Its product lesson is:
 
 The agentic next iteration is A5:
 
-- materialize joined trace logs;
-- run the 8 multi-turn intake cases;
-- measure material-fact elicitation, bad-premise challenge, user-behavior adaptation, and escalation timing;
+- human-calibrate the 6 completed smoke traces;
+- expand the 3-case smoke to all 8 multi-turn intake cases;
+- measure material-fact elicitation, bad-premise challenge, user-behavior adaptation, and escalation timing with an A5-specific judge;
 - route trace failures into SFT, preference, badcase, and regression eval assets.
 
 ## Strong Closing

@@ -28,6 +28,7 @@ The legacy V workflow aliases map to the product-level A0-A5 architecture taxono
 | A0-A5 architecture taxonomy | Complete as design layer |
 | Trace-level eval schema | Complete as design layer |
 | A5 multi-turn intake pilot cases | Complete as 8-case JSONL pilot |
+| A5 multi-turn intake API smoke | Complete as 6-trace / 18-turn smoke |
 
 ## Mock Diagnostic Artifacts
 
@@ -233,6 +234,35 @@ Retrieval found the expected sources, but generation still produced too many unc
 Detailed results:
 
 `docs/rag_v2_focused_results.md`
+
+## A5 Multi-Turn Intake Smoke
+
+After adding the A0-A5 architecture layer, a small A5 smoke test was run to prove the trace-level legal intake loop.
+
+Evidence package:
+
+`outputs/a5_multiturn_intake_smoke/`
+
+| Metric | Result |
+| --- | ---: |
+| Cases | 3 |
+| Models | 2 |
+| Traces | 6 |
+| Turns | 18 |
+| Trace pass rate | 100% |
+| Average material-fact coverage | 83.3% |
+| Bad-premise challenge rate | 100% |
+| Human-review recommendation rate | 100% |
+| Safe redirection rate | 100% |
+| Overclaim trace count | 0 |
+
+Main finding:
+
+A5 can now be evaluated as a trace rather than a single final answer. The smoke set intentionally used cooperative, dependent, and adversarial users. All traces routed to `human_review_required`, which is the expected conservative product posture for labor coercion and adversarial debt-collection scenarios.
+
+Detailed results:
+
+`docs/a5_multiturn_smoke_results.md`
 
 ## Product Policy Conclusions
 

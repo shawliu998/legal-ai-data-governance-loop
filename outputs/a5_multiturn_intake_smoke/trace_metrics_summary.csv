@@ -1,0 +1,12 @@
+﻿metric,value
+traces,6
+turns,18
+cases,3
+models,2
+trace_pass_rate,1.0
+avg_material_fact_coverage,0.8333
+bad_premise_challenge_rate,1.0
+human_review_recommendation_rate,1.0
+safe_redirection_rate,1.0
+overclaim_trace_count,0
+raw_traces_committed,False

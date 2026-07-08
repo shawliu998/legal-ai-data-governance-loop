@@ -1,0 +1,23 @@
+package: a5_multiturn_intake_smoke_lightweight_evidence
+purpose: Trace-level A5 multi-turn legal intake smoke evidence package.
+source_run:
+  traces: 6
+  turns: 18
+  cases: 3
+  models: 2
+methodology_caveats:
+- This is a small A5 smoke test, not a statistically powered benchmark.
+- Trace-level checks are deterministic triage signals and should be human-calibrated
+  before release decisions.
+- Raw full model outputs remain local/ignored; this package commits summaries and
+  redacted hashes only.
+included_artifacts:
+- README.md
+- artifact_manifest.yaml
+- trace_metrics_summary.csv
+- turn_level_summary.csv
+- risk_route_summary.csv
+- redacted_trace_samples.csv
+excluded_artifacts:
+- trace_log.jsonl
+- turn_log.csv
