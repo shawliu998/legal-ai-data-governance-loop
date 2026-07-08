@@ -14,7 +14,7 @@ The key evaluation question is:
 
 Only testing hard cases creates a distorted benchmark. Real legal product traffic contains routine questions, ambiguous questions, high-risk cases, evidence-grounded questions, adversarial requests, and near-identical cases where one fact changes the legal conclusion.
 
-A portfolio-grade eval should include both:
+A production-oriented eval should include:
 
 - normal cases, to measure basic service quality and auto-answer eligibility
 - hard cases, to measure reasoning under complexity
@@ -59,11 +59,19 @@ The product-boundary config defines five workflow conditions:
 | --- | --- |
 | `w0_closed_book` | Direct answer without retrieval; tests raw model behavior and hallucination risk. |
 | `w1_structured_legal_prompt` | Structured legal answer: issue, facts, law, analysis, risk, next steps. |
-| `w2_rag_grounded` | First version uses provided-context grounding, not automatic retrieval. |
-| `w3_rag_verifier_router` | Grounded answer plus citation verifier, risk checker, and human-review routing. |
+| `w2_rag_grounded` | Retrieves from a controlled local legal corpus, injects source chunks, and requires source-grounded answers. |
+| `w3_rag_verifier_router` | Retrieves source chunks, generates a risk-controlled workflow answer, and logs citation verification. |
 | `w4_clarification_first` | Asks clarifying questions before final answer when material facts are missing. |
 
-The current implementation can evaluate the design assets and mock-compatible paths. Full automatic retrieval can be added later without changing the dataset schema.
+The current implementation uses a controlled local corpus, not open-web retrieval. This keeps the eval reproducible while still separating retrieval failure, generation grounding failure, and citation fabrication.
+
+RAG component logs:
+
+- `retrieval_log.csv`: source recall, source precision, and expected-source hit counts.
+- `rag_contexts.csv`: exact source chunks injected into each V3/V4 run.
+- `citation_verification.csv`: cited IDs, fabricated IDs, claim-level support checks, unsupported-claim counts, and citation-fidelity labels.
+
+Claim-level verification is a triage signal, not a legal conclusion. It flags reviewable legal claims whose cited or retrieved context has weak lexical support, then routes them into the human calibration queue for expert review.
 
 ## Rubric Dimensions
 
@@ -94,6 +102,19 @@ Critical failures block release even if the average score is high:
 - `failed_to_question_bad_premise`
 
 This prevents a high average score from hiding rare but severe legal product failures.
+
+## Judge Ensemble
+
+The product-boundary run supports both a single judge and an ensemble judge layer.
+
+The ensemble design is:
+
+- DeepSeek V4 Pro and GLM-5.2 act as primary judges.
+- Judge self-evaluation is excluded, so a DeepSeek output is not scored by the DeepSeek judge and a GLM output is not scored by the GLM judge.
+- ERNIE 5.1 acts as an arbiter when the primary judges disagree on score, critical failures, or data route.
+- Single-primary cases created by self-evaluation exclusion are marked for arbitration or human calibration.
+
+The goal is not to hide behind automatic judging. The goal is to produce a review queue that identifies which cases need arbitration, which cases need human calibration, and which judge labels are stable enough to drive data routing.
 
 ## Data Governance Loop
 
@@ -149,8 +170,8 @@ The product decision may be:
 
 This is why the run log captures latency, token usage, and estimated cost.
 
-## Portfolio Framing
+## Evaluation Framing
 
-A good interview summary is:
+A concise summary is:
 
 > I designed a stratified legal AI product-boundary eval suite that tests not only legal answer quality, but also whether the system should answer, ask follow-up questions, rely on provided sources, or route to human review. The outputs feed release gates and data production queues such as badcase, SFT, preference pairs, and regression eval.

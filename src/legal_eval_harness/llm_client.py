@@ -45,7 +45,12 @@ class LLMClient:
     ) -> tuple[str, dict[str, Any]]:
         started = time.perf_counter()
         if self.mode == "mock":
-            text = self._mock_generate(version=version, sample_id=sample_id, v0_output=v0_output)
+            text = self._mock_generate(
+                version=version,
+                sample_id=sample_id,
+                v0_output=v0_output,
+                prompt=prompt,
+            )
             latency_ms = int((time.perf_counter() - started) * 1000)
             return text, self._metadata(
                 prompt=prompt,
@@ -145,8 +150,9 @@ class LLMClient:
         return {str(key): str(value) for key, value in headers.items() if value not in {None, ""}}
 
     @staticmethod
-    def _mock_generate(*, version: str, sample_id: str, v0_output: str = "") -> str:
+    def _mock_generate(*, version: str, sample_id: str, v0_output: str = "", prompt: str = "") -> str:
         seed = int(hashlib.sha256(f"{sample_id}-{version}".encode("utf-8")).hexdigest(), 16)
+        source_ids = LLMClient._extract_source_ids(prompt)
         if version == "V0":
             return (
                 f"基于现有事实，{sample_id} 可以先与对方协商并保留证据，必要时考虑投诉或起诉。"
@@ -187,6 +193,7 @@ class LLMClient:
             )
         if version == "V3":
             level = "medium" if seed % 7 else "high"
+            cited = source_ids[:2]
             return json_dumps(
                 {
                     "intake": {
@@ -204,9 +211,18 @@ class LLMClient:
                     },
                     "legal_analysis": {
                         "fact_summary": "当前只能作初步信息分析。",
-                        "rule_direction": "先确认法律关系、责任主体、证据链和程序路径。",
-                        "application": "若证据能支持承诺、违约或侵权事实，可进一步评估主张基础。",
-                        "conditional_conclusion": "不能仅凭现有描述作确定结论，应以补充材料后的判断为准。",
+                        "rule_direction": (
+                            "先确认法律关系、责任主体、证据链和程序路径。"
+                            + (
+                                f"可参考检索来源：{', '.join(f'[{sid}]' for sid in cited)}。"
+                                if cited
+                                else ""
+                            )
+                        ),
+                        "application": "若检索材料和用户证据能支持核心事实，可进一步评估主张基础。",
+                        "conditional_conclusion": (
+                            "不能仅凭现有描述作确定结论，应以补充材料后的判断为准。"
+                        ),
                     },
                     "risk_review": {
                         "evidence_risk": "证据链不足会影响责任认定。",
@@ -215,7 +231,10 @@ class LLMClient:
                         "overclaim_risk": "避免承诺一定胜诉、一定赔偿或直接停止履行义务。",
                     },
                     "rewrite": {
-                        "rewritten_user_answer": "建议先固定并补充证据，再按责任主体和请求基础分层判断；目前只能给出条件化分析。"
+                        "rewritten_user_answer": (
+                            "建议先固定并补充证据，再按责任主体和请求基础分层判断；"
+                            "目前只能给出条件化分析。"
+                        )
                     },
                     "logger": {
                         "error_tags": [
@@ -232,10 +251,12 @@ class LLMClient:
                 }
             )
         if version == "V4":
+            basis = "、".join(f"[{sid}]" for sid in source_ids[:3]) or "无可引用来源"
             return (
-                "1. 可使用的依据：仅能依据用户问题和已提供的可见材料；如材料中出现来源编号，应只引用这些编号。\n"
-                "2. 不能从依据中推出的结论：不能编造未提供的法条、案例或合同条款，也不能把证据不足的问题说成确定结论。\n"
-                "3. 条件化分析：若提供材料支持核心事实，可作初步判断；若材料不足，应说明依据不足。\n"
+                f"1. 可使用的依据：本次检索命中的可见来源为{basis}；只能引用这些编号。\n"
+                "2. 不能从依据中推出的结论：不能编造未提供的法条、案例或合同条款，"
+                "也不能把证据不足的问题说成确定结论。\n"
+                "3. 条件化分析：若检索材料支持核心事实，可作初步判断；若材料不足，应说明依据不足。\n"
                 "4. 需要补充的事实或证据：完整合同、通知、付款、沟通记录、证据来源和程序状态。\n"
                 "5. 风险与人审建议：引用或高风险事实不明确时，应转人工复核。"
             )
@@ -278,3 +299,10 @@ class LLMClient:
                 }
             )
         raise ValueError(f"Unsupported mock version: {version}")
+
+    @staticmethod
+    def _extract_source_ids(prompt: str) -> list[str]:
+        import re
+
+        ids = re.findall(r"\[([A-Z][A-Z0-9_-]{2,})\]", prompt or "")
+        return sorted(set(ids))

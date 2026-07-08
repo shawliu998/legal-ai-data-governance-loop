@@ -11,6 +11,14 @@ from .config import get_models
 from .io_excel import DatasetBundle, find_eval_row
 from .llm_client import LLMClient
 from .prompt_builder import PromptBuilder
+from .rag import (
+    build_context_rows,
+    build_retrieval_log_row,
+    inject_retrieved_context,
+    load_rag_corpus,
+    retrieve_contexts,
+    verify_output_citations,
+)
 from .utils import json_dumps, utc_now_iso
 
 
@@ -94,14 +102,37 @@ def run_models(
     builder = PromptBuilder(prompt_dir)
     client = LLMClient(config, mode=mode)
     rows: list[dict[str, Any]] = []
+    retrieval_rows: list[dict[str, Any]] = []
+    context_rows: list[dict[str, Any]] = []
+    citation_rows: list[dict[str, Any]] = []
     output_by_key: dict[tuple[str, str, str], str] = {}
+    rag_config = config.get("rag") or {}
+    rag_enabled = bool(rag_config.get("enabled", False))
+    rag_versions = set(rag_config.get("retrieval_versions") or ["V3", "V4"])
+    rag_corpus = None
+    if rag_enabled:
+        rag_corpus = load_rag_corpus(rag_config.get("corpus_path", "data/rag_corpus/legal_sources.csv"))
 
     for spec in tqdm(build_run_plan(bundle, config), desc="model runs"):
         eval_row = find_eval_row(bundle, spec.sample_id)
         v0_output = output_by_key.get((spec.sample_id, spec.model_alias, "V0"), "")
         workflow_condition, workflow_name = WORKFLOW_CONDITIONS.get(spec.version, (spec.version, spec.version))
+        contexts: list[dict[str, Any]] = []
         try:
-            prompt, visible_fields = builder.render_agent_prompt(spec.version, eval_row, v0_output=v0_output)
+            prompt_eval_row = eval_row
+            if rag_enabled and rag_corpus is not None and spec.version in rag_versions:
+                contexts = retrieve_contexts(
+                    eval_row=eval_row,
+                    corpus=rag_corpus,
+                    top_k=int(rag_config.get("top_k", 4)),
+                    min_score=float(rag_config.get("min_score", 0.0)),
+                )
+                prompt_eval_row = inject_retrieved_context(eval_row, contexts)
+            prompt, visible_fields = builder.render_agent_prompt(
+                spec.version,
+                prompt_eval_row,
+                v0_output=v0_output,
+            )
             output_text, call_metadata = client.generate_with_metadata(
                 prompt=prompt,
                 model_config=spec.model_config,
@@ -126,39 +157,59 @@ def run_models(
             run_status = "failed"
             error_message = str(exc)
         output_by_key[(spec.sample_id, spec.model_alias, spec.version)] = output_text
-        rows.append(
-            {
-                "run_id": spec.run_id,
-                "sample_id": spec.sample_id,
-                "source_dataset": eval_row.get("source_dataset", ""),
-                "task_category": eval_row.get("task_category", ""),
-                "model_alias": spec.model_alias,
-                "model_vendor": spec.model_config.get("vendor", ""),
-                "model_family": spec.model_config.get("family", ""),
-                "provider": spec.model_config.get("provider", ""),
-                "model_name": spec.model_config.get("model", ""),
-                "version": spec.version,
-                "workflow_condition": workflow_condition,
-                "workflow_name": workflow_name,
-                "run_scope": spec.run_scope,
-                "prompt_id": spec.version,
-                "input_visible_fields": json_dumps(visible_fields),
-                "output_text": output_text,
-                "run_status": run_status,
-                "error_message": error_message,
-                "output_length": len(output_text),
-                "latency_ms": int(call_metadata.get("latency_ms", 0)),
-                "input_tokens": int(call_metadata.get("input_tokens", 0)),
-                "output_tokens": int(call_metadata.get("output_tokens", 0)),
-                "total_tokens": int(call_metadata.get("total_tokens", 0)),
-                "estimated_cost": float(call_metadata.get("estimated_cost", 0.0)),
-                "cost_currency": call_metadata.get("cost_currency", "USD"),
-                "usage_source": call_metadata.get("usage_source", ""),
-                "created_at": utc_now_iso(),
-            }
-        )
+        run_record = {
+            "run_id": spec.run_id,
+            "sample_id": spec.sample_id,
+            "source_dataset": eval_row.get("source_dataset", ""),
+            "task_category": eval_row.get("task_category", ""),
+            "model_alias": spec.model_alias,
+            "model_vendor": spec.model_config.get("vendor", ""),
+            "model_family": spec.model_config.get("family", ""),
+            "provider": spec.model_config.get("provider", ""),
+            "model_name": spec.model_config.get("model", ""),
+            "version": spec.version,
+            "workflow_condition": workflow_condition,
+            "workflow_name": workflow_name,
+            "run_scope": spec.run_scope,
+            "prompt_id": spec.version,
+            "input_visible_fields": json_dumps(visible_fields),
+            "output_text": output_text,
+            "run_status": run_status,
+            "error_message": error_message,
+            "output_length": len(output_text),
+            "latency_ms": int(call_metadata.get("latency_ms", 0)),
+            "input_tokens": int(call_metadata.get("input_tokens", 0)),
+            "output_tokens": int(call_metadata.get("output_tokens", 0)),
+            "total_tokens": int(call_metadata.get("total_tokens", 0)),
+            "estimated_cost": float(call_metadata.get("estimated_cost", 0.0)),
+            "cost_currency": call_metadata.get("cost_currency", "USD"),
+            "usage_source": call_metadata.get("usage_source", ""),
+            "rag_enabled": bool(rag_enabled and spec.version in rag_versions),
+            "rag_source_ids": json_dumps([context.get("source_id", "") for context in contexts]),
+            "created_at": utc_now_iso(),
+        }
+        rows.append(run_record)
+        if rag_enabled and spec.version in rag_versions:
+            retrieval_rows.append(build_retrieval_log_row(run_row=run_record, contexts=contexts, bundle=bundle))
+            context_rows.extend(build_context_rows(run_row=run_record, contexts=contexts))
+            citation_rows.append(
+                verify_output_citations(run_row=run_record, contexts=contexts, output_text=output_text)
+            )
 
     df = pd.DataFrame(rows)
-    Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+    output_path = Path(output_path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(output_path, index=False, encoding="utf-8-sig")
+    if rag_enabled:
+        pd.DataFrame(retrieval_rows).to_csv(
+            output_path.parent / "retrieval_log.csv",
+            index=False,
+            encoding="utf-8-sig",
+        )
+        pd.DataFrame(context_rows).to_csv(output_path.parent / "rag_contexts.csv", index=False, encoding="utf-8-sig")
+        pd.DataFrame(citation_rows).to_csv(
+            output_path.parent / "citation_verification.csv",
+            index=False,
+            encoding="utf-8-sig",
+        )
     return df

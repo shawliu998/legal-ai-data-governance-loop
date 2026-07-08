@@ -1,6 +1,6 @@
 import pandas as pd
 
-from legal_eval_harness.calibration import build_human_review_sample
+from legal_eval_harness.calibration import build_human_review_sample, summarize_human_calibration
 from legal_eval_harness.release_gate import build_release_gate
 from legal_eval_harness.utils import json_dumps
 
@@ -142,6 +142,92 @@ def test_human_review_sample_includes_critical_rows(tmp_path):
     assert "r1" in set(sample["run_id"])
     assert sample.loc[sample["run_id"] == "r1", "critical_for_review"].item()
     assert "human_notes" in sample.columns
+
+
+def test_human_review_sample_includes_citation_and_ensemble_signals(tmp_path):
+    runs, scores, routing = _frames()
+    citation = pd.DataFrame(
+        [
+            {
+                "run_id": "r2",
+                "citation_fidelity_label": "unsupported_claim",
+                "fabricated_citation_count": 0,
+                "unsupported_claim_count": 2,
+                "claim_count": 3,
+                "claim_checks": "[]",
+            }
+        ]
+    )
+    ensemble = pd.DataFrame(
+        [
+            {
+                "run_id": "r3",
+                "ensemble_status": "needs_human_calibration",
+                "final_data_route": "human_review",
+                "requires_arbitration": True,
+                "requires_human_calibration": True,
+                "disagreement_reasons": "route_mismatch",
+            }
+        ]
+    )
+
+    sample = build_human_review_sample(
+        runs=runs,
+        scores=scores,
+        routing=routing,
+        citation_verification=citation,
+        ensemble_summary=ensemble,
+        output_path=tmp_path / "human_review.csv",
+        sample_rate=0.2,
+        min_samples=1,
+    )
+
+    assert "r2" in set(sample["run_id"])
+    assert "r3" in set(sample["run_id"])
+    assert "human_citation_support" in sample.columns
+    assert "human_route_override" in sample.columns
+
+
+def test_human_review_sample_can_add_random_calibration_rows(tmp_path):
+    runs, scores, routing = _frames()
+    sample = build_human_review_sample(
+        runs=runs,
+        scores=scores,
+        routing=routing,
+        output_path=tmp_path / "human_review.csv",
+        sample_rate=0.2,
+        min_samples=1,
+        random_calibration_min=2,
+    )
+
+    assert set(sample["run_id"]) == {"r1", "r2", "r3"}
+    assert sample.loc[sample["run_id"] == "r1", "review_bucket"].item() == "critical_failure"
+    assert set(sample.loc[sample["run_id"].isin(["r2", "r3"]), "review_bucket"]) == {"random_calibration"}
+
+
+def test_human_calibration_summary_counts_reviewed_rows(tmp_path):
+    reviewed = pd.DataFrame(
+        [
+            {
+                "run_id": "r1",
+                "human_pass_fail": "fail",
+                "human_critical_failure": "yes",
+                "human_citation_support": "unsupported",
+                "human_route_override": "human_review",
+                "human_data_action": "badcase",
+                "judge_human_agreement": "agree",
+            },
+            {"run_id": "r2", "human_pass_fail": "", "judge_human_agreement": ""},
+        ]
+    )
+
+    summary = summarize_human_calibration(reviewed=reviewed, output_path=tmp_path / "summary.csv")
+
+    row = summary.iloc[0]
+    assert row["completed_review_rows"] == 1
+    assert row["confirmed_critical_failure_count"] == 1
+    assert row["confirmed_citation_issue_count"] == 1
+    assert row["judge_human_agreement_rate"] == 1.0
 
 
 def test_release_gate_blocks_unsafe_action(tmp_path):

@@ -1,14 +1,12 @@
 # Legal Agent Eval Harness
 
-Two-day portfolio prototype for legal AI data-loop governance.
-
-Target role: professional-domain AI data product manager.
+A leakage-safe evaluation harness for legal AI data governance and error-to-data routing.
 
 Core problem: how to turn risky legal Agent outputs into reusable data assets for `eval`, `sft`, `preference`, `badcase`, and `human_review`.
 
-Final artifacts: PRD, labeling SOP, leakage-safe dataset, rubric-based Judge, normalized run log, data router, tests, dashboard, and interview-ready case study.
+Core artifacts: PRD, labeling SOP, leakage-safe dataset, rubric-based Judge, normalized run log, data router, tests, dashboard, and technical case study.
 
-The project is intentionally scoped: no RAG, no Web UI, no database, and no automatic legal citation retrieval. It focuses on data-product capabilities: leakage-safe datasets, multi-task legal evaluation, rubric-based judging, human review queueing, error taxonomy, error-to-data routing, and dashboard-driven data production decisions.
+The project is intentionally scoped: controlled local RAG, no Web UI, no database, and no open-web legal retrieval. It focuses on data-product capabilities: leakage-safe datasets, multi-task legal evaluation, rubric-based judging, retrieval/citation verification, human review queueing, error taxonomy, error-to-data routing, and dashboard-driven data production decisions.
 
 It is not a legal advice system and not a model leaderboard.
 
@@ -24,8 +22,7 @@ Three dashboard takeaways:
 
 - Product PRD: [docs/product_prd.md](docs/product_prd.md)
 - Labeling SOP: [docs/labeling_sop.md](docs/labeling_sop.md)
-- Portfolio narrative: [docs/portfolio_case_study.md](docs/portfolio_case_study.md)
-- Resume and pitch notes: [docs/resume_pitch.md](docs/resume_pitch.md)
+- Technical case study: [docs/case_study.md](docs/case_study.md)
 - API smoke run plan: [docs/api_smoke_run.md](docs/api_smoke_run.md)
 - Reproducible dashboard: [outputs/executive_dashboard.xlsx](outputs/executive_dashboard.xlsx)
 - Dataset design: [data/eval_input.csv](data/eval_input.csv), [data/gold_labels.csv](data/gold_labels.csv), [data/rubric_items.csv](data/rubric_items.csv)
@@ -77,7 +74,7 @@ Primary files:
 - `data/rubric_items.csv`
 - `data/sample_metadata.csv`
 
-The normalized CSV files are committed because they show the data design directly. The upgraded 40-core workbook is kept as a source artifact; the old 20-sample workbook is excluded from the portfolio package.
+The normalized CSV files are committed because they show the data design directly. The upgraded 40-core workbook is kept as a source artifact; the old 20-sample workbook is excluded from the default package.
 
 ## Setup
 
@@ -128,7 +125,7 @@ Generated outputs:
 - `outputs/data_routing.csv`
 - `outputs/executive_dashboard.xlsx`
 
-The full generated CSV outputs are reproducible and intentionally ignored by Git. The dashboard workbook is committed as the interview-ready artifact.
+The full generated CSV outputs are reproducible and intentionally ignored by Git. The dashboard workbook is committed as a reviewable output artifact.
 
 The Excel dashboard includes:
 
@@ -142,7 +139,7 @@ The Excel dashboard includes:
 
 For full reproduction steps and output checks, see [docs/runbook.md](docs/runbook.md).
 
-For the portfolio/interview narrative, including selected badcase cards, resume bullets, and artifact submission guidance, see [docs/portfolio_case_study.md](docs/portfolio_case_study.md).
+For design rationale and selected badcase cards, see [docs/case_study.md](docs/case_study.md).
 
 ## API Mode
 
@@ -169,7 +166,7 @@ For a higher-difficulty real-practice pilot, generate a separate licensed adapte
   --document-limit 4
 ```
 
-Then validate or run it without changing the default 85-sample portfolio dataset:
+Then validate or run it without changing the default 85-sample diagnostic dataset:
 
 ```bash
 .venv/bin/python -m legal_eval_harness.cli validate \
@@ -301,18 +298,66 @@ Run the current mock-compatible workflow mapping:
   --output-dir outputs/product_boundary_pilot_mock
 ```
 
+Run cross-judge calibration on the same model outputs:
+
+```bash
+.venv/bin/python -m legal_eval_harness.cli run-judge-ensemble \
+  --input data/product_boundary_pilot/dataset_manifest.yaml \
+  --config config.qianfan_product_boundary_runnable.yaml \
+  --runs outputs/product_boundary_pilot_mock/model_run_log.csv \
+  --mode mock \
+  --output-dir outputs/product_boundary_pilot_mock
+```
+
+The ensemble layer uses DeepSeek V4 Pro and GLM-5.2 as primary judges, excludes self-evaluation, and uses ERNIE 5.1 as an arbiter when score, critical-failure, or routing labels disagree.
+
 Current runnable workflow mapping:
 
 - `V0`: `w0_closed_book`
 - `V1`: `w1_structured_legal_prompt`
-- `V4`: `w2_rag_grounded` using provided context
+- `V4`: `w2_rag_grounded` using local corpus retrieval and retrieved context injection
 - `V3`: `w3_risk_control_workflow`
 - `V5`: `w4_clarification_first`
+
+RAG component outputs:
+
+- `retrieval_log.csv`: retrieved source IDs, expected-source recall, and context precision.
+- `rag_contexts.csv`: per-run source chunks injected into V3/V4 prompts.
+- `citation_verification.csv`: cited source IDs, fabricated citation IDs, claim-level support checks, unsupported-claim counts, and citation-fidelity labels.
+
+Build a legal-review calibration queue:
+
+```bash
+.venv/bin/python -m legal_eval_harness.cli sample-human-review \
+  --runs outputs/product_boundary_pilot_mock/model_run_log.csv \
+  --scores outputs/product_boundary_pilot_mock/judge_scores.csv \
+  --routing outputs/product_boundary_pilot_mock/data_routing.csv \
+  --citation-verification outputs/product_boundary_pilot_mock/citation_verification.csv \
+  --ensemble-summary outputs/product_boundary_pilot_mock/judge_ensemble_summary.csv \
+  --output outputs/product_boundary_pilot_mock/human_review_calibration.csv \
+  --sample-rate 0.2 \
+  --min-samples 120
+```
+
+When critical rows dominate the review queue, build an additional stratified calibration file for judge-human agreement analysis:
+
+```bash
+.venv/bin/python -m legal_eval_harness.cli sample-human-review \
+  --runs outputs/product_boundary_pilot_mock/model_run_log.csv \
+  --scores outputs/product_boundary_pilot_mock/judge_scores.csv \
+  --routing outputs/product_boundary_pilot_mock/data_routing.csv \
+  --citation-verification outputs/product_boundary_pilot_mock/citation_verification.csv \
+  --ensemble-summary outputs/product_boundary_pilot_mock/judge_ensemble_summary.csv \
+  --output outputs/product_boundary_pilot_mock/human_review_calibration_stratified.csv \
+  --sample-rate 0.2 \
+  --min-samples 120 \
+  --random-calibration-min 100
+```
 
 This is not a simple leaderboard. It evaluates model-workflow configurations under realistic legal product conditions to decide product routing, release readiness, and next-round data production.
 
 ## Project Boundary
 
-This project evaluates model behavior and routes data. It does not provide legal advice, does not decide final legal correctness, does not retrieve statutes, and does not rank models.
+This project evaluates model behavior and routes data. It does not provide legal advice, does not decide final legal correctness, does not perform open-web legal retrieval, and does not rank models.
 
 The main product question is: given legal AI outputs, which failures should become eval samples, SFT samples, preference pairs, badcases, or human review items?

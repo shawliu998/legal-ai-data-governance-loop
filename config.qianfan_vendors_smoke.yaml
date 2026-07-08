@@ -4,7 +4,7 @@ project:
   boundary: Qianfan-hosted multi-vendor deployment-eval pilot; not legal advice; not model ranking
   jurisdiction: 中国大陆
   law_snapshot_date: "2026-07-07"
-  legal_advice_boundary: 仅用于法律 AI 诊断评测和数据治理原型，不构成法律咨询或最终法律意见。
+  legal_advice_boundary: 仅用于法律 AI 诊断评测和数据治理工作流，不构成法律咨询或最终法律意见。
 
 models:
   - alias: Qianfan_ERNIE

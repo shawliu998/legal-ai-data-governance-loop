@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "legal-agent-eval-harness"
 version = "0.3.0"
-description = "MVP legal AI data-loop governance prototype for diagnostic agent evaluation."
+description = "Legal AI data-loop governance harness for diagnostic agent evaluation."
 requires-python = ">=3.11"
 dependencies = [
   "pandas",

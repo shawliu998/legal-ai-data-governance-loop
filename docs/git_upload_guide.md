@@ -1,13 +1,13 @@
 # GitHub Upload Guide
 
-这份文档说明如何把当前投递版项目上传到 GitHub。
+这份文档说明如何把当前项目上传到 GitHub。
 
 当前本地状态：
 
-- 当前分支：`codex/legal-data-governance-mvp`
+- 当前分支：`codex/legal-data-governance-eval`
 - 当前仓库还没有 commit
 - 当前仓库还没有 remote
-- 投递包文件已经 staged
+- 发布所需文件已经 staged
 - 完整输出 CSV 和旧 20 条 workbook 已通过 `.gitignore` 排除
 
 ## 1. 提交前检查
@@ -71,7 +71,7 @@ git check-ignore -v \
 创建 commit：
 
 ```bash
-git commit -m "Build legal AI data governance eval harness MVP"
+git commit -m "Build legal AI data governance eval harness"
 ```
 
 ## 3. 在 GitHub 创建空仓库
@@ -79,7 +79,7 @@ git commit -m "Build legal AI data governance eval harness MVP"
 在 GitHub 网页新建 repository，建议：
 
 - Repository name: `legal-ai-data-governance-eval-harness`
-- Visibility: public 或 private 均可；投递简历建议 public
+- Visibility: public 或 private 均可
 - 不要勾选 `Add a README file`
 - 不要勾选 `.gitignore`
 - 不要选择 license
@@ -104,7 +104,7 @@ git remote -v
 
 ## 5. Push 到 GitHub
 
-如果这是最终投递仓库，建议把当前分支改名为 `main` 后推送：
+如果这是最终发布仓库，建议把当前分支改名为 `main` 后推送：
 
 ```bash
 git branch -M main
@@ -114,17 +114,17 @@ git push -u origin main
 如果你想保留当前 Codex 工作分支，也可以直接推送当前分支：
 
 ```bash
-git push -u origin codex/legal-data-governance-mvp
+git push -u origin codex/legal-data-governance-eval
 ```
 
-投递简历时，最简单的方式是使用 `main` 分支。
+对外共享仓库时，最简单的方式是使用 `main` 分支。
 
 ## 6. 上传后检查
 
 打开 GitHub 仓库，优先检查：
 
 - README 首屏是否能说明项目不是法律问答系统、不是模型排行榜
-- `docs/portfolio_case_study.md` 是否能打开
+- `docs/case_study.md` 是否能打开
 - `outputs/executive_dashboard.xlsx` 是否存在
 - `data/*.csv` 是否存在
 - `outputs/*.csv` 是否没有被提交
@@ -132,26 +132,26 @@ git push -u origin codex/legal-data-governance-mvp
 
 可以在 GitHub README 中优先打开：
 
-1. `docs/portfolio_case_study.md`
+1. `docs/case_study.md`
 2. `outputs/executive_dashboard.xlsx`
 3. `docs/runbook.md`
 4. `data/eval_input.csv`, `data/gold_labels.csv`, `data/rubric_items.csv`
 
-## 7. 简历链接写法
+## 7. Repository Summary
 
 中文：
 
 ```text
 项目：Legal AI Data Governance Eval Harness
 链接：https://github.com/<your-username>/legal-ai-data-governance-eval-harness
-说明：构建法律 AI 数据闭环治理原型，覆盖 gold label 防泄漏、多任务 rubric 评测、normalized run log、错误标签标准化、人审队列和 badcase-to-data routing。
+说明：构建法律 AI 数据闭环治理评测工作流，覆盖 gold label 防泄漏、多任务 rubric 评测、normalized run log、错误标签标准化、人审队列和 badcase-to-data routing。
 ```
 
 英文：
 
 ```text
 Legal AI Data Governance Eval Harness
-Built a leakage-safe legal AI evaluation and data-loop governance prototype with 85 samples, 380 rubric items, 546 normalized model runs, task-specific LLM judges, standardized error taxonomy, human review queueing, and error-to-data routing.
+Built a leakage-safe legal AI evaluation and data-loop governance harness with 85 samples, 380 rubric items, 546 normalized model runs, task-specific LLM judges, standardized error taxonomy, human review queueing, and error-to-data routing.
 ```
 
 ## 8. 常见问题

@@ -2,7 +2,7 @@
 
 This runbook explains how to reproduce the Legal AI Data Governance & Eval Harness from a fresh checkout.
 
-The project is a diagnostic data-loop prototype. It is not a legal advice system, not a model leaderboard, and not an automatic legal correctness engine.
+The project is a diagnostic data-loop workflow. It is not a legal advice system, not a model leaderboard, and not an automatic legal correctness engine.
 
 ## 1. Environment Setup
 
@@ -85,7 +85,7 @@ Gold-only fields must not appear in `Eval_Input`:
 
 ## 4. Run the Mock Pipeline
 
-Mock mode is the default portfolio demo path because it is deterministic and does not require API keys.
+Mock mode is the default reproducible path because it is deterministic and does not require API keys.
 
 ```bash
 .venv/bin/python -m legal_eval_harness.cli all \
@@ -124,7 +124,7 @@ Key sheets:
 - `Executive_Dashboard`: one-page data decision summary.
 - `Dataset_Coverage`: source dataset and task category coverage.
 - `Task_Category_Summary`: behavior patterns by legal task type.
-- `Badcase_Cards`: interview-ready examples for human review or data routing.
+- `Badcase_Cards`: concrete examples for human review or data routing.
 - `Data_Routing_Summary`: counts by route and task category.
 - `Error_Taxonomy`: standardized coarse error tags.
 - `Data_Route_Taxonomy`: fixed route definitions.
@@ -173,7 +173,7 @@ Then run:
   --output-dir outputs
 ```
 
-API mode is optional. For a two-day portfolio submission, mock mode is enough to demonstrate the full data loop.
+API mode is optional. Mock mode is enough to validate the full data loop without external provider variance.
 
 For a small DeepSeek-compatible smoke test, use `config.deepseek.smoke.yaml`. It selects 12 samples and 30 model runs to validate provider integration without turning the project into a model leaderboard. See `docs/api_smoke_run.md`.
 
@@ -216,7 +216,7 @@ Run the pilot pipeline:
   --output-dir outputs/practice_benchmark_pilot
 ```
 
-This pilot is intentionally separate from `dataset_manifest.yaml` so the default portfolio dataset remains stable.
+This pilot is intentionally separate from `dataset_manifest.yaml` so the default diagnostic dataset remains stable.
 
 ## 9. Real API Deployment-Eval Smoke Run
 
@@ -380,7 +380,7 @@ Validate it:
 
 Expected shape:
 
-- 32 cases
+- 50 cases
 - 6 `normal_practice`
 - 6 `hard_legal_reasoning`
 - 5 `risk_calibration`
@@ -400,8 +400,8 @@ Prepare normalized CSV files and a manifest for the existing runner:
 
 Expected normalized shape:
 
-- 32 samples
-- 128 rubric rows
+- 50 samples
+- 200 rubric rows
 - task categories mapped into the current runner vocabulary:
   - `consultation`
   - `case_analysis`
@@ -418,14 +418,14 @@ Validate the runnable manifest:
 Expected planned run count:
 
 ```text
-32 cases × 5 model slots × 5 current workflow versions = 800 normalized runs
+50 cases × 5 model slots × 5 current workflow versions = 1250 normalized runs
 ```
 
 Current runnable workflow mapping:
 
 - `V0` -> `w0_closed_book`
 - `V1` -> `w1_structured_legal_prompt`
-- `V4` -> `w2_rag_grounded` using provided context
+- `V4` -> `w2_rag_grounded` using local corpus retrieval and retrieved context injection
 - `V3` -> `w3_risk_control_workflow`
 - `V5` -> `w4_clarification_first`
 
@@ -437,6 +437,72 @@ Run the mock-compatible product-boundary pipeline:
   --config config.qianfan_product_boundary_runnable.yaml \
   --mode mock \
   --output-dir outputs/product_boundary_pilot_mock
+```
+
+RAG is enabled in `config.qianfan_product_boundary_runnable.yaml` for `V4` and `V3`. The corpus is `data/rag_corpus/legal_sources.csv`.
+
+Expected RAG outputs:
+
+- `retrieval_log.csv`: retrieved source IDs, expected source IDs, recall, precision, and retrieval status.
+- `rag_contexts.csv`: source chunks injected into each RAG-enabled run.
+- `citation_verification.csv`: cited source IDs, valid source IDs, fabricated source IDs, claim-level support checks, unsupported-claim counts, and citation-fidelity label.
+
+Run judge ensemble calibration after `model_run_log.csv` exists:
+
+```bash
+.venv/bin/python -m legal_eval_harness.cli run-judge-ensemble \
+  --input data/product_boundary_pilot/dataset_manifest.yaml \
+  --config config.qianfan_product_boundary_runnable.yaml \
+  --runs outputs/product_boundary_pilot_mock/model_run_log.csv \
+  --mode mock \
+  --output-dir outputs/product_boundary_pilot_mock
+```
+
+Expected ensemble outputs:
+
+- `judge_ensemble_scores.csv`: one row per output and judge, with answer model, judge model, self-eval exclusion, and raw judge payload.
+- `judge_disagreements.csv`: score gap, critical-failure mismatch, route mismatch, arbitration trigger, and arbiter used.
+- `judge_ensemble_summary.csv`: per-run stable/arbitrated/human-calibration status and final risk route.
+
+For API mode, set the Qianfan model env vars in `config.qianfan_product_boundary_runnable.yaml`. The default design uses DeepSeek V4 Pro and GLM-5.2 as primary judges, ERNIE 5.1 as arbiter, and blocks judge self-evaluation.
+
+Build the legal-review calibration queue:
+
+```bash
+.venv/bin/python -m legal_eval_harness.cli sample-human-review \
+  --runs outputs/product_boundary_pilot_mock/model_run_log.csv \
+  --scores outputs/product_boundary_pilot_mock/judge_scores.csv \
+  --routing outputs/product_boundary_pilot_mock/data_routing.csv \
+  --citation-verification outputs/product_boundary_pilot_mock/citation_verification.csv \
+  --ensemble-summary outputs/product_boundary_pilot_mock/judge_ensemble_summary.csv \
+  --output outputs/product_boundary_pilot_mock/human_review_calibration.csv \
+  --sample-rate 0.2 \
+  --min-samples 120
+```
+
+If critical rows already exceed the target sample rate, the file intentionally grows beyond 20%. Critical failures are review obligations. For judge calibration and evaluation reporting, also create a stratified file that keeps all critical rows and adds routine non-critical samples across task, model, workflow, and risk strata:
+
+```bash
+.venv/bin/python -m legal_eval_harness.cli sample-human-review \
+  --runs outputs/product_boundary_pilot_mock/model_run_log.csv \
+  --scores outputs/product_boundary_pilot_mock/judge_scores.csv \
+  --routing outputs/product_boundary_pilot_mock/data_routing.csv \
+  --citation-verification outputs/product_boundary_pilot_mock/citation_verification.csv \
+  --ensemble-summary outputs/product_boundary_pilot_mock/judge_ensemble_summary.csv \
+  --output outputs/product_boundary_pilot_mock/human_review_calibration_stratified.csv \
+  --sample-rate 0.2 \
+  --min-samples 120 \
+  --random-calibration-min 100
+```
+
+As the legal reviewer, fill `human_citation_support`, `human_unsupported_claims`, `human_route_override`, `human_data_action`, and `human_notes`. These fields are intentionally separate from automated judge labels so judge-human agreement can be measured later.
+
+After review, summarize agreement and confirmed issues:
+
+```bash
+.venv/bin/python -m legal_eval_harness.cli summarize-human-calibration \
+  --input outputs/product_boundary_pilot_mock/human_review_calibration.csv \
+  --output outputs/product_boundary_pilot_mock/human_calibration_summary.csv
 ```
 
 Mock release-gate decisions are only pipeline diagnostics. Do not interpret them as real deployment readiness until API outputs and human calibration are available.
@@ -476,9 +542,9 @@ Allowed values:
 eval, sft, preference, badcase, human_review
 ```
 
-## 13. Demo Script
+## 13. Walkthrough Script
 
-For interview discussion:
+For review discussion:
 
 1. Start with `Executive_Dashboard`.
 2. Show `Dataset_Coverage` to explain the 40 core + 45 extended sample design.

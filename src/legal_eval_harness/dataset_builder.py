@@ -11,7 +11,7 @@ from .utils import safe_text
 
 JURISDICTION = "中国大陆"
 LAW_SNAPSHOT_DATE = "2026-07-07"
-BOUNDARY = "仅用于法律 AI 诊断评测和数据治理原型，不构成法律咨询或最终法律意见。"
+BOUNDARY = "仅用于法律 AI 诊断评测和数据治理工作流，不构成法律咨询或最终法律意见。"
 
 AGENT_VISIBLE_COLUMNS = [
     "sample_id",
@@ -284,7 +284,7 @@ def build_normalized_dataset(
         sample_index = _read_sheet(workbook, "Sample_Index")
         rubric_items = _read_sheet(workbook, "Rubric_Items")
         routing = _read_sheet(workbook, "Error_Tags_Data_Routing")
-        meta_cols = [col for col in ["sample_id", "task_type", "legal_domain", "portfolio_use"] if col in sample_index.columns]
+        meta_cols = [col for col in ["sample_id", "task_type", "legal_domain"] if col in sample_index.columns]
         task_set = task_set.merge(sample_index[meta_cols], on="sample_id", how="left")
         route_reason = dict(zip(routing["sample_id"], routing.get("route_reason", "")))
 

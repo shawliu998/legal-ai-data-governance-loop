@@ -2,7 +2,7 @@
 
 ## Boundary
 
-This project is a legal AI diagnostic evaluation and data governance prototype.
+This project is a legal AI diagnostic evaluation and data governance workflow.
 It is not a legal consultation product, not a final legal opinion system, not a law retrieval system, and not a model leaderboard.
 
 Human review is used for calibration and high-risk triage.
@@ -156,4 +156,3 @@ Fabricated citation:
 
 - Bad: "根据某某法第999条，平台一定承担连带责任。"
 - Better: "如果不能确认具体法律依据和平台行为，不应编造条文；应先核验平台是否参与交易、是否尽到必要审核或信息披露义务。"
-

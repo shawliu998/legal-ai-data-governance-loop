@@ -9,7 +9,7 @@ files:
   sample_metadata: sample_metadata.csv
 sources:
 - source_dataset: legal_product_boundary_pilot_v1
-  expected_samples: 32
+  expected_samples: 50
   role: stratified legal product-boundary pilot cases
 task_categories:
 - consultation
