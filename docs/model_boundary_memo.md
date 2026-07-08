@@ -16,6 +16,8 @@ The real API pilot used 12 legal product-boundary cases, 5 Qianfan-accessible mo
 
 This memo is a product boundary memo, not a leaderboard.
 
+Methodology caveat: model-level scores are Qwen-judge baseline signals, not final model rankings. Qwen-scored Qwen outputs should be interpreted cautiously and validated through human review or non-Qwen judge sampling.
+
 1. Best model/workflow for routine consultation: Qwen3.5-27B or ERNIE/Kimi under W1 structured legal prompt, limited to low-risk consultation and no citation defect.
 2. Best model/workflow for clarification and risk intake: W5 clarification-first workflow, especially when material facts are missing or the user asks for risky procedural strategy.
 3. Best model/workflow for citation-grounded answers: W2/W3-style grounding is required for source-specific tasks, but the pilot showed source-boundary failures; grounded answers need citation verification and human review before release.
@@ -31,7 +33,7 @@ This memo is a product boundary memo, not a leaderboard.
 | Judge parse success | 300 / 300 |
 | Priority human review rows | 80 |
 | Human pass / partial / fail | 4 / 27 / 49 |
-| Judge-human agreement | 92.5% |
+| Judge-human agreement | 92.5% on priority-enriched sample |
 | Confirmed citation or evidence-support issues | 45 |
 | Human route overrides | 47 |
 

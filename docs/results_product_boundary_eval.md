@@ -72,23 +72,24 @@ The API pilot was run as split jobs rather than one monolithic `all` command, be
 
 ### Completed Artifacts
 
-| Artifact | Path |
-| --- | --- |
-| Model outputs | `outputs/product_boundary_api_pilot_v1/model_run_log.csv` |
-| Retrieval log | `outputs/product_boundary_api_pilot_v1/retrieval_log.csv` |
-| RAG contexts | `outputs/product_boundary_api_pilot_v1/rag_contexts.csv` |
-| Citation verification | `outputs/product_boundary_api_pilot_v1/citation_verification.csv` |
-| Claim entailment triage | `outputs/product_boundary_api_pilot_v1/claim_entailment.csv` |
-| Claim entailment summary | `outputs/product_boundary_api_pilot_v1/claim_entailment_summary.csv` |
-| Qwen judge scores | `outputs/product_boundary_api_pilot_v1/judge_scores.csv` |
-| Data routing | `outputs/product_boundary_api_pilot_v1/data_routing.csv` |
-| Release gate | `outputs/product_boundary_api_pilot_v1/release_gate.csv` |
-| Executive dashboard | `outputs/product_boundary_api_pilot_v1/executive_dashboard.xlsx` |
-| Human review queue | `outputs/product_boundary_api_pilot_v1/human_review_calibration.csv` |
-| Priority human review sample | `outputs/product_boundary_api_pilot_v1/human_review_priority_80.csv` |
-| Reviewed priority sample | `outputs/product_boundary_api_pilot_v1/human_review_priority_80_reviewed.csv` |
-| Chinese reviewed workbook | `outputs/product_boundary_api_pilot_v1/human_review_priority_80_reviewed_zh.xlsx` |
-| Human calibration summary | `outputs/product_boundary_api_pilot_v1/human_calibration_summary_priority_80.csv` |
+| Artifact | Path | GitHub status |
+| --- | --- | --- |
+| Lightweight evidence package | `outputs/product_boundary_api_pilot_v1/` | committed |
+| Metrics summary | `outputs/product_boundary_api_pilot_v1/metrics_summary.csv` | committed |
+| Release-gate summary | `outputs/product_boundary_api_pilot_v1/release_gate_summary.csv` | committed |
+| Claim entailment summary | `outputs/product_boundary_api_pilot_v1/claim_entailment_summary.csv` | committed |
+| Human calibration summary | `outputs/product_boundary_api_pilot_v1/human_calibration_summary_priority_80.csv` | committed |
+| Redacted sample outputs | `outputs/product_boundary_api_pilot_v1/redacted_sample_outputs_20.csv` | committed |
+| Full model outputs | `outputs/product_boundary_api_pilot_v1/model_run_log.csv` | local / ignored |
+| Retrieval log | `outputs/product_boundary_api_pilot_v1/retrieval_log.csv` | local / ignored |
+| RAG contexts | `outputs/product_boundary_api_pilot_v1/rag_contexts.csv` | local / ignored |
+| Citation verification | `outputs/product_boundary_api_pilot_v1/citation_verification.csv` | local / ignored |
+| Full claim entailment triage | `outputs/product_boundary_api_pilot_v1/claim_entailment.csv` | local / ignored |
+| Qwen judge scores | `outputs/product_boundary_api_pilot_v1/judge_scores.csv` | local / ignored |
+| Data routing | `outputs/product_boundary_api_pilot_v1/data_routing.csv` | local / ignored |
+| Release gate | `outputs/product_boundary_api_pilot_v1/release_gate.csv` | local / ignored |
+| Executive dashboard | `outputs/product_boundary_api_pilot_v1/executive_dashboard.xlsx` | local / ignored |
+| Human review queue and workbooks | `outputs/product_boundary_api_pilot_v1/human_review_*` | local / ignored except summary |
 
 ### Run Integrity
 
@@ -105,6 +106,8 @@ The API pilot was run as split jobs rather than one monolithic `all` command, be
 ### Model-Level Signals
 
 These are deployment signals from a Qwen3.5-27B judge baseline, not a public leaderboard.
+
+Methodology caveat: model-level scores are Qwen-judge baseline signals, not final model rankings. Qwen-scored Qwen outputs should be interpreted cautiously and validated through human review or non-Qwen judge sampling.
 
 | Model | Avg score | High-risk rate | Human-review rate | Avg latency |
 | --- | ---: | ---: | ---: | ---: |
@@ -177,7 +180,7 @@ The priority legal-review sample focuses on high-risk outputs, citation or claim
 | Human pass | 4 |
 | Human partial pass | 27 |
 | Human fail | 49 |
-| Judge-human agreement | 92.5% |
+| Judge-human agreement | 92.5% on priority-enriched sample |
 | Confirmed critical failures | 76 |
 | Confirmed citation or evidence-support issues | 45 |
 | Human route overrides | 47 |

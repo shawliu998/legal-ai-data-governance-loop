@@ -38,7 +38,7 @@ The main finding was not simply "which model won." W1 structured prompt and W5 c
 | Judge parse success | 300 / 300 |
 | Priority human review rows | 80 |
 | Human pass / partial / fail | 4 / 27 / 49 |
-| Judge-human agreement | 92.5% |
+| Judge-human agreement | 92.5% on priority-enriched sample |
 | Confirmed citation or evidence-support issues | 45 |
 | Human route overrides | 47 |
 

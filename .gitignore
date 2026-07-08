@@ -22,5 +22,14 @@ outputs/product_boundary_pilot/
 outputs/product_boundary_pilot_mock/
 outputs/product_boundary_api_smoke_1case/
 outputs/product_boundary_api_pilot_v1/
+!outputs/product_boundary_api_pilot_v1/
+outputs/product_boundary_api_pilot_v1/*
+!outputs/product_boundary_api_pilot_v1/README.md
+!outputs/product_boundary_api_pilot_v1/artifact_manifest.yaml
+!outputs/product_boundary_api_pilot_v1/metrics_summary.csv
+!outputs/product_boundary_api_pilot_v1/release_gate_summary.csv
+!outputs/product_boundary_api_pilot_v1/human_calibration_summary_priority_80.csv
+!outputs/product_boundary_api_pilot_v1/claim_entailment_summary.csv
+!outputs/product_boundary_api_pilot_v1/redacted_sample_outputs_20.csv
 
 data/practice_benchmark_pilot/source/

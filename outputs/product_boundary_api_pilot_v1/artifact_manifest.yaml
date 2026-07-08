@@ -1,0 +1,40 @@
+package: "product_boundary_api_pilot_v1_lightweight_evidence"
+purpose: "GitHub-friendly evidence package for the real Qianfan API pilot without committing all raw model outputs."
+source_run:
+  cases: 12
+  models: 5
+  workflows: 5
+  model_outputs: 300
+  judge_rows: 300
+  judge_parse_success: 300
+  priority_human_review_rows: 80
+methodology_caveats:
+  - "Model-level scores are Qwen-judge baseline signals, not final model rankings."
+  - "Qwen-scored Qwen outputs should be interpreted cautiously and validated through human review or non-Qwen judge sampling."
+  - "The 80-row human review sample is priority-enriched for high-risk and likely blocker cases, not a random sample of all 300 outputs."
+  - "Claim-level entailment labels are conservative deterministic triage signals for review queues and release gates, not final legal conclusions."
+  - "Raw full model outputs remain local/ignored; this package commits summaries and redacted samples only."
+included_artifacts:
+  -
+    path: "README.md"
+    description: "Evidence package overview and caveats."
+  -
+    path: "artifact_manifest.yaml"
+    description: "Machine-readable artifact list and methodology caveats."
+  -
+    path: "metrics_summary.csv"
+    description: "Key run, judge, routing, RAG, claim entailment, and human review metrics."
+  -
+    path: "release_gate_summary.csv"
+    description: "Release gate count summaries."
+  -
+    path: "human_calibration_summary_priority_80.csv"
+    description: "Priority human-review calibration summary."
+  -
+    path: "claim_entailment_summary.csv"
+    description: "Claim-level citation entailment summary."
+  -
+    path: "redacted_sample_outputs_20.csv"
+    description: "20 representative rows with metadata, output length, and output hash; full output text is omitted."
+excluded_artifacts:
+  - "Full model_run_log.csv, judge_scores.csv, claim_entailment.csv, citation_verification.csv, and human review workbooks are intentionally not committed."

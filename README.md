@@ -25,9 +25,10 @@ Current real API pilot takeaways:
 
 - 300 / 300 Qianfan model-workflow outputs completed across ERNIE 5.0, DeepSeek V4 Pro, Qwen3.5-27B, GLM-5.2, and Kimi K2.6.
 - Qwen3.5-27B was selected as the full-run structured judge after smoke tests; it produced 300 / 300 parseable judge outputs.
-- 80 priority real outputs were human-reviewed: 4 pass, 27 partial pass, 49 fail, with 92.5% judge-human agreement.
+- 80 priority real outputs were human-reviewed: 4 pass, 27 partial pass, 49 fail, with 92.5% agreement on a high-risk/blocker-enriched review sample.
 - W1 structured prompting and W5 clarification-first were stronger release candidates than closed-book or current RAG/verifier variants.
 - RAG is still required for source-specific tasks, but the pilot showed citation-boundary and unsupported-claim failures that must be caught by verification and human review.
+- Real API pilot evidence package: [outputs/product_boundary_api_pilot_v1/](outputs/product_boundary_api_pilot_v1/)
 
 ## Open First
 
@@ -35,6 +36,7 @@ Current real API pilot takeaways:
 - Project summary: [docs/project_summary.md](docs/project_summary.md)
 - Product-boundary results: [docs/results_product_boundary_eval.md](docs/results_product_boundary_eval.md)
 - Model boundary memo: [docs/model_boundary_memo.md](docs/model_boundary_memo.md)
+- Real API pilot evidence package: [outputs/product_boundary_api_pilot_v1/](outputs/product_boundary_api_pilot_v1/)
 - RAG V2 improvement plan: [docs/rag_v2_improvement_plan.md](docs/rag_v2_improvement_plan.md)
 - Interview talk track: [docs/interview_talk_track.md](docs/interview_talk_track.md)
 - Labeling SOP: [docs/labeling_sop.md](docs/labeling_sop.md)
