@@ -4,6 +4,7 @@ import argparse
 from pathlib import Path
 
 import pandas as pd
+from pandas.errors import EmptyDataError
 
 from .aggregator import build_executive_dashboard
 from .calibration import build_human_review_sample, summarize_human_calibration
@@ -247,7 +248,10 @@ def cmd_merge_model_outputs(args: argparse.Namespace) -> None:
         for input_dir in args.input_dirs:
             path = Path(input_dir) / file_name
             if path.exists():
-                frames.append(pd.read_csv(path))
+                try:
+                    frames.append(pd.read_csv(path))
+                except EmptyDataError:
+                    continue
         if not frames:
             continue
         merged = pd.concat(frames, ignore_index=True)
