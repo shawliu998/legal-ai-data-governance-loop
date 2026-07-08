@@ -39,22 +39,22 @@ Instead of scoring only the final answer, the evaluator can inspect:
 
 ## Required Fields
 
-| Field | Meaning |
-| --- | --- |
-| `trace_id` | Stable ID for one evaluated agent run |
-| `sample_id` | Eval case ID |
-| `model_alias` | Model configuration alias |
-| `agent_architecture` | A0-A5 architecture name |
-| `legacy_workflow_alias` | V0/V1/V3/V4/V5 if produced by the current runner |
-| `legal_slice` | Product-boundary slice, such as citation grounding or risk calibration |
-| `turns` | User and agent messages with per-turn intent and risk labels |
-| `retrieval_events` | Retrieved source IDs, ranks, scores, and source-boundary status |
-| `citation_checks` | Source-ID citation validation |
-| `claim_checks` | Claim-level support, source scope, and product action |
-| `risk_checks` | Unsafe action, overclaim, bad premise, missing fact, or escalation risks |
-| `human_review_route` | Whether and why the trace should go to review |
-| `release_gate` | Candidate release, limited release, human review, or blocked |
-| `data_route` | Eval, SFT, preference, badcase, regression, or human review |
+| Field                   | Meaning                                                                  |
+| ----------------------- | ------------------------------------------------------------------------ |
+| `trace_id`              | Stable ID for one evaluated agent run                                    |
+| `sample_id`             | Eval case ID                                                             |
+| `model_alias`           | Model configuration alias                                                |
+| `agent_architecture`    | A0-A5 architecture name                                                  |
+| `legacy_workflow_alias` | V0/V1/V3/V4/V5 if produced by the current runner                         |
+| `legal_slice`           | Product-boundary slice, such as citation grounding or risk calibration   |
+| `turns`                 | User and agent messages with per-turn intent and risk labels             |
+| `retrieval_events`      | Retrieved source IDs, ranks, scores, and source-boundary status          |
+| `citation_checks`       | Source-ID citation validation                                            |
+| `claim_checks`          | Claim-level support, source scope, and product action                    |
+| `risk_checks`           | Unsafe action, overclaim, bad premise, missing fact, or escalation risks |
+| `human_review_route`    | Whether and why the trace should go to review                            |
+| `release_gate`          | Candidate release, limited release, human review, or blocked             |
+| `data_route`            | Eval, SFT, preference, badcase, regression, or human review              |
 
 ## Turn Schema
 
@@ -89,7 +89,11 @@ Agent turns add:
 {
   "event_id": "RET-001",
   "query": "source-limited delay delivery triple compensation",
-  "retrieved_source_ids": ["CONTRACT-001", "PLATFORM-001", "STAT-CONSUMER-FRAUD-001"],
+  "retrieved_source_ids": [
+    "CONTRACT-001",
+    "PLATFORM-001",
+    "STAT-CONSUMER-FRAUD-001"
+  ],
   "allowed_source_ids": ["CONTRACT-001", "PLATFORM-001"],
   "expected_source_ids": ["CONTRACT-001", "PLATFORM-001"],
   "source_boundary_precision": 0.67,
@@ -141,10 +145,7 @@ Allowed entailment labels:
 ```json
 {
   "release_decision": "blocked",
-  "blockers": [
-    "out_of_scope_source",
-    "unsupported_material_claim"
-  ],
+  "blockers": ["out_of_scope_source", "unsupported_material_claim"],
   "required_mitigations": [
     "source-boundary filtering",
     "claim-level citation coverage"
@@ -165,17 +166,17 @@ Allowed entailment labels:
 
 ## Mapping To Existing Artifacts
 
-| Trace component | Existing artifact |
-| --- | --- |
-| `turns[0].user.message` | `eval_input.csv:user_question` |
-| `turns[-1].agent.message` | `model_run_log.csv:output_text` |
-| `retrieval_events` | `retrieval_log.csv`, `rag_contexts.csv` |
-| `citation_checks` | `citation_verification.csv` |
-| `claim_checks` | `claim_entailment.csv` |
-| `risk_checks` | `judge_scores.csv:error_tags`, `data_routing.csv` |
-| `human_review_route` | `data_routing.csv`, `human_review_*` |
-| `release_gate` | `release_gate.csv` |
-| `data_route` | `data_routing.csv` |
+| Trace component           | Existing artifact                                 |
+| ------------------------- | ------------------------------------------------- |
+| `turns[0].user.message`   | `eval_input.csv:user_question`                    |
+| `turns[-1].agent.message` | `model_run_log.csv:output_text`                   |
+| `retrieval_events`        | `retrieval_log.csv`, `rag_contexts.csv`           |
+| `citation_checks`         | `citation_verification.csv`                       |
+| `claim_checks`            | `claim_entailment.csv`                            |
+| `risk_checks`             | `judge_scores.csv:error_tags`, `data_routing.csv` |
+| `human_review_route`      | `data_routing.csv`, `human_review_*`              |
+| `release_gate`            | `release_gate.csv`                                |
+| `data_route`              | `data_routing.csv`                                |
 
 ## Evaluation Metrics
 

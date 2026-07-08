@@ -26,13 +26,13 @@ V2 should focus on citation reliability and product release gates, not simply on
 
 Target corpus size for V2:
 
-| Source Type | Target Count | Purpose |
-| --- | ---: | --- |
-| Statute or rule excerpts | 40-60 | Ground common civil, labor, consumer, contract, and procedure claims. |
-| Contract clauses | 20-30 | Test source-limited document interpretation. |
-| Platform or company policies | 15-25 | Test internal-rule boundaries and employment scenarios. |
-| Case rule summaries | 20-30 | Test analogical reasoning without pretending to be full case retrieval. |
-| Evidence snippets | 20-30 | Test whether outputs distinguish facts, evidence, and legal conclusions. |
+| Source Type                  | Target Count | Purpose                                                                  |
+| ---------------------------- | -----------: | ------------------------------------------------------------------------ |
+| Statute or rule excerpts     |        40-60 | Ground common civil, labor, consumer, contract, and procedure claims.    |
+| Contract clauses             |        20-30 | Test source-limited document interpretation.                             |
+| Platform or company policies |        15-25 | Test internal-rule boundaries and employment scenarios.                  |
+| Case rule summaries          |        20-30 | Test analogical reasoning without pretending to be full case retrieval.  |
+| Evidence snippets            |        20-30 | Test whether outputs distinguish facts, evidence, and legal conclusions. |
 
 Design principles:
 
@@ -52,14 +52,14 @@ claim -> cited source(s) -> entailment label -> product action
 
 Proposed labels:
 
-| Label | Meaning | Product Action |
-| --- | --- | --- |
-| `supported` | The cited source directly supports the claim. | Can pass citation gate. |
-| `partially_supported` | The source supports part of the claim, but the answer overextends it. | Human review or revision. |
-| `unsupported` | The source does not support the claim. | Badcase and regression eval. |
-| `contradicted` | The source points against the claim. | Release blocker. |
-| `no_citation` | Claim needed support but no citation was provided. | Human review and prompt/routing fix. |
-| `out_of_scope_source` | The source may be true but was not allowed for this task. | Source-boundary regression. |
+| Label                 | Meaning                                                               | Product Action                       |
+| --------------------- | --------------------------------------------------------------------- | ------------------------------------ |
+| `supported`           | The cited source directly supports the claim.                         | Can pass citation gate.              |
+| `partially_supported` | The source supports part of the claim, but the answer overextends it. | Human review or revision.            |
+| `unsupported`         | The source does not support the claim.                                | Badcase and regression eval.         |
+| `contradicted`        | The source points against the claim.                                  | Release blocker.                     |
+| `no_citation`         | Claim needed support but no citation was provided.                    | Human review and prompt/routing fix. |
+| `out_of_scope_source` | The source may be true but was not allowed for this task.             | Source-boundary regression.          |
 
 Minimal implementation:
 
@@ -87,26 +87,26 @@ Current implementation status:
 
 Add retrieval-level checks before generation scoring:
 
-| Metric | Question |
-| --- | --- |
-| Context recall | Did retrieval include the expected source? |
-| Context precision | Were top-k sources actually relevant? |
+| Metric                    | Question                                                         |
+| ------------------------- | ---------------------------------------------------------------- |
+| Context recall            | Did retrieval include the expected source?                       |
+| Context precision         | Were top-k sources actually relevant?                            |
 | Source-boundary precision | Did retrieval avoid disallowed sources for source-limited tasks? |
-| Distractor resistance | Did the model ignore retrieved but irrelevant sources? |
-| Citation coverage | Did material claims cite sources when required? |
-| Citation entailment | Did cited sources support the claims? |
+| Distractor resistance     | Did the model ignore retrieved but irrelevant sources?           |
+| Citation coverage         | Did material claims cite sources when required?                  |
+| Citation entailment       | Did cited sources support the claims?                            |
 
 ## V2 API Pilot Design
 
 Do not rerun the full 300-output pilot first. Run a focused V2 pilot:
 
-| Dimension | Plan |
-| --- | --- |
-| Cases | 8-12 citation/document cases |
-| Models | Qwen3.5-27B, ERNIE 5.0, one challenger model |
-| Workflows | W1 structured, W4 RAG-grounded, W5 clarification-first |
-| Outputs | 72-108 |
-| Human review | All citation failures plus 20 clean-looking passes |
+| Dimension    | Plan                                                   |
+| ------------ | ------------------------------------------------------ |
+| Cases        | 8-12 citation/document cases                           |
+| Models       | Qwen3.5-27B, ERNIE 5.0, one challenger model           |
+| Workflows    | W1 structured, W4 RAG-grounded, W5 clarification-first |
+| Outputs      | 72-108                                                 |
+| Human review | All citation failures plus 20 clean-looking passes     |
 
 Primary hypothesis:
 
@@ -136,14 +136,14 @@ Allow limited release only when:
 
 ## Data Production Loop
 
-| Failure | Data Asset |
-| --- | --- |
-| Source not retrieved | Retrieval eval and corpus metadata fix. |
-| Wrong source retrieved | Hard negative pair for retriever/reranker. |
-| Source cited but unsupported | Citation entailment regression case. |
-| Out-of-scope source used | Source-boundary badcase. |
+| Failure                                 | Data Asset                                   |
+| --------------------------------------- | -------------------------------------------- |
+| Source not retrieved                    | Retrieval eval and corpus metadata fix.      |
+| Wrong source retrieved                  | Hard negative pair for retriever/reranker.   |
+| Source cited but unsupported            | Citation entailment regression case.         |
+| Out-of-scope source used                | Source-boundary badcase.                     |
 | Good answer with calibrated uncertainty | Preference winner and positive eval example. |
-| Correct refusal or clarification | SFT/intake exemplar. |
+| Correct refusal or clarification        | SFT/intake exemplar.                         |
 
 ## Success Criteria
 

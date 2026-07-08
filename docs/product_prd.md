@@ -145,20 +145,20 @@ Expected dashboard questions:
 
 ## 7. Feature List
 
-| Feature | User Value | Priority | Status |
-| --- | --- | --- | --- |
-| Eval/Gold/Rubric split | Prevents leakage and clarifies data ownership | P0 | Done |
-| Prompt visibility control | Enforces model-facing field restrictions | P0 | Done |
-| Multi-task task_category | Supports consultation/case/drafting coverage | P0 | Done |
-| Normalized run log | Supports multi-model and multi-version runs | P0 | Done |
-| Task-specific Judge prompts | Aligns evaluation with legal task type | P0 | Done |
-| Error taxonomy | Enables aggregation and routing | P0 | Done |
-| Data router | Converts errors into data production actions | P0 | Done |
-| Executive dashboard | Supports product decision review | P0 | Done |
-| Labeling SOP | Supports scalable annotation operations | P0 | Done |
-| API smoke run config | Validates provider integration without full cost | P1 | Ready |
-| Web UI | Nice-to-have for operations | P3 | Not included |
-| RAG/legal retrieval | Separate legal QA capability | P3 | Not included |
+| Feature                     | User Value                                       | Priority | Status       |
+| --------------------------- | ------------------------------------------------ | -------- | ------------ |
+| Eval/Gold/Rubric split      | Prevents leakage and clarifies data ownership    | P0       | Done         |
+| Prompt visibility control   | Enforces model-facing field restrictions         | P0       | Done         |
+| Multi-task task_category    | Supports consultation/case/drafting coverage     | P0       | Done         |
+| Normalized run log          | Supports multi-model and multi-version runs      | P0       | Done         |
+| Task-specific Judge prompts | Aligns evaluation with legal task type           | P0       | Done         |
+| Error taxonomy              | Enables aggregation and routing                  | P0       | Done         |
+| Data router                 | Converts errors into data production actions     | P0       | Done         |
+| Executive dashboard         | Supports product decision review                 | P0       | Done         |
+| Labeling SOP                | Supports scalable annotation operations          | P0       | Done         |
+| API smoke run config        | Validates provider integration without full cost | P1       | Ready        |
+| Web UI                      | Nice-to-have for operations                      | P3       | Not included |
+| RAG/legal retrieval         | Separate legal QA capability                     | P3       | Not included |
 
 ## 8. Prioritization
 
@@ -292,14 +292,14 @@ flowchart LR
 
 ## 12. Risks And Mitigations
 
-| Risk | Impact | Mitigation |
-| --- | --- | --- |
-| Gold label leakage | Invalid evaluation | Strict file split and prompt visibility tests |
-| Judge instability | Incorrect routing | `parsed_ok`, judge confidence, and human review fallback |
-| Over-reliance on mock mode | Weak external credibility | Add small API smoke run |
-| Ambiguous labels | Inconsistent annotation | Labeling SOP and examples |
-| Dashboard misread as leaderboard | Wrong product framing | README and dashboard boundary language |
-| Legal correctness overclaim | Compliance risk | Boundary statements and human review triggers |
+| Risk                             | Impact                    | Mitigation                                               |
+| -------------------------------- | ------------------------- | -------------------------------------------------------- |
+| Gold label leakage               | Invalid evaluation        | Strict file split and prompt visibility tests            |
+| Judge instability                | Incorrect routing         | `parsed_ok`, judge confidence, and human review fallback |
+| Over-reliance on mock mode       | Weak external credibility | Add small API smoke run                                  |
+| Ambiguous labels                 | Inconsistent annotation   | Labeling SOP and examples                                |
+| Dashboard misread as leaderboard | Wrong product framing     | README and dashboard boundary language                   |
+| Legal correctness overclaim      | Compliance risk           | Boundary statements and human review triggers            |
 
 ## 13. Iteration Plan
 

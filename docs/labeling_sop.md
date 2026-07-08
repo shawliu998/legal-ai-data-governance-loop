@@ -84,18 +84,18 @@ Document drafting:
 
 Use only the following `coarse_error_tag` values.
 
-| coarse_error_tag | Definition | Typical Route |
-| --- | --- | --- |
-| `missing_facts` | Output fails to identify facts needed before analysis. | `eval` or `sft` |
-| `overclaim` | Output gives a stronger conclusion than facts support. | `preference` or `badcase` |
-| `missing_evidence_warning` | Output does not warn that evidence is needed. | `sft` |
-| `unverified_basis` | Output relies on a legal basis without enough verification. | `eval` or `human_review` |
-| `fabricated_citation` | Output invents law, article, case, institution, or citation. | `human_review` |
-| `weak_fact_rule_application` | Output weakly connects facts to rules or claims. | `eval` |
-| `missing_procedure_warning` | Output misses limitation, jurisdiction, filing, notice, or procedural risk. | `sft` or `human_review` |
-| `jurisdiction_risk` | Output ignores local or jurisdiction uncertainty. | `human_review` or `eval` |
-| `unsafe_action_suggestion` | Output suggests action that could harm user rights or safety. | `human_review` |
-| `needs_human_review` | Output requires legal expert or policy calibration. | `human_review` |
+| coarse_error_tag             | Definition                                                                  | Typical Route             |
+| ---------------------------- | --------------------------------------------------------------------------- | ------------------------- |
+| `missing_facts`              | Output fails to identify facts needed before analysis.                      | `eval` or `sft`           |
+| `overclaim`                  | Output gives a stronger conclusion than facts support.                      | `preference` or `badcase` |
+| `missing_evidence_warning`   | Output does not warn that evidence is needed.                               | `sft`                     |
+| `unverified_basis`           | Output relies on a legal basis without enough verification.                 | `eval` or `human_review`  |
+| `fabricated_citation`        | Output invents law, article, case, institution, or citation.                | `human_review`            |
+| `weak_fact_rule_application` | Output weakly connects facts to rules or claims.                            | `eval`                    |
+| `missing_procedure_warning`  | Output misses limitation, jurisdiction, filing, notice, or procedural risk. | `sft` or `human_review`   |
+| `jurisdiction_risk`          | Output ignores local or jurisdiction uncertainty.                           | `human_review` or `eval`  |
+| `unsafe_action_suggestion`   | Output suggests action that could harm user rights or safety.               | `human_review`            |
+| `needs_human_review`         | Output requires legal expert or policy calibration.                         | `human_review`            |
 
 `error_subtype` should describe the legal or operational subtype, for example:
 
@@ -234,17 +234,17 @@ Allowed routes:
 
 Route logic:
 
-| Condition | Route |
-| --- | --- |
-| fabricated citation | `human_review` |
-| high risk | `human_review` |
-| low judge confidence | `human_review` |
-| unsafe action suggestion | `human_review` |
-| recurring overclaim with better candidate answer | `preference` |
-| severe overclaim requiring regression tracking | `badcase` |
-| missing facts awareness gap | `eval` or `sft` |
-| missing evidence warning | `sft` |
-| weak fact-rule application | `eval` |
+| Condition                                        | Route           |
+| ------------------------------------------------ | --------------- |
+| fabricated citation                              | `human_review`  |
+| high risk                                        | `human_review`  |
+| low judge confidence                             | `human_review`  |
+| unsafe action suggestion                         | `human_review`  |
+| recurring overclaim with better candidate answer | `preference`    |
+| severe overclaim requiring regression tracking   | `badcase`       |
+| missing facts awareness gap                      | `eval` or `sft` |
+| missing evidence warning                         | `sft`           |
+| weak fact-rule application                       | `eval`          |
 
 Routing notes:
 

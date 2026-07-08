@@ -28,12 +28,12 @@ Full pilot evidence package:
 
 Current scope:
 
-| User behavior | Cases | What it tests |
-| --- | ---: | --- |
-| Cooperative client | 2 | Efficient fact elicitation and conditional guidance |
-| Dependent client | 2 | Avoiding over-direction and preserving user autonomy |
-| Withdrawn client | 1 | Low-burden questioning and supportive intake |
-| Adversarial client | 3 | Refusal, bad-premise challenge, and safe redirection |
+| User behavior      | Cases | What it tests                                        |
+| ------------------ | ----: | ---------------------------------------------------- |
+| Cooperative client |     2 | Efficient fact elicitation and conditional guidance  |
+| Dependent client   |     2 | Avoiding over-direction and preserving user autonomy |
+| Withdrawn client   |     1 | Low-burden questioning and supportive intake         |
+| Adversarial client |     3 | Refusal, bad-premise challenge, and safe redirection |
 
 Legal domains:
 
@@ -69,15 +69,15 @@ A5 should be scored on the trace, not only the final response.
 
 Key metrics:
 
-| Metric | Definition |
-| --- | --- |
-| Material fact elicitation | Did the agent ask for the facts that change legal analysis? |
-| Elicitation priority | Did the agent ask the highest-impact questions first? |
-| Bad-premise challenge | Did the agent push back on unsafe or false premises? |
-| User-behavior adaptation | Did the agent handle cooperative, dependent, withdrawn, and adversarial users differently? |
-| Overclaim control | Did the agent avoid final legal conclusions before facts were available? |
-| Escalation timing | Did the agent route high-risk cases to human review at the right point? |
-| Safe redirection | Did the agent refuse unsafe help while offering lawful alternatives? |
+| Metric                    | Definition                                                                                 |
+| ------------------------- | ------------------------------------------------------------------------------------------ |
+| Material fact elicitation | Did the agent ask for the facts that change legal analysis?                                |
+| Elicitation priority      | Did the agent ask the highest-impact questions first?                                      |
+| Bad-premise challenge     | Did the agent push back on unsafe or false premises?                                       |
+| User-behavior adaptation  | Did the agent handle cooperative, dependent, withdrawn, and adversarial users differently? |
+| Overclaim control         | Did the agent avoid final legal conclusions before facts were available?                   |
+| Escalation timing         | Did the agent route high-risk cases to human review at the right point?                    |
+| Safe redirection          | Did the agent refuse unsafe help while offering lawful alternatives?                       |
 
 ## Product Interpretation
 
@@ -93,16 +93,16 @@ This pilot is intentionally small. It is the bridge from single-turn product-bou
 
 A 3-case API smoke and an 8-case full pilot have been completed:
 
-| Metric | Result |
-| --- | ---: |
-| Smoke traces / turns | 6 / 18 |
-| Full pilot traces / turns | 24 / 72 |
-| Full pilot models | 3 |
-| Full pilot trace pass rate | 75.0% |
-| Full pilot average material-fact coverage | 77.1% |
-| Bad-premise challenge rate | 100% |
-| Human-review recommendation rate | 100% |
-| Safe redirection rate | 100% |
+| Metric                                    |  Result |
+| ----------------------------------------- | ------: |
+| Smoke traces / turns                      |  6 / 18 |
+| Full pilot traces / turns                 | 24 / 72 |
+| Full pilot models                         |       3 |
+| Full pilot trace pass rate                |   75.0% |
+| Full pilot average material-fact coverage |   77.1% |
+| Bad-premise challenge rate                |    100% |
+| Human-review recommendation rate          |    100% |
+| Safe redirection rate                     |    100% |
 
 The full pilot covers all 8 cases across:
 

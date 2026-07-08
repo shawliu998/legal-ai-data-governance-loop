@@ -13,29 +13,29 @@ Core question:
 
 Fill after the API run:
 
-| Field | Value |
-| --- | --- |
-| Dataset manifest | `data/practice_benchmark_pilot/dataset_manifest.yaml` |
-| Config | `config.practice_api_smoke.yaml` |
-| Output directory | `outputs/practice_api_smoke` |
-| Human calibration file | `outputs/practice_api_smoke/human_review_calibration.csv` |
-| Release gate file | `outputs/practice_api_smoke/release_gate.csv` |
-| Sample count | 12 |
-| Model aliases | `DeepSeek_Target`, `Strong_Closed_Baseline`, `Open_or_CN_Baseline` |
-| Workflows | `W0 closed-book`, `W1 structured legal prompt`, `W3 risk-control workflow` |
-| Total model outputs | 108 |
-| Judge mode | API |
-| Human review sample | TODO |
+| Field                  | Value                                                                      |
+| ---------------------- | -------------------------------------------------------------------------- |
+| Dataset manifest       | `data/practice_benchmark_pilot/dataset_manifest.yaml`                      |
+| Config                 | `config.practice_api_smoke.yaml`                                           |
+| Output directory       | `outputs/practice_api_smoke`                                               |
+| Human calibration file | `outputs/practice_api_smoke/human_review_calibration.csv`                  |
+| Release gate file      | `outputs/practice_api_smoke/release_gate.csv`                              |
+| Sample count           | 12                                                                         |
+| Model aliases          | `DeepSeek_Target`, `Strong_Closed_Baseline`, `Open_or_CN_Baseline`         |
+| Workflows              | `W0 closed-book`, `W1 structured legal prompt`, `W3 risk-control workflow` |
+| Total model outputs    | 108                                                                        |
+| Judge mode             | API                                                                        |
+| Human review sample    | TODO                                                                       |
 
 ## Hypotheses
 
-| Hypothesis | Product Meaning | Result |
-| --- | --- | --- |
-| H1: Structured workflows reduce overclaim on incomplete legal facts. | Decide whether direct answer should be allowed for consultation. | TODO |
-| H2: Higher-capability models help case analysis more than routine document drafting. | Decide model routing by task type. | TODO |
-| H3: Risk-control workflow increases human_review routing but reduces critical failures. | Decide release gate and escalation policy. | TODO |
-| H4: Citation or legal-basis failures should become regression badcases, not SFT examples. | Decide data route by failure type. | TODO |
-| H5: Cost/latency tradeoffs differ by task slice. | Decide whether to use expensive models only for high-risk slices. | TODO |
+| Hypothesis                                                                                | Product Meaning                                                   | Result |
+| ----------------------------------------------------------------------------------------- | ----------------------------------------------------------------- | ------ |
+| H1: Structured workflows reduce overclaim on incomplete legal facts.                      | Decide whether direct answer should be allowed for consultation.  | TODO   |
+| H2: Higher-capability models help case analysis more than routine document drafting.      | Decide model routing by task type.                                | TODO   |
+| H3: Risk-control workflow increases human_review routing but reduces critical failures.   | Decide release gate and escalation policy.                        | TODO   |
+| H4: Citation or legal-basis failures should become regression badcases, not SFT examples. | Decide data route by failure type.                                | TODO   |
+| H5: Cost/latency tradeoffs differ by task slice.                                          | Decide whether to use expensive models only for high-risk slices. | TODO   |
 
 ## Executive Findings
 
@@ -49,39 +49,39 @@ Replace TODO with metrics from `outputs/practice_api_smoke/executive_dashboard.x
 
 ## Task Slice Policy
 
-| Task Slice | Recommended Workflow | Model Policy | Human Review Policy | Data Production |
-| --- | --- | --- | --- | --- |
-| Consultation | TODO | TODO | TODO | TODO |
-| Case analysis | TODO | TODO | TODO | TODO |
-| Document drafting | TODO | TODO | TODO | TODO |
+| Task Slice        | Recommended Workflow | Model Policy | Human Review Policy | Data Production |
+| ----------------- | -------------------- | ------------ | ------------------- | --------------- |
+| Consultation      | TODO                 | TODO         | TODO                | TODO            |
+| Case analysis     | TODO                 | TODO         | TODO                | TODO            |
+| Document drafting | TODO                 | TODO         | TODO                | TODO            |
 
 ## Deployment Policy
 
 Use the `Deployment_Policy` sheet and `outputs/practice_api_smoke/release_gate.csv`.
 
 | Task | Workflow | Auto-answer Eligible | Reason | Required Guardrail |
-| --- | --- | --- | --- | --- |
-| TODO | TODO | yes/no | TODO | TODO |
+| ---- | -------- | -------------------- | ------ | ------------------ |
+| TODO | TODO     | yes/no               | TODO   | TODO               |
 
 ## Release Gate Summary
 
 Use `release_gate.csv`.
 
 | Task | Model | Workflow | Decision | Blockers | Required Mitigations |
-| --- | --- | --- | --- | --- | --- |
-| TODO | TODO | TODO | TODO | TODO | TODO |
+| ---- | ----- | -------- | -------- | -------- | -------------------- |
+| TODO | TODO  | TODO     | TODO     | TODO     | TODO                 |
 
 ## Data Routing Summary
 
 Use `Data_Routing_Summary` and `Badcase_Cards`.
 
-| Data Route | What Goes Here | Next Action |
-| --- | --- | --- |
-| `human_review` | High-risk or low-confidence outputs. | Human calibration and release-blocking review. |
-| `badcase` | Regression-worthy failures such as overclaim or fabricated basis. | Add to regression eval set. |
-| `preference` | Paired good/bad outputs for the same case. | Build preference pairs for risk-control behavior. |
-| `sft` | Stable improvement examples such as missing evidence warning. | Convert into supervised training examples. |
-| `eval` | Diagnostic coverage samples. | Hold out for future model/workflow regression checks. |
+| Data Route     | What Goes Here                                                    | Next Action                                           |
+| -------------- | ----------------------------------------------------------------- | ----------------------------------------------------- |
+| `human_review` | High-risk or low-confidence outputs.                              | Human calibration and release-blocking review.        |
+| `badcase`      | Regression-worthy failures such as overclaim or fabricated basis. | Add to regression eval set.                           |
+| `preference`   | Paired good/bad outputs for the same case.                        | Build preference pairs for risk-control behavior.     |
+| `sft`          | Stable improvement examples such as missing evidence warning.     | Convert into supervised training examples.            |
+| `eval`         | Diagnostic coverage samples.                                      | Hold out for future model/workflow regression checks. |
 
 ## Representative Badcases
 

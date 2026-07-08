@@ -32,18 +32,18 @@
 
 ## 关键结果
 
-| 结果 | 数字 |
-| --- | ---: |
-| 真实模型输出 | 300 |
-| Qwen judge parse success | 300 / 300 |
-| 人审 priority outputs | 80 |
-| 人审 pass / partial / fail | 4 / 27 / 49 |
-| priority 样本 judge-human agreement | 92.5% |
-| RAG V2 输出 | 72 |
-| RAG V2 citation-gate issue rate | 88.1% strict release-risk gate |
-| A5 full pilot | 24 traces / 72 turns |
-| A5 deterministic trace pass rate | 75.0% |
-| A5 overclaim-flagged traces | 6 |
+| 结果                                |                           数字 |
+| ----------------------------------- | -----------------------------: |
+| 真实模型输出                        |                            300 |
+| Qwen judge parse success            |                      300 / 300 |
+| 人审 priority outputs               |                             80 |
+| 人审 pass / partial / fail          |                    4 / 27 / 49 |
+| priority 样本 judge-human agreement |                          92.5% |
+| RAG V2 输出                         |                             72 |
+| RAG V2 citation-gate issue rate     | 88.1% strict release-risk gate |
+| A5 full pilot                       |           24 traces / 72 turns |
+| A5 deterministic trace pass rate    |                          75.0% |
+| A5 overclaim-flagged traces         |                              6 |
 
 ## 产品结论
 

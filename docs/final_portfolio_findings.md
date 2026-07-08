@@ -86,14 +86,14 @@ The goal is controlled deployment, not maximal automation.
 
 Each failure type should become a data asset.
 
-| Failure pattern | Data route | Next data action |
-| --- | --- | --- |
-| Missing material facts | `sft_candidate` | Train intake prompts and fact-elicitation examples |
-| Safer answer beats overconfident answer | `preference_candidate` | Build preference pairs for calibrated legal advice |
-| Fabricated citation or invented fact | `badcase` | Add to P0 regression and release-blocker tests |
-| Out-of-scope source use | `regression_eval` | Create source-boundary regression cases and retrieval hard negatives |
-| Unsupported material claim | `human_review` / `badcase` | Human label support status, then route to citation SFT or regression |
-| Repeated judge-human disagreement | `eval_holdout` | Preserve as judge calibration and future evaluator test set |
+| Failure pattern                         | Data route                 | Next data action                                                     |
+| --------------------------------------- | -------------------------- | -------------------------------------------------------------------- |
+| Missing material facts                  | `sft_candidate`            | Train intake prompts and fact-elicitation examples                   |
+| Safer answer beats overconfident answer | `preference_candidate`     | Build preference pairs for calibrated legal advice                   |
+| Fabricated citation or invented fact    | `badcase`                  | Add to P0 regression and release-blocker tests                       |
+| Out-of-scope source use                 | `regression_eval`          | Create source-boundary regression cases and retrieval hard negatives |
+| Unsupported material claim              | `human_review` / `badcase` | Human label support status, then route to citation SFT or regression |
+| Repeated judge-human disagreement       | `eval_holdout`             | Preserve as judge calibration and future evaluator test set          |
 
 Product interpretation:
 

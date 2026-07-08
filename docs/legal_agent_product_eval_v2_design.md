@@ -14,14 +14,14 @@ The older `V0` / `V1` / `V3` / `V4` / `V5` workflow names are implementation ali
 
 ## Agent Architecture Taxonomy
 
-| Architecture | Product meaning | Legacy alias | Evaluated capability |
-| --- | --- | --- | --- |
-| A0 baseline closed-book | Direct answer without product controls | V0 | Raw model capability and hallucination risk |
-| A1 structured legal counsel | Structured legal issue spotting and risk-calibrated answer | V1 | Legal reasoning, missing-fact awareness, overclaim control |
-| A2 grounded retrieval counsel | Retrieval-grounded answer using controlled sources | V4 | Source use, citation coverage, source-boundary discipline |
-| A3 verifier-router policy layer | Post-generation risk/citation verifier and routing policy | V3 | Release blocking, human-review routing, data routing |
-| A4 clarification-first intake | Single-turn intake that asks before answering when facts are missing | V5 | Material fact elicitation and bad-premise challenge |
-| A5 multi-turn legal intake agent | Multi-turn intake simulator with user behavior variants | New pilot | Prioritized questioning, user resistance handling, escalation timing |
+| Architecture                     | Product meaning                                                      | Legacy alias | Evaluated capability                                                 |
+| -------------------------------- | -------------------------------------------------------------------- | ------------ | -------------------------------------------------------------------- |
+| A0 baseline closed-book          | Direct answer without product controls                               | V0           | Raw model capability and hallucination risk                          |
+| A1 structured legal counsel      | Structured legal issue spotting and risk-calibrated answer           | V1           | Legal reasoning, missing-fact awareness, overclaim control           |
+| A2 grounded retrieval counsel    | Retrieval-grounded answer using controlled sources                   | V4           | Source use, citation coverage, source-boundary discipline            |
+| A3 verifier-router policy layer  | Post-generation risk/citation verifier and routing policy            | V3           | Release blocking, human-review routing, data routing                 |
+| A4 clarification-first intake    | Single-turn intake that asks before answering when facts are missing | V5           | Material fact elicitation and bad-premise challenge                  |
+| A5 multi-turn legal intake agent | Multi-turn intake simulator with user behavior variants              | New pilot    | Prioritized questioning, user resistance handling, escalation timing |
 
 ## Why This Matters
 
@@ -65,19 +65,19 @@ The evaluation object is no longer only the final answer. It is the full path fr
 
 ## Current Implementation Mapping
 
-| Layer | Current artifact | Status |
-| --- | --- | --- |
-| A0-A4 prompts/workflows | `prompts/`, `config.qianfan_product_boundary_api_pilot.yaml` | Implemented through legacy V aliases |
-| 50-case eval bank | `data/eval_sets/legal_product_boundary_pilot_v1.jsonl` | Implemented |
-| 300-output real API pilot | `outputs/product_boundary_api_pilot_v1/` | Implemented with lightweight evidence package |
-| RAG V2 focused pilot | `outputs/rag_v2_focused_pilot_v1/` | Implemented with lightweight evidence package |
-| Claim-level citation triage | `build-claim-entailment` | Implemented as deterministic review-queue signal |
-| Release gate | `release-gate` | Implemented |
-| A5 multi-turn intake cases | `data/eval_sets/legal_agent_multiturn_intake_pilot_v1.jsonl` | 8-case pilot added |
-| A5 multi-turn intake smoke | `outputs/a5_multiturn_intake_smoke/` | 6 traces / 18 turns completed |
-| A5 multi-turn intake full pilot | `outputs/a5_multiturn_intake_pilot_v1/` | 24 traces / 72 turns completed |
-| Trace-level schema | `docs/trace_level_eval_schema.md` | Design-level schema added |
-| Focused V2 full-run plan | `configs/experiments/legal_agent_product_eval_v2_focused.yaml` | Planned 450-output formal experiment |
+| Layer                           | Current artifact                                               | Status                                           |
+| ------------------------------- | -------------------------------------------------------------- | ------------------------------------------------ |
+| A0-A4 prompts/workflows         | `prompts/`, `config.qianfan_product_boundary_api_pilot.yaml`   | Implemented through legacy V aliases             |
+| 50-case eval bank               | `data/eval_sets/legal_product_boundary_pilot_v1.jsonl`         | Implemented                                      |
+| 300-output real API pilot       | `outputs/product_boundary_api_pilot_v1/`                       | Implemented with lightweight evidence package    |
+| RAG V2 focused pilot            | `outputs/rag_v2_focused_pilot_v1/`                             | Implemented with lightweight evidence package    |
+| Claim-level citation triage     | `build-claim-entailment`                                       | Implemented as deterministic review-queue signal |
+| Release gate                    | `release-gate`                                                 | Implemented                                      |
+| A5 multi-turn intake cases      | `data/eval_sets/legal_agent_multiturn_intake_pilot_v1.jsonl`   | 8-case pilot added                               |
+| A5 multi-turn intake smoke      | `outputs/a5_multiturn_intake_smoke/`                           | 6 traces / 18 turns completed                    |
+| A5 multi-turn intake full pilot | `outputs/a5_multiturn_intake_pilot_v1/`                        | 24 traces / 72 turns completed                   |
+| Trace-level schema              | `docs/trace_level_eval_schema.md`                              | Design-level schema added                        |
+| Focused V2 full-run plan        | `configs/experiments/legal_agent_product_eval_v2_focused.yaml` | Planned 450-output formal experiment             |
 
 ## A5 Multi-Turn Intake Goals
 

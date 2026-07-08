@@ -66,14 +66,14 @@ The main track is:
 
 Agent architecture naming:
 
-| Agent architecture | Product meaning | Legacy alias |
-| --- | --- | --- |
-| A0 baseline closed-book | Direct answer without product controls | V0 |
-| A1 structured legal counsel | Structured legal reasoning and risk-calibrated answer | V1 |
-| A2 grounded retrieval counsel | Retrieval-grounded answer with controlled sources | V4 |
-| A3 verifier-router policy layer | Post-generation verification, routing, and release policy | V3 |
-| A4 clarification-first intake | Single-turn clarification before answering | V5 |
-| A5 multi-turn legal intake agent | Multi-turn intake with user behavior variants | New pilot |
+| Agent architecture               | Product meaning                                           | Legacy alias |
+| -------------------------------- | --------------------------------------------------------- | ------------ |
+| A0 baseline closed-book          | Direct answer without product controls                    | V0           |
+| A1 structured legal counsel      | Structured legal reasoning and risk-calibrated answer     | V1           |
+| A2 grounded retrieval counsel    | Retrieval-grounded answer with controlled sources         | V4           |
+| A3 verifier-router policy layer  | Post-generation verification, routing, and release policy | V3           |
+| A4 clarification-first intake    | Single-turn clarification before answering                | V5           |
+| A5 multi-turn legal intake agent | Multi-turn intake with user behavior variants             | New pilot    |
 
 The legacy `V0` / `V1` / `V3` / `V4` / `V5` labels remain in code and artifacts for reproducibility. The product-level interpretation uses A0-A5.
 
@@ -114,7 +114,7 @@ Real API pilot takeaways:
 RAG V2 focused pilot takeaways:
 
 - 72 / 72 Qianfan outputs completed on 8 source-limited citation/document cases across ERNIE 5.0, DeepSeek V4 Pro, and Qwen3.5-27B.
-- Retrieval found all expected allowed sources for W4/RAG runs, but average source-boundary precision was only 0.50 because top-k also included extra sources.
+- Retrieval found all expected allowed sources for A2/RAG runs, but average source-boundary precision was only 0.50 because top-k also included extra sources.
 - Claim-level triage found 555 citation-gate issues among 630 reviewable legal claims; this is a strict material-claim citation gate designed to expose release risk, not an overall answer-accuracy rate.
 - A2/RAG improved citation coverage versus A1 and A4, but also produced 74 out-of-scope source claims, so RAG must be paired with source-boundary and claim-level verification.
 - RAG V2 evidence package: [outputs/rag_v2_focused_pilot_v1/](outputs/rag_v2_focused_pilot_v1/)
@@ -140,13 +140,18 @@ A5 and trace-level eval additions:
 ## Open First
 
 - Final portfolio findings: [docs/final_portfolio_findings.md](docs/final_portfolio_findings.md)
-- Agent product eval V2 design: [docs/legal_agent_product_eval_v2_design.md](docs/legal_agent_product_eval_v2_design.md)
-- Trace-level eval schema: [docs/trace_level_eval_schema.md](docs/trace_level_eval_schema.md)
-- Focused V2 run plan: [docs/legal_agent_product_eval_v2_focused_run_plan.md](docs/legal_agent_product_eval_v2_focused_run_plan.md)
-- Focused V2 planned config: [configs/experiments/legal_agent_product_eval_v2_focused.yaml](configs/experiments/legal_agent_product_eval_v2_focused.yaml)
-- Product PRD: [docs/product_prd.md](docs/product_prd.md)
 - Project summary: [docs/project_summary.md](docs/project_summary.md)
 - Product-boundary results: [docs/results_product_boundary_eval.md](docs/results_product_boundary_eval.md)
+- Agent product eval V2 design: [docs/legal_agent_product_eval_v2_design.md](docs/legal_agent_product_eval_v2_design.md)
+- Model boundary memo: [docs/model_boundary_memo.md](docs/model_boundary_memo.md)
+
+## Appendix / Evidence Packages
+
+- Trace-level eval schema: [docs/trace_level_eval_schema.md](docs/trace_level_eval_schema.md)
+- Focused V2 run plan: [docs/legal_agent_product_eval_v2_focused_run_plan.md](docs/legal_agent_product_eval_v2_focused_run_plan.md)
+- Focused V2 root config: [config.legal_agent_product_eval_v2_focused.yaml](config.legal_agent_product_eval_v2_focused.yaml)
+- Focused V2 planned config: [configs/experiments/legal_agent_product_eval_v2_focused.yaml](configs/experiments/legal_agent_product_eval_v2_focused.yaml)
+- Product PRD: [docs/product_prd.md](docs/product_prd.md)
 - RAG V2 focused results: [docs/rag_v2_focused_results.md](docs/rag_v2_focused_results.md)
 - Methodology risk register: [docs/methodology_risk_register.md](docs/methodology_risk_register.md)
 - A5 smoke results: [docs/a5_multiturn_smoke_results.md](docs/a5_multiturn_smoke_results.md)
@@ -154,7 +159,6 @@ A5 and trace-level eval additions:
 - A5 trace judge rubric: [docs/a5_trace_judge_rubric.md](docs/a5_trace_judge_rubric.md)
 - Redacted A5 trace example: [outputs/a5_multiturn_intake_smoke/redacted_trace_example.md](outputs/a5_multiturn_intake_smoke/redacted_trace_example.md)
 - A5 multi-turn intake pilot: [docs/multiturn_intake_pilot.md](docs/multiturn_intake_pilot.md)
-- Model boundary memo: [docs/model_boundary_memo.md](docs/model_boundary_memo.md)
 - Real API pilot evidence package: [outputs/product_boundary_api_pilot_v1/](outputs/product_boundary_api_pilot_v1/)
 - RAG V2 evidence package: [outputs/rag_v2_focused_pilot_v1/](outputs/rag_v2_focused_pilot_v1/)
 - A5 smoke evidence package: [outputs/a5_multiturn_intake_smoke/](outputs/a5_multiturn_intake_smoke/)
@@ -472,13 +476,13 @@ The ensemble layer uses DeepSeek V4 Pro and GLM-5.2 as primary judges, excludes 
 
 Legacy implementation alias mapping:
 
-| Product architecture | Legacy alias | Runnable workflow |
-| --- | --- | --- |
-| A0 baseline closed-book | `V0` | `w0_closed_book` |
-| A1 structured legal counsel | `V1` | `w1_structured_legal_prompt` |
-| A2 grounded retrieval counsel | `V4` | `w2_rag_grounded` with local corpus retrieval and context injection |
-| A3 verifier-router policy layer | `V3` | `w3_risk_control_workflow` |
-| A4 clarification-first intake | `V5` | `w4_clarification_first` |
+| Product architecture            | Legacy alias | Runnable workflow                                                   |
+| ------------------------------- | ------------ | ------------------------------------------------------------------- |
+| A0 baseline closed-book         | `V0`         | `w0_closed_book`                                                    |
+| A1 structured legal counsel     | `V1`         | `w1_structured_legal_prompt`                                        |
+| A2 grounded retrieval counsel   | `V4`         | `w2_rag_grounded` with local corpus retrieval and context injection |
+| A3 verifier-router policy layer | `V3`         | `w3_risk_control_workflow`                                          |
+| A4 clarification-first intake   | `V5`         | `w4_clarification_first`                                            |
 
 The `V*` names remain in configs and artifacts for reproducibility.
 Portfolio and interview discussion should use the A0-A5 product architecture names.

@@ -41,21 +41,21 @@ The main finding was not simply "which model won." A1 structured legal counsel a
 
 ## Key Numbers
 
-| Metric | Result |
-| --- | ---: |
-| Real model outputs | 300 |
-| Judge parse success | 300 / 300 |
-| Priority human review rows | 80 |
-| Human pass / partial / fail | 4 / 27 / 49 |
-| Judge-human agreement | 92.5% on priority-enriched sample |
-| Confirmed citation or evidence-support issues | 45 |
-| Human route overrides | 47 |
-| RAG V2 focused outputs | 72 / 72 |
-| RAG V2 citation-gate issue rate | 88.1% strict release-risk gate |
-| A5 multi-turn intake cases | 8 |
-| A5 API pilot traces / turns | 24 / 72 |
-| A5 deterministic trace pass rate | 75.0% |
-| A5 overclaim-flagged traces | 6 |
+| Metric                                        |                            Result |
+| --------------------------------------------- | --------------------------------: |
+| Real model outputs                            |                               300 |
+| Judge parse success                           |                         300 / 300 |
+| Priority human review rows                    |                                80 |
+| Human pass / partial / fail                   |                       4 / 27 / 49 |
+| Judge-human agreement                         | 92.5% on priority-enriched sample |
+| Confirmed citation or evidence-support issues |                                45 |
+| Human route overrides                         |                                47 |
+| RAG V2 focused outputs                        |                           72 / 72 |
+| RAG V2 citation-gate issue rate               |    88.1% strict release-risk gate |
+| A5 multi-turn intake cases                    |                                 8 |
+| A5 API pilot traces / turns                   |                           24 / 72 |
+| A5 deterministic trace pass rate              |                             75.0% |
+| A5 overclaim-flagged traces                   |                                 6 |
 
 ## What I Would Emphasize
 

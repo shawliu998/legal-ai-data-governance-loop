@@ -12,16 +12,16 @@ The answer from this pilot is: retrieval improved evidence availability, but gen
 
 ## Run Shape
 
-| Field | Value |
-| --- | ---: |
-| Cases | 8 source-limited citation/document cases |
-| Models | 3 |
-| Workflows | V1 structured, V4 RAG-grounded, V5 clarification-first |
-| Model outputs | 72 |
-| Judge rows | 72 |
-| RAG retrieval rows | 24 |
-| Claim rows | 1766 |
-| Reviewable legal claims | 630 |
+| Field                   |                                                  Value |
+| ----------------------- | -----------------------------------------------------: |
+| Cases                   |               8 source-limited citation/document cases |
+| Models                  |                                                      3 |
+| Workflows               | V1 structured, V4 RAG-grounded, V5 clarification-first |
+| Model outputs           |                                                     72 |
+| Judge rows              |                                                     72 |
+| RAG retrieval rows      |                                                     24 |
+| Claim rows              |                                                   1766 |
+| Reviewable legal claims |                                                    630 |
 
 Lightweight evidence package:
 
@@ -31,15 +31,15 @@ Full raw outputs remain local and ignored by Git. The committed package contains
 
 ## Main Results
 
-| Metric | Result |
-| --- | ---: |
-| Expected-source recall on W4/RAG retrieval | 100% |
-| Average source-boundary precision | 0.50 |
-| Citation-gate issue rows | 555 |
-| Citation-gate issue rate | 88.1% |
-| Claim-level release blocker rows | 75 |
-| Claim-level release blocker rate | 11.9% |
-| Human-review rate under Qwen judge baseline | 54.2% |
+| Metric                                      | Result |
+| ------------------------------------------- | -----: |
+| Expected-source recall on W4/RAG retrieval  |   100% |
+| Average source-boundary precision           |   0.50 |
+| Citation-gate issue rows                    |    555 |
+| Citation-gate issue rate                    |  88.1% |
+| Claim-level release blocker rows            |     75 |
+| Claim-level release blocker rate            |  11.9% |
+| Human-review rate under Qwen judge baseline |  54.2% |
 
 The 88.1% citation-gate issue rate is a strict material-claim citation gate.
 
@@ -55,20 +55,20 @@ Interpretation:
 
 ## Workflow Comparison
 
-| Workflow | Avg score | Citation coverage | Citation-gate issue rate | Release-blocker rate | Product interpretation |
-| --- | ---: | ---: | ---: | ---: | --- |
-| V1 structured prompt | 0.922 | 11.7% | 91.5% | 0.5% | Strong answer quality, weak citation discipline. |
-| V4 RAG-grounded | 0.753 | 36.1% | 84.2% | 26.0% | Better citation coverage, but source-boundary failures block release. |
-| V5 clarification-first | 0.814 | 9.8% | 91.0% | 0.0% | Safer intake behavior, not sufficient for source-grounded final answers. |
+| Workflow               | Avg score | Citation coverage | Citation-gate issue rate | Release-blocker rate | Product interpretation                                                   |
+| ---------------------- | --------: | ----------------: | -----------------------: | -------------------: | ------------------------------------------------------------------------ |
+| V1 structured prompt   |     0.922 |             11.7% |                    91.5% |                 0.5% | Strong answer quality, weak citation discipline.                         |
+| V4 RAG-grounded        |     0.753 |             36.1% |                    84.2% |                26.0% | Better citation coverage, but source-boundary failures block release.    |
+| V5 clarification-first |     0.814 |              9.8% |                    91.0% |                 0.0% | Safer intake behavior, not sufficient for source-grounded final answers. |
 
 ## Failure Taxonomy
 
-| Failure | Count | Product action |
-| --- | ---: | --- |
-| No citation | 489 | Human review and prompt fix |
-| Out-of-scope source | 74 | Source-boundary regression |
-| Unsupported | 18 | Badcase and regression eval |
-| Contradicted | 1 | Release blocker |
+| Failure             | Count | Product action              |
+| ------------------- | ----: | --------------------------- |
+| No citation         |   489 | Human review and prompt fix |
+| Out-of-scope source |    74 | Source-boundary regression  |
+| Unsupported         |    18 | Badcase and regression eval |
+| Contradicted        |     1 | Release blocker             |
 
 Product conclusion:
 

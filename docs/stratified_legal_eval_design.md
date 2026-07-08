@@ -42,26 +42,26 @@ The rubric therefore scores product behavior, not only legal fluency.
 
 ## Slice Design
 
-| Slice | Purpose | Product Decision |
-| --- | --- | --- |
-| `normal_practice` | Represents routine product traffic. | Identify low-risk auto-answer candidates and stable SFT examples. |
-| `hard_legal_reasoning` | Tests multi-factor legal analysis. | Decide whether stronger models or human review are needed. |
-| `risk_calibration` | Tests high-risk user actions and escalation. | Tune human review routing and release blockers. |
-| `citation_grounding` | Tests answers constrained by provided statutes, contracts, cases, or policies. | Decide when grounded workflow or verifier is required. |
-| `adversarial_trap` | Tests refusal, premise checking, and safe rewriting. | Mine badcases and preference pairs for product-boundary behavior. |
-| `counterfactual_pair` | Changes one material fact while keeping the case nearly identical. | Test whether the model notices legally material fact changes. |
+| Slice                  | Purpose                                                                        | Product Decision                                                  |
+| ---------------------- | ------------------------------------------------------------------------------ | ----------------------------------------------------------------- |
+| `normal_practice`      | Represents routine product traffic.                                            | Identify low-risk auto-answer candidates and stable SFT examples. |
+| `hard_legal_reasoning` | Tests multi-factor legal analysis.                                             | Decide whether stronger models or human review are needed.        |
+| `risk_calibration`     | Tests high-risk user actions and escalation.                                   | Tune human review routing and release blockers.                   |
+| `citation_grounding`   | Tests answers constrained by provided statutes, contracts, cases, or policies. | Decide when grounded workflow or verifier is required.            |
+| `adversarial_trap`     | Tests refusal, premise checking, and safe rewriting.                           | Mine badcases and preference pairs for product-boundary behavior. |
+| `counterfactual_pair`  | Changes one material fact while keeping the case nearly identical.             | Test whether the model notices legally material fact changes.     |
 
 ## Workflow Conditions
 
 The product-boundary config defines five workflow conditions:
 
-| Workflow | Product Meaning |
-| --- | --- |
-| `w0_closed_book` | Direct answer without retrieval; tests raw model behavior and hallucination risk. |
-| `w1_structured_legal_prompt` | Structured legal answer: issue, facts, law, analysis, risk, next steps. |
-| `w2_rag_grounded` | Retrieves from a controlled local legal corpus, injects source chunks, and requires source-grounded answers. |
-| `w3_rag_verifier_router` | Retrieves source chunks, generates a risk-controlled workflow answer, and logs citation verification. |
-| `w4_clarification_first` | Asks clarifying questions before final answer when material facts are missing. |
+| Workflow                     | Product Meaning                                                                                              |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `w0_closed_book`             | Direct answer without retrieval; tests raw model behavior and hallucination risk.                            |
+| `w1_structured_legal_prompt` | Structured legal answer: issue, facts, law, analysis, risk, next steps.                                      |
+| `w2_rag_grounded`            | Retrieves from a controlled local legal corpus, injects source chunks, and requires source-grounded answers. |
+| `w3_rag_verifier_router`     | Retrieves source chunks, generates a risk-controlled workflow answer, and logs citation verification.        |
+| `w4_clarification_first`     | Asks clarifying questions before final answer when material facts are missing.                               |
 
 The current implementation uses a controlled local corpus, not open-web retrieval. This keeps the eval reproducible while still separating retrieval failure, generation grounding failure, and citation fabrication.
 
@@ -120,14 +120,14 @@ The goal is not to hide behind automatic judging. The goal is to produce a revie
 
 Every failed output should become a data asset:
 
-| Failure Pattern | Data Asset |
-| --- | --- |
-| Fabricated citation or unsupported legal basis | `badcase`, `regression_eval` |
-| Overclaim or excessive certainty | `preference_pair` |
-| Missing evidence warnings | `sft_candidate` |
-| Missed material fact change | `regression_eval`, counterfactual holdout |
-| Unsafe or deceptive assistance | `human_review`, `badcase` |
-| Weak routine answer | `eval_holdout` or SFT candidate after human cleanup |
+| Failure Pattern                                | Data Asset                                          |
+| ---------------------------------------------- | --------------------------------------------------- |
+| Fabricated citation or unsupported legal basis | `badcase`, `regression_eval`                        |
+| Overclaim or excessive certainty               | `preference_pair`                                   |
+| Missing evidence warnings                      | `sft_candidate`                                     |
+| Missed material fact change                    | `regression_eval`, counterfactual holdout           |
+| Unsafe or deceptive assistance                 | `human_review`, `badcase`                           |
+| Weak routine answer                            | `eval_holdout` or SFT candidate after human cleanup |
 
 The point is not only to score the model. The point is to decide the next data production action.
 

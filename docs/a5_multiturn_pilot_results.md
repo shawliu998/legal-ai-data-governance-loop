@@ -11,14 +11,14 @@ The goal is to evaluate whether multi-turn agents can maintain product boundarie
 
 ## Run Shape
 
-| Field | Value |
-| --- | ---: |
-| Cases | 8 |
-| Models | 3 |
-| Traces | 24 |
-| Turns | 72 |
+| Field               |                                          Value |
+| ------------------- | ---------------------------------------------: |
+| Cases               |                                              8 |
+| Models              |                                              3 |
+| Traces              |                                             24 |
+| Turns               |                                             72 |
 | User behavior types | cooperative, dependent, withdrawn, adversarial |
-| Output package | `outputs/a5_multiturn_intake_pilot_v1/` |
+| Output package      |        `outputs/a5_multiturn_intake_pilot_v1/` |
 
 Models:
 
@@ -28,31 +28,31 @@ Models:
 
 ## Main Results
 
-| Metric | Result |
-| --- | ---: |
-| Trace pass rate | 75.0% |
-| Average material fact coverage | 77.1% |
-| Bad-premise challenge rate | 100% |
-| Human-review recommendation rate | 100% |
-| Safe redirection rate | 100% |
-| Overclaim trace count | 6 |
+| Metric                           | Result |
+| -------------------------------- | -----: |
+| Trace pass rate                  |  75.0% |
+| Average material fact coverage   |  77.1% |
+| Bad-premise challenge rate       |   100% |
+| Human-review recommendation rate |   100% |
+| Safe redirection rate            |   100% |
+| Overclaim trace count            |      6 |
 
 Model-level deterministic trace signals:
 
-| Model | Traces | Trace pass rate | Avg material fact coverage | Overclaim traces |
-| --- | ---: | ---: | ---: | ---: |
-| DeepSeek V4 Pro | 8 | 87.5% | 77.1% | 1 |
-| ERNIE 5.0 | 8 | 50.0% | 72.9% | 4 |
-| Qwen3.5-27B | 8 | 87.5% | 81.3% | 1 |
+| Model           | Traces | Trace pass rate | Avg material fact coverage | Overclaim traces |
+| --------------- | -----: | --------------: | -------------------------: | ---------------: |
+| DeepSeek V4 Pro |      8 |           87.5% |                      77.1% |                1 |
+| ERNIE 5.0       |      8 |           50.0% |                      72.9% |                4 |
+| Qwen3.5-27B     |      8 |           87.5% |                      81.3% |                1 |
 
 Behavior-level deterministic trace signals:
 
-| User behavior | Traces | Trace pass rate | Avg material fact coverage | Overclaim traces |
-| --- | ---: | ---: | ---: | ---: |
-| Adversarial client | 9 | 88.9% | 74.1% | 1 |
-| Cooperative client | 6 | 33.3% | 83.3% | 4 |
-| Dependent client | 6 | 83.3% | 72.2% | 1 |
-| Withdrawn client | 3 | 100.0% | 83.3% | 0 |
+| User behavior      | Traces | Trace pass rate | Avg material fact coverage | Overclaim traces |
+| ------------------ | -----: | --------------: | -------------------------: | ---------------: |
+| Adversarial client |      9 |           88.9% |                      74.1% |                1 |
+| Cooperative client |      6 |           33.3% |                      83.3% |                4 |
+| Dependent client   |      6 |           83.3% |                      72.2% |                1 |
+| Withdrawn client   |      3 |          100.0% |                      83.3% |                0 |
 
 ## Product Interpretation
 

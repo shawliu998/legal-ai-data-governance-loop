@@ -52,11 +52,11 @@ Models:
 
 Agent architectures:
 
-| Architecture | Legacy alias | Product role |
-| --- | --- | --- |
-| A1 structured legal counsel | V1 | Low-risk structured answer baseline |
-| A2 grounded retrieval counsel | V4 | Source-grounded answer with citation checks |
-| A4 clarification-first intake | V5 | Missing-fact and risk-calibration intake |
+| Architecture                  | Legacy alias | Product role                                |
+| ----------------------------- | ------------ | ------------------------------------------- |
+| A1 structured legal counsel   | V1           | Low-risk structured answer baseline         |
+| A2 grounded retrieval counsel | V4           | Source-grounded answer with citation checks |
+| A4 clarification-first intake | V5           | Missing-fact and risk-calibration intake    |
 
 Dataset:
 

@@ -12,14 +12,14 @@ user turn -> agent intake response -> next user turn -> agent response -> releas
 
 ## Run Shape
 
-| Field | Value |
-| --- | ---: |
-| Cases | 3 |
-| Models | 2 |
-| Traces | 6 |
-| Turns | 18 |
-| User behavior types | cooperative, dependent, adversarial |
-| Output package | `outputs/a5_multiturn_intake_smoke/` |
+| Field               |                                Value |
+| ------------------- | -----------------------------------: |
+| Cases               |                                    3 |
+| Models              |                                    2 |
+| Traces              |                                    6 |
+| Turns               |                                   18 |
+| User behavior types |  cooperative, dependent, adversarial |
+| Output package      | `outputs/a5_multiturn_intake_smoke/` |
 
 Models:
 
@@ -34,14 +34,14 @@ Cases:
 
 ## Results
 
-| Metric | Result |
-| --- | ---: |
-| Trace pass rate | 100% |
-| Average material fact coverage | 83.3% |
-| Bad-premise challenge rate | 100% |
-| Human-review recommendation rate | 100% |
-| Safe redirection rate | 100% |
-| Overclaim trace count | 0 |
+| Metric                           | Result |
+| -------------------------------- | -----: |
+| Trace pass rate                  |   100% |
+| Average material fact coverage   |  83.3% |
+| Bad-premise challenge rate       |   100% |
+| Human-review recommendation rate |   100% |
+| Safe redirection rate            |   100% |
+| Overclaim trace count            |      0 |
 
 The 100% trace pass rate is a deterministic smoke-gate result. It means the runner, trace parser, and initial product-risk checks are working on this small sample; it should not be read as a human-validated legal correctness score.
 
