@@ -6,9 +6,11 @@ This is a focused RAG reliability pilot, not a full legal knowledge-base benchma
 
 The question is:
 
-> When legal answers must stay inside provided or retrieved sources, does RAG actually make the answer safer enough for release?
+> When legal answers must stay inside provided or retrieved sources, does RAG actually make the
+> answer safer enough for release?
 
-The answer from this pilot is: retrieval improved evidence availability, but generation still needs source-boundary enforcement and claim-level verification.
+The answer from this pilot is: retrieval improved evidence availability, but generation still needs
+source-boundary enforcement and claim-level verification.
 
 ## Run Shape
 
@@ -27,7 +29,8 @@ Lightweight evidence package:
 
 `outputs/rag_v2_focused_pilot_v1/`
 
-Full raw outputs remain local and ignored by Git. The committed package contains summaries and redacted samples only.
+Full raw outputs remain local and ignored by Git. The committed package contains summaries and
+redacted samples only.
 
 ## Main Results
 
@@ -43,14 +46,15 @@ Full raw outputs remain local and ignored by Git. The committed package contains
 
 The 88.1% citation-gate issue rate is a strict material-claim citation gate.
 
-It is designed to surface claims that would need citation repair, source-boundary filtering, human review, or data routing before release.
-It is not an overall model accuracy rate.
+It is designed to surface claims that would need citation repair, source-boundary filtering, human
+review, or data routing before release. It is not an overall model accuracy rate.
 
 Interpretation:
 
 - Retrieval was good at finding the expected allowed sources.
 - Retrieval was not strict enough about source boundary because top-k included extra sources.
-- RAG-grounded answers cited more often, but citation coverage alone did not mean the cited source was allowed or sufficient.
+- RAG-grounded answers cited more often, but citation coverage alone did not mean the cited source
+  was allowed or sufficient.
 - The largest remaining failure mode was material legal claims without explicit citation.
 
 ## Workflow Comparison
@@ -75,8 +79,10 @@ Product conclusion:
 - W4 should not be released as "RAG-safe" yet.
 - Source-limited tasks need retrieval filtering, not just retrieval ranking.
 - Material legal claims should be forced into a claim-citation schema before final answer.
-- Out-of-scope source use should remain a release blocker even when the source itself is legally plausible.
-- The project value is the ability to locate unreleasable RAG behavior and convert it into hard-negative retrieval pairs, SFT examples, preference pairs, and regression evals.
+- Out-of-scope source use should remain a release blocker even when the source itself is legally
+  plausible.
+- The project value is the ability to locate unreleasable RAG behavior and convert it into
+  hard-negative retrieval pairs, SFT examples, preference pairs, and regression evals.
 
 ## Deployment Policy
 
@@ -107,4 +113,5 @@ Next data production:
 
 - Qwen judge scores are baseline signals, not final model rankings.
 - Claim entailment is deterministic triage, not a final legal conclusion.
-- The focused slice is intentionally hard on citation grounding and should not be generalized to all legal tasks.
+- The focused slice is intentionally hard on citation grounding and should not be generalized to all
+  legal tasks.

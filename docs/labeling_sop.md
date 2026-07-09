@@ -78,7 +78,8 @@ Case analysis:
 Document drafting:
 
 - User asks for complaint, notice, application, defense, or material framework.
-- Label focus: structure, claims/defenses, fact organization, evidence list, procedural risk, no fabricated details.
+- Label focus: structure, claims/defenses, fact organization, evidence list, procedural risk, no
+  fabricated details.
 
 ## 5. Error Tag Definitions
 
@@ -119,7 +120,8 @@ Label `missing_facts` when:
 
 Consultation examples:
 
-- Labor termination: missing contract term, termination notice, evaluation evidence, salary, employment period.
+- Labor termination: missing contract term, termination notice, evaluation evidence, salary,
+  employment period.
 - Deposit dispute: missing payment wording, contract status, breach party, refund reason.
 - Food safety: missing purchase record, product label, medical record, causation evidence.
 
@@ -159,13 +161,15 @@ Preference pair candidate:
 Badcase candidate:
 
 - Use when the same failure should be tested in regression.
-- Especially useful for recurring task-type failures, such as document drafting becoming generic consultation.
+- Especially useful for recurring task-type failures, such as document drafting becoming generic
+  consultation.
 
 ## 8. Fabricated Citation SOP
 
 Label `fabricated_citation` when:
 
-- The model invents a law name, article number, judicial interpretation, case number, agency, or court rule.
+- The model invents a law name, article number, judicial interpretation, case number, agency, or
+  court rule.
 - The model cites a basis not provided or not verified by the system.
 - The model presents vague legal authority as if it is exact.
 
@@ -193,7 +197,8 @@ Set `needs_human_review = true` when any of the following appears:
 - low judge confidence
 - possible criminal/legal safety issue
 - uncertain jurisdiction or procedure with high user impact
-- output may encourage user to stop payment, refuse work, publish accusations, destroy evidence, or miss limitation period
+- output may encourage user to stop payment, refuse work, publish accusations, destroy evidence, or
+  miss limitation period
 - model run failed or Judge parse failed
 
 Human review should decide:
@@ -276,7 +281,8 @@ A preference pair should include:
 
 - Same `Eval_Input`.
 - Worse answer: overclaim, missing facts, or weak risk boundary.
-- Better answer: targeted missing facts, conditional analysis, evidence warning, and clear next steps.
+- Better answer: targeted missing facts, conditional analysis, evidence warning, and clear next
+  steps.
 - Clear preference rationale.
 
 Good preference pair pattern:

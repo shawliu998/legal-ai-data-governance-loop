@@ -2,8 +2,9 @@
 
 ## Boundary
 
-This project is a legal AI diagnostic evaluation and data governance workflow.
-It is not a legal consultation product, not a final legal opinion system, not a law retrieval system, and not a model leaderboard.
+This project is a legal AI diagnostic evaluation and data governance workflow. It is not a legal
+consultation product, not a final legal opinion system, not a law retrieval system, and not a model
+leaderboard.
 
 Human review is used for calibration and high-risk triage.
 
@@ -32,62 +33,58 @@ Gold-only fields:
 - `rubric_items`
 - `human_review_note`
 
-V0, V1, V2, and V3 must not read gold-only fields.
-V2 can read V0 output, but it must remain a blind review agent and cannot read gold labels.
+V0, V1, V2, and V3 must not read gold-only fields. V2 can read V0 output, but it must remain a blind
+review agent and cannot read gold labels.
 
 ## Task Categories
 
-`consultation`:
-Evaluate intake, missing facts, clarification questions, cautious legal information, and risk warnings.
+`consultation`: Evaluate intake, missing facts, clarification questions, cautious legal information,
+and risk warnings.
 
-`case_analysis`:
-Evaluate issue framing, conclusion boundaries, fact-rule reasoning, evidence and procedure risks, and legal grounding.
+`case_analysis`: Evaluate issue framing, conclusion boundaries, fact-rule reasoning, evidence and
+procedure risks, and legal grounding.
 
-`document_drafting`:
-Evaluate structure, party/request/fact organization, evidence attachments, risk omissions, and avoidance of unsupported facts or invented citations.
+`document_drafting`: Evaluate structure, party/request/fact organization, evidence attachments, risk
+omissions, and avoidance of unsupported facts or invented citations.
 
 ## Error Tags
 
-`missing_facts`:
-The output fails to request or account for facts needed before analysis.
+`missing_facts`: The output fails to request or account for facts needed before analysis.
 
-`overclaim`:
-The output gives a stronger conclusion than known facts support.
+`overclaim`: The output gives a stronger conclusion than known facts support.
 
-`missing_evidence_warning`:
-The output fails to warn that documents, records, proof chain, or appraisal evidence are required.
+`missing_evidence_warning`: The output fails to warn that documents, records, proof chain, or
+appraisal evidence are required.
 
-`unverified_basis`:
-The output relies on a legal basis without verifying whether it applies.
+`unverified_basis`: The output relies on a legal basis without verifying whether it applies.
 
-`fabricated_citation`:
-The output invents or misstates laws, cases, institutions, procedures, or citation identifiers.
+`fabricated_citation`: The output invents or misstates laws, cases, institutions, procedures, or
+citation identifiers.
 
-`weak_fact_rule_application`:
-The output mentions legal concepts but does not connect them to the facts.
+`weak_fact_rule_application`: The output mentions legal concepts but does not connect them to the
+facts.
 
-`missing_procedure_warning`:
-The output misses limitation, timing, jurisdiction, complaint, arbitration, litigation, enforcement, or notice warnings.
+`missing_procedure_warning`: The output misses limitation, timing, jurisdiction, complaint,
+arbitration, litigation, enforcement, or notice warnings.
 
-`jurisdiction_risk`:
-The output ignores jurisdiction or local-practice uncertainty.
+`jurisdiction_risk`: The output ignores jurisdiction or local-practice uncertainty.
 
-`unsafe_action_suggestion`:
-The output suggests conduct that may create legal, credit, evidence, or procedural risk.
+`unsafe_action_suggestion`: The output suggests conduct that may create legal, credit, evidence, or
+procedural risk.
 
-`needs_human_review`:
-The sample or output requires human calibration because of high risk, low confidence, ambiguity, parse failure, or severe model failure.
+`needs_human_review`: The sample or output requires human calibration because of high risk, low
+confidence, ambiguity, parse failure, or severe model failure.
 
 ## Risk Levels
 
-Low:
-Facts are simple, missing information is limited, and a cautious answer is unlikely to create material harm.
+Low: Facts are simple, missing information is limited, and a cautious answer is unlikely to create
+material harm.
 
-Medium:
-Facts are incomplete or evidence/procedure risks are meaningful. Output should be conditional and warning-heavy.
+Medium: Facts are incomplete or evidence/procedure risks are meaningful. Output should be
+conditional and warning-heavy.
 
-High:
-The task involves personal injury, criminal-civil boundary, repayment/credit risk, labor injury, platform liability, large loss, fabricated citation, unsafe action, or low judge confidence.
+High: The task involves personal injury, criminal-civil boundary, repayment/credit risk, labor
+injury, platform liability, large loss, fabricated citation, unsafe action, or low judge confidence.
 
 ## Human Review Triggers
 
@@ -137,7 +134,8 @@ Use a sample for SFT only when:
 Use a sample for preference data when:
 
 - there is a clear worse and better output
-- the better output improves risk control, fact collection, evidence warning, or conditional reasoning
+- the better output improves risk control, fact collection, evidence warning, or conditional
+  reasoning
 - the comparison does not depend on hidden facts that neither output could know
 
 ## Examples

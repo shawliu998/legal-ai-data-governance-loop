@@ -2,17 +2,22 @@
 
 ## Why V2 Is Needed
 
-The first real API pilot proved that RAG is necessary for source-specific legal tasks, but it also exposed a product risk: retrieved context does not automatically make an answer grounded.
+The first real API pilot proved that RAG is necessary for source-specific legal tasks, but it also
+exposed a product risk: retrieved context does not automatically make an answer grounded.
 
 Observed V1 issues:
 
-- The controlled corpus is useful for demonstration, but too small to represent a serious legal knowledge base.
-- Some legal rules are summarized rather than represented as precise statute, contract, policy, or case text.
+- The controlled corpus is useful for demonstration, but too small to represent a serious legal
+  knowledge base.
+- Some legal rules are summarized rather than represented as precise statute, contract, policy, or
+  case text.
 - Citation verification is mostly source-id and lexical-support based.
-- The system can flag missing or out-of-scope citations, but cannot yet reliably decide whether a cited source actually entails the legal conclusion.
+- The system can flag missing or out-of-scope citations, but cannot yet reliably decide whether a
+  cited source actually entails the legal conclusion.
 - W3/W4 workflows over-routed to human review and still produced source-boundary failures.
 
-V2 should focus on citation reliability and product release gates, not simply on adding more documents.
+V2 should focus on citation reliability and product release gates, not simply on adding more
+documents.
 
 ## V2 Goals
 
@@ -74,14 +79,20 @@ Current implementation status:
 - It emits `claim_entailment.csv` and `claim_entailment_summary.csv`.
 - It supports allowed-source boundary checks through `--cases-jsonl`.
 - It can be passed into `release-gate` through `--claim-entailment`.
-- The controlled corpus has been expanded from 45 to 52 sources and a conflicting `POLICY-001` source was corrected to match the source-limited employment-policy case.
-- False positives were reduced by filtering intake/question fragments and scoring combined cited sources for multi-source claims.
+- The controlled corpus has been expanded from 45 to 52 sources and a conflicting `POLICY-001`
+  source was corrected to match the source-limited employment-policy case.
+- False positives were reduced by filtering intake/question fragments and scoring combined cited
+  sources for multi-source claims.
 - It should be treated as triage before human review, not as final legal entailment.
-- A focused RAG V2 pilot has now been run on 8 source-limited citation/document cases, 3 Qianfan-hosted models, and 3 workflows, producing 72 / 72 successful model outputs.
+- A focused RAG V2 pilot has now been run on 8 source-limited citation/document cases, 3
+  Qianfan-hosted models, and 3 workflows, producing 72 / 72 successful model outputs.
 - The focused pilot evidence package is committed at `outputs/rag_v2_focused_pilot_v1/`.
-- The focused pilot found 100% expected-source recall for W4/RAG retrieval, but only 0.50 average source-boundary precision because top-k retrieval also included extra sources.
-- Claim-level triage found 555 citation-gate issues among 630 reviewable legal claims, mostly uncited material claims.
-- W4/RAG improved citation coverage but introduced 74 out-of-scope source claims, so source-specific legal tasks still need source-boundary filtering and claim-level verification before release.
+- The focused pilot found 100% expected-source recall for W4/RAG retrieval, but only 0.50 average
+  source-boundary precision because top-k retrieval also included extra sources.
+- Claim-level triage found 555 citation-gate issues among 630 reviewable legal claims, mostly
+  uncited material claims.
+- W4/RAG improved citation coverage but introduced 74 out-of-scope source claims, so source-specific
+  legal tasks still need source-boundary filtering and claim-level verification before release.
 
 ## Retrieval Metrics
 
@@ -110,7 +121,8 @@ Do not rerun the full 300-output pilot first. Run a focused V2 pilot:
 
 Primary hypothesis:
 
-> Claim-level citation entailment will reduce false confidence in RAG outputs and produce better release-gate decisions than source-id verification alone.
+> Claim-level citation entailment will reduce false confidence in RAG outputs and produce better
+> release-gate decisions than source-id verification alone.
 
 Secondary hypotheses:
 
@@ -152,4 +164,5 @@ V2 should be considered successful if:
 - Citation-support failure rate drops on the focused citation slice.
 - Human reviewers disagree less with automated citation labels.
 - W4 grounded answers become safer without routing nearly every output to human review.
-- The release gate can distinguish "RAG answer is grounded" from "RAG answer merely cites something."
+- The release gate can distinguish "RAG answer is grounded" from "RAG answer merely cites
+  something."

@@ -1,8 +1,10 @@
 # Runbook
 
-This runbook explains how to reproduce the Legal AI Product Eval & Data Governance System from a fresh checkout.
+This runbook explains how to reproduce the Legal AI Product Eval & Data Governance System from a
+fresh checkout.
 
-The project is a diagnostic data-loop workflow. It is not a legal advice system, not a model leaderboard, and not an automatic legal correctness engine.
+The project is a diagnostic data-loop workflow. It is not a legal advice system, not a model
+leaderboard, and not an automatic legal correctness engine.
 
 ## 1. Environment Setup
 
@@ -15,7 +17,8 @@ python3 -m venv .venv
 cp .env.example .env
 ```
 
-If package import fails in a local editable setup, use the installed wheel command above (`pip install .`) rather than editable install.
+If package import fails in a local editable setup, use the installed wheel command above (`pip
+install .`) rather than editable install.
 
 ## 2. Data Preparation
 
@@ -48,7 +51,8 @@ Expected dataset shape:
 - 45 `extended_diagnostic_45` samples
 - 3 task categories: `consultation`, `case_analysis`, `document_drafting`
 - 380 rubric rows
-- `sample_metadata.csv` for difficulty, risk level, deep-badcase flag, and human-review flag. This metadata is not prompt-visible.
+- `sample_metadata.csv` for difficulty, risk level, deep-badcase flag, and human-review flag. This
+  metadata is not prompt-visible.
 
 ## 3. Validate Leakage Controls
 
@@ -85,7 +89,8 @@ Gold-only fields must not appear in `Eval_Input`:
 
 ## 4. Run the Mock Pipeline
 
-Mock mode is the default reproducible path because it is deterministic and does not require API keys.
+Mock mode is the default reproducible path because it is deterministic and does not require API
+keys.
 
 ```bash
 .venv/bin/python -m legal_eval_harness.cli all \
@@ -173,9 +178,12 @@ Then run:
   --output-dir outputs
 ```
 
-API mode is optional. Mock mode is enough to validate the full data loop without external provider variance.
+API mode is optional. Mock mode is enough to validate the full data loop without external provider
+variance.
 
-For a small DeepSeek-compatible smoke test, use `config.deepseek.smoke.yaml`. It selects 12 samples and 30 model runs to validate provider integration without turning the project into a model leaderboard. See `docs/api_smoke_run.md`.
+For a small DeepSeek-compatible smoke test, use `config.deepseek.smoke.yaml`. It selects 12 samples
+and 30 model runs to validate provider integration without turning the project into a model
+leaderboard. See `docs/api_smoke_run.md`.
 
 ## 8. Optional Practice Benchmark Pilot
 
@@ -216,7 +224,8 @@ Run the pilot pipeline:
   --output-dir outputs/practice_benchmark_pilot
 ```
 
-This pilot is intentionally separate from `dataset_manifest.yaml` so the default diagnostic dataset remains stable.
+This pilot is intentionally separate from `dataset_manifest.yaml` so the default diagnostic dataset
+remains stable.
 
 ## 9. Real API Deployment-Eval Smoke Run
 
@@ -268,7 +277,8 @@ Expected shape:
 - 3 workflow conditions: `W0`, `W1`, `W3`
 - 108 model outputs
 
-Use the resulting `Executive_Dashboard`, `Cost_Latency`, `Deployment_Policy`, `Data_Routing_Summary`, and `Badcase_Cards` sheets to complete `docs/results_practice_api_smoke.md`.
+Use the resulting `Executive_Dashboard`, `Cost_Latency`, `Deployment_Policy`,
+`Data_Routing_Summary`, and `Badcase_Cards` sheets to complete `docs/results_practice_api_smoke.md`.
 
 Apply `docs/release_gate.md` before making any auto-answer or model-routing claim.
 
@@ -284,7 +294,8 @@ Generate a 20% human calibration sample. Critical rows are always prioritized:
   --min-samples 20
 ```
 
-If critical rows exceed 20% of outputs, the calibration file intentionally exceeds the target sample rate. Critical failures are review obligations, not optional samples.
+If critical rows exceed 20% of outputs, the calibration file intentionally exceeds the target sample
+rate. Critical failures are review obligations, not optional samples.
 
 Generate the release gate table:
 
@@ -326,7 +337,8 @@ QIANFAN_MODEL_GLM_52=
 QIANFAN_MODEL_KIMI_K26=
 ```
 
-Use exact model names from the Qianfan model center. If one vendor slot is unavailable, remove that model block from `config.qianfan_vendors_smoke.yaml` or leave only the vendors you can call.
+Use exact model names from the Qianfan model center. If one vendor slot is unavailable, remove that
+model block from `config.qianfan_vendors_smoke.yaml` or leave only the vendors you can call.
 
 Run:
 
@@ -370,7 +382,8 @@ Report this as a deployment policy experiment:
 
 ## 11. Stratified Product Boundary Eval
 
-The stratified product-boundary eval is a JSONL suite designed to test normal, hard, risk, citation, adversarial, and counterfactual legal product traffic.
+The stratified product-boundary eval is a JSONL suite designed to test normal, hard, risk, citation,
+adversarial, and counterfactual legal product traffic.
 
 Validate it:
 
@@ -389,7 +402,9 @@ Expected shape:
 - 4 `adversarial_trap`
 - 6 `counterfactual_pair`
 
-Use `config.qianfan_product_boundary_eval.yaml` as the product-boundary experiment spec. The first version is intentionally schema-validated and mock-compatible; automatic RAG retrieval can be added later without changing the dataset schema.
+Use `config.qianfan_product_boundary_eval.yaml` as the product-boundary experiment spec. The first
+version is intentionally schema-validated and mock-compatible; automatic RAG retrieval can be added
+later without changing the dataset schema.
 
 Prepare normalized CSV files and a manifest for the existing runner:
 
@@ -440,13 +455,16 @@ Run the mock-compatible product-boundary pipeline:
   --output-dir outputs/product_boundary_pilot_mock
 ```
 
-RAG is enabled in `config.qianfan_product_boundary_runnable.yaml` for `V4` and `V3`. The corpus is `data/rag_corpus/legal_sources.csv`.
+RAG is enabled in `config.qianfan_product_boundary_runnable.yaml` for `V4` and `V3`. The corpus is
+`data/rag_corpus/legal_sources.csv`.
 
 Expected RAG outputs:
 
-- `retrieval_log.csv`: retrieved source IDs, expected source IDs, recall, precision, and retrieval status.
+- `retrieval_log.csv`: retrieved source IDs, expected source IDs, recall, precision, and retrieval
+  status.
 - `rag_contexts.csv`: source chunks injected into each RAG-enabled run.
-- `citation_verification.csv`: cited source IDs, valid source IDs, fabricated source IDs, claim-level support checks, unsupported-claim counts, and citation-fidelity label.
+- `citation_verification.csv`: cited source IDs, valid source IDs, fabricated source IDs,
+  claim-level support checks, unsupported-claim counts, and citation-fidelity label.
 
 Build claim-level citation entailment triage after model outputs exist:
 
@@ -461,10 +479,14 @@ PYTHONPATH=src .venv/bin/python -m legal_eval_harness.cli build-claim-entailment
 
 This produces:
 
-- `claim_entailment.csv`: one row per extracted claim, with cited source IDs, allowed source IDs, best source, support score, entailment label, and product action.
-- `claim_entailment_summary.csv`: counts for reviewable claims, citation-gate issues, release blockers, supported claims, unsupported claims, no-citation claims, out-of-scope source usage, fabricated citations, and contradiction signals.
+- `claim_entailment.csv`: one row per extracted claim, with cited source IDs, allowed source IDs,
+  best source, support score, entailment label, and product action.
+- `claim_entailment_summary.csv`: counts for reviewable claims, citation-gate issues, release
+  blockers, supported claims, unsupported claims, no-citation claims, out-of-scope source usage,
+  fabricated citations, and contradiction signals.
 
-The entailment labels are deterministic triage signals for review queues and release gates. They are not final legal conclusions.
+The entailment labels are deterministic triage signals for review queues and release gates. They are
+not final legal conclusions.
 
 Run judge ensemble calibration after `model_run_log.csv` exists:
 
@@ -479,11 +501,16 @@ Run judge ensemble calibration after `model_run_log.csv` exists:
 
 Expected ensemble outputs:
 
-- `judge_ensemble_scores.csv`: one row per output and judge, with answer model, judge model, self-eval exclusion, and raw judge payload.
-- `judge_disagreements.csv`: score gap, critical-failure mismatch, route mismatch, arbitration trigger, and arbiter used.
-- `judge_ensemble_summary.csv`: per-run stable/arbitrated/human-calibration status and final risk route.
+- `judge_ensemble_scores.csv`: one row per output and judge, with answer model, judge model,
+  self-eval exclusion, and raw judge payload.
+- `judge_disagreements.csv`: score gap, critical-failure mismatch, route mismatch, arbitration
+  trigger, and arbiter used.
+- `judge_ensemble_summary.csv`: per-run stable/arbitrated/human-calibration status and final risk
+  route.
 
-For API mode, set the Qianfan model env vars in `config.qianfan_product_boundary_runnable.yaml`. The default design uses DeepSeek V4 Pro and GLM-5.2 as primary judges, Kimi K2.6 as arbiter, and blocks judge self-evaluation.
+For API mode, set the Qianfan model env vars in `config.qianfan_product_boundary_runnable.yaml`. The
+default design uses DeepSeek V4 Pro and GLM-5.2 as primary judges, Kimi K2.6 as arbiter, and blocks
+judge self-evaluation.
 
 Build the legal-review calibration queue:
 
@@ -499,7 +526,10 @@ Build the legal-review calibration queue:
   --min-samples 120
 ```
 
-If critical rows already exceed the target sample rate, the file intentionally grows beyond 20%. Critical failures are review obligations. For judge calibration and evaluation reporting, also create a stratified file that keeps all critical rows and adds routine non-critical samples across task, model, workflow, and risk strata:
+If critical rows already exceed the target sample rate, the file intentionally grows beyond 20%.
+Critical failures are review obligations. For judge calibration and evaluation reporting, also
+create a stratified file that keeps all critical rows and adds routine non-critical samples across
+task, model, workflow, and risk strata:
 
 ```bash
 .venv/bin/python -m legal_eval_harness.cli sample-human-review \
@@ -514,7 +544,9 @@ If critical rows already exceed the target sample rate, the file intentionally g
   --random-calibration-min 100
 ```
 
-As the legal reviewer, fill `human_citation_support`, `human_unsupported_claims`, `human_route_override`, `human_data_action`, and `human_notes`. These fields are intentionally separate from automated judge labels so judge-human agreement can be measured later.
+As the legal reviewer, fill `human_citation_support`, `human_unsupported_claims`,
+`human_route_override`, `human_data_action`, and `human_notes`. These fields are intentionally
+separate from automated judge labels so judge-human agreement can be measured later.
 
 After review, summarize agreement and confirmed issues:
 
@@ -524,15 +556,18 @@ After review, summarize agreement and confirmed issues:
   --output outputs/product_boundary_pilot_mock/human_calibration_summary.csv
 ```
 
-Mock release-gate decisions are only pipeline diagnostics. Do not interpret them as real deployment readiness until API outputs and human calibration are available.
+Mock release-gate decisions are only pipeline diagnostics. Do not interpret them as real deployment
+readiness until API outputs and human calibration are available.
 
 ## 12. Qianfan API Pilot
 
-Do not start with the full 1250-output run. First run the 1-case API smoke test, then run the 12-case API pilot.
+Do not start with the full 1250-output run. First run the 1-case API smoke test, then run the
+12-case API pilot.
 
 ### 12.1 One-Case API Smoke Test
 
-Use this to verify Qianfan API key, base URL, model ID, response parsing, and CSV writing before spending money on the pilot.
+Use this to verify Qianfan API key, base URL, model ID, response parsing, and CSV writing before
+spending money on the pilot.
 
 Validate the smoke dataset and run plan:
 
@@ -687,7 +722,8 @@ The output package contains redacted summaries and a human calibration template:
 outputs/a5_multiturn_intake_pilot_v1/human_trace_calibration_template.csv
 ```
 
-Full raw traces remain local and ignored by Git. By default, runs under `outputs/` write raw A5 logs to `outputs_raw/<run_name>/`.
+Full raw traces remain local and ignored by Git. By default, runs under `outputs/` write raw A5 logs
+to `outputs_raw/<run_name>/`.
 
 ## 14. Common Checks
 

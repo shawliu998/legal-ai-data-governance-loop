@@ -2,17 +2,24 @@
 
 ## Why This Eval Exists
 
-This project is not a legal model leaderboard. It evaluates whether a legal AI product can decide when to answer, when to ask for more facts, when to rely only on provided sources, and when to route a case to human review.
+This project is not a legal model leaderboard. It evaluates whether a legal AI product can decide
+when to answer, when to ask for more facts, when to rely only on provided sources, and when to route
+a case to human review.
 
-Strong models can often answer ordinary legal questions fluently. That is not enough for deployment. A legal AI product must also control overclaim, fabricated citations, unsafe document drafting, missed human review, and sensitivity to legally material facts.
+Strong models can often answer ordinary legal questions fluently. That is not enough for deployment.
+A legal AI product must also control overclaim, fabricated citations, unsafe document drafting,
+missed human review, and sensitivity to legally material facts.
 
 The key evaluation question is:
 
-> Which model-workflow configuration is safe and useful for each legal task slice, and what should failed outputs become in the next data production loop?
+> Which model-workflow configuration is safe and useful for each legal task slice, and what should
+> failed outputs become in the next data production loop?
 
 ## Why Not Only Hard Cases
 
-Only testing hard cases creates a distorted benchmark. Real legal product traffic contains routine questions, ambiguous questions, high-risk cases, evidence-grounded questions, adversarial requests, and near-identical cases where one fact changes the legal conclusion.
+Only testing hard cases creates a distorted benchmark. Real legal product traffic contains routine
+questions, ambiguous questions, high-risk cases, evidence-grounded questions, adversarial requests,
+and near-identical cases where one fact changes the legal conclusion.
 
 A production-oriented eval should include:
 
@@ -23,7 +30,8 @@ A production-oriented eval should include:
 - adversarial cases, to measure product boundary enforcement
 - counterfactual cases, to measure legal fact sensitivity
 
-This design makes the eval realistic enough for product decisions while still difficult enough to expose differences among strong models.
+This design makes the eval realistic enough for product decisions while still difficult enough to
+expose differences among strong models.
 
 ## Can Answer vs. Should Answer
 
@@ -33,10 +41,14 @@ Legal product eval asks whether the model should answer in that way.
 
 Examples:
 
-- A model can draft an intimidating demand letter, but should refuse threats and rewrite it into a compliant notice.
-- A model can give a win probability, but should avoid precise odds when facts and evidence are incomplete.
-- A model can cite legal rules from memory, but should not invent citations when the workflow requires provided-source grounding.
-- A model can follow the user's preferred legal framing, but should challenge bad premises such as confusing investment with loan.
+- A model can draft an intimidating demand letter, but should refuse threats and rewrite it into a
+  compliant notice.
+- A model can give a win probability, but should avoid precise odds when facts and evidence are
+  incomplete.
+- A model can cite legal rules from memory, but should not invent citations when the workflow
+  requires provided-source grounding.
+- A model can follow the user's preferred legal framing, but should challenge bad premises such as
+  confusing investment with loan.
 
 The rubric therefore scores product behavior, not only legal fluency.
 
@@ -63,15 +75,20 @@ The product-boundary config defines five workflow conditions:
 | `w3_rag_verifier_router`     | Retrieves source chunks, generates a risk-controlled workflow answer, and logs citation verification.        |
 | `w4_clarification_first`     | Asks clarifying questions before final answer when material facts are missing.                               |
 
-The current implementation uses a controlled local corpus, not open-web retrieval. This keeps the eval reproducible while still separating retrieval failure, generation grounding failure, and citation fabrication.
+The current implementation uses a controlled local corpus, not open-web retrieval. This keeps the
+eval reproducible while still separating retrieval failure, generation grounding failure, and
+citation fabrication.
 
 RAG component logs:
 
 - `retrieval_log.csv`: source recall, source precision, and expected-source hit counts.
 - `rag_contexts.csv`: exact source chunks injected into each V3/V4 run.
-- `citation_verification.csv`: cited IDs, fabricated IDs, claim-level support checks, unsupported-claim counts, and citation-fidelity labels.
+- `citation_verification.csv`: cited IDs, fabricated IDs, claim-level support checks,
+  unsupported-claim counts, and citation-fidelity labels.
 
-Claim-level verification is a triage signal, not a legal conclusion. It flags reviewable legal claims whose cited or retrieved context has weak lexical support, then routes them into the human calibration queue for expert review.
+Claim-level verification is a triage signal, not a legal conclusion. It flags reviewable legal
+claims whose cited or retrieved context has weak lexical support, then routes them into the human
+calibration queue for expert review.
 
 ## Rubric Dimensions
 
@@ -85,7 +102,9 @@ Primary dimensions:
 - `human_review_routing`
 - `product_usability`
 
-These dimensions are chosen because a legal AI product fails not only when it gives a wrong legal answer, but also when it answers too confidently, ignores missing facts, invents sources, or fails to escalate.
+These dimensions are chosen because a legal AI product fails not only when it gives a wrong legal
+answer, but also when it answers too confidently, ignores missing facts, invents sources, or fails
+to escalate.
 
 ## Critical Failures
 
@@ -110,11 +129,16 @@ The product-boundary run supports both a single judge and an ensemble judge laye
 The ensemble design is:
 
 - DeepSeek V4 Pro and GLM-5.2 act as primary judges.
-- Judge self-evaluation is excluded, so a DeepSeek output is not scored by the DeepSeek judge and a GLM output is not scored by the GLM judge.
-- Kimi K2.6 acts as an arbiter when the primary judges disagree on score, critical failures, or data route.
-- Single-primary cases created by self-evaluation exclusion are marked for arbitration or human calibration.
+- Judge self-evaluation is excluded, so a DeepSeek output is not scored by the DeepSeek judge and a
+  GLM output is not scored by the GLM judge.
+- Kimi K2.6 acts as an arbiter when the primary judges disagree on score, critical failures, or data
+  route.
+- Single-primary cases created by self-evaluation exclusion are marked for arbitration or human
+  calibration.
 
-The goal is not to hide behind automatic judging. The goal is to produce a review queue that identifies which cases need arbitration, which cases need human calibration, and which judge labels are stable enough to drive data routing.
+The goal is not to hide behind automatic judging. The goal is to produce a review queue that
+identifies which cases need arbitration, which cases need human calibration, and which judge labels
+are stable enough to drive data routing.
 
 ## Data Governance Loop
 
@@ -143,7 +167,8 @@ Auto-answer is blocked when:
 - the model ignores a material fact change in a counterfactual pair
 - judge parsing or calibration is unreliable
 
-Limited release may be acceptable when quality is strong but human review rate, latency, or uncertainty remains high.
+Limited release may be acceptable when quality is strong but human review rate, latency, or
+uncertainty remains high.
 
 ## Counterfactual Pairs
 
@@ -155,11 +180,13 @@ Examples in `legal_product_boundary_pilot_v1.jsonl` include:
 - transfer note marked loan vs. investment
 - consumer payment marked `定金` vs. `订金`
 
-These pairs are valuable because strong models often sound confident in both variants. The evaluation checks whether the legal conclusion changes for the right reason.
+These pairs are valuable because strong models often sound confident in both variants. The
+evaluation checks whether the legal conclusion changes for the right reason.
 
 ## Cost And Latency
 
-Legal AI deployment is not only about quality. Cost and latency determine which workflow can be used for which task.
+Legal AI deployment is not only about quality. Cost and latency determine which workflow can be used
+for which task.
 
 The product decision may be:
 
@@ -174,4 +201,7 @@ This is why the run log captures latency, token usage, and estimated cost.
 
 A concise summary is:
 
-> I designed a stratified legal AI product-boundary eval suite that tests not only legal answer quality, but also whether the system should answer, ask follow-up questions, rely on provided sources, or route to human review. The outputs feed release gates and data production queues such as badcase, SFT, preference pairs, and regression eval.
+> I designed a stratified legal AI product-boundary eval suite that tests not only legal answer
+> quality, but also whether the system should answer, ask follow-up questions, rely on provided
+> sources, or route to human review. The outputs feed release gates and data production queues such
+> as badcase, SFT, preference pairs, and regression eval.

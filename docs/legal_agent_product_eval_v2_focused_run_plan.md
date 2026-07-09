@@ -21,8 +21,8 @@ x 3 agent architectures
 
 ## Why This Run
 
-The current evidence is strong but split across several pilots.
-The focused run creates a cleaner main line for interview and portfolio review.
+The current evidence is strong but split across several pilots. The focused run creates a cleaner
+main line for interview and portfolio review.
 
 It tests whether each model-agent configuration should:
 
@@ -39,8 +39,8 @@ Run-plan config:
 
 `configs/experiments/legal_agent_product_eval_v2_focused.yaml`
 
-This file is a planned experiment config.
-It should not be described as completed until output artifacts are generated.
+This file is a planned experiment config. It should not be described as completed until output
+artifacts are generated.
 
 ## Scope
 
@@ -61,7 +61,8 @@ Agent architectures:
 Dataset:
 
 - `data/eval_sets/legal_product_boundary_pilot_v1.jsonl`
-- 50 cases across normal, hard reasoning, risk calibration, citation grounding, adversarial, and counterfactual slices.
+- 50 cases across normal, hard reasoning, risk calibration, citation grounding, adversarial, and
+  counterfactual slices.
 
 ## Human Calibration
 

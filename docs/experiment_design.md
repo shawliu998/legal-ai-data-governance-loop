@@ -2,10 +2,11 @@
 
 ## Positioning
 
-This is a compact evaluation framework for legal AI data-loop governance.
-It is designed to support data product decisions through a self-contained diagnostic dataset.
+This is a compact evaluation framework for legal AI data-loop governance. It is designed to support
+data product decisions through a self-contained diagnostic dataset.
 
-The workflow uses a compact legal task set and rubric-based judging structure, then implements a lightweight data loop:
+The workflow uses a compact legal task set and rubric-based judging structure, then implements a
+lightweight data loop:
 
 1. Normalize legal samples.
 2. Prevent gold label leakage.
@@ -14,7 +15,8 @@ The workflow uses a compact legal task set and rubric-based judging structure, t
 5. Route failures into data-use buckets.
 6. Generate a dashboard for data production decisions.
 
-The current product-boundary extension includes controlled local RAG and citation verification. It still excludes Web UI, database storage, and open-web legal retrieval.
+The current product-boundary extension includes controlled local RAG and citation verification. It
+still excludes Web UI, database storage, and open-web legal retrieval.
 
 ## Dataset Layers
 
@@ -59,29 +61,29 @@ Task categories:
 
 The extended samples are for task coverage, scale testing, and data-routing calibration.
 
-An optional practice benchmark pilot can be generated separately under `data/practice_benchmark_pilot/`.
-It contains 30 licensed adapted practice samples by default:
+An optional practice benchmark pilot can be generated separately under
+`data/practice_benchmark_pilot/`. It contains 30 licensed adapted practice samples by default:
 
 - 20 `case_analysis` samples
 - 6 `consultation` samples
 - 4 `document_drafting` samples
 - 155 rubric rows
 
-This pilot is intentionally not merged into the default 85-sample manifest. It is used for higher-difficulty real-practice evaluation and API runs while keeping the default diagnostic run deterministic and stable.
+This pilot is intentionally not merged into the default 85-sample manifest. It is used for
+higher-difficulty real-practice evaluation and API runs while keeping the default diagnostic run
+deterministic and stable.
 
 ## Agent Versions
 
-V0 Direct Answer:
-Baseline direct response using only `Eval_Input`.
+V0 Direct Answer: Baseline direct response using only `Eval_Input`.
 
-V1 Answer Protocol:
-Structured legal-information response using only `Eval_Input`.
+V1 Answer Protocol: Structured legal-information response using only `Eval_Input`.
 
-V2 Blind Review Agent:
-Reviews V0 output using only `Eval_Input` plus V0 output. It cannot see gold labels.
+V2 Blind Review Agent: Reviews V0 output using only `Eval_Input` plus V0 output. It cannot see gold
+labels.
 
-V3 Workflow Agent:
-Runs intake, clarification, legal analysis, risk review, rewrite, and logger using only `Eval_Input`.
+V3 Workflow Agent: Runs intake, clarification, legal analysis, risk review, rewrite, and logger
+using only `Eval_Input`.
 
 ## Experiment Matrix
 
@@ -116,7 +118,8 @@ Practice API smoke run:
 - 3 model aliases
 - W0/V0 closed-book answer, W1/V1 structured legal prompt, W3/V3 risk-control workflow
 - 108 normalized API outputs
-- output-level latency, token count, estimated cost, judge score, critical failure label, human-review decision, and data route
+- output-level latency, token count, estimated cost, judge score, critical failure label,
+  human-review decision, and data route
 
 The API smoke run should be interpreted as a deployment-eval experiment:
 
@@ -184,4 +187,5 @@ Examples:
 - missing evidence warning -> `sft`
 - weak fact-rule application -> `eval`
 
-The dashboard is a data production panel. It should answer what data to build next, not which model is best.
+The dashboard is a data production panel. It should answer what data to build next, not which model
+is best.

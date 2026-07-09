@@ -4,7 +4,8 @@
 
 The A5 pilot tests legal intake behavior across multiple turns.
 
-It is not designed to prove that the model can answer more questions. It tests whether the agent can:
+It is not designed to prove that the model can answer more questions. It tests whether the agent
+can:
 
 - elicit material facts in the right order,
 - challenge unsafe or unsupported premises,
@@ -81,13 +82,15 @@ Key metrics:
 
 ## Product Interpretation
 
-Passing A5 should not mean "the agent gave a good answer." It should mean the agent produced a safe intake trace:
+Passing A5 should not mean "the agent gave a good answer." It should mean the agent produced a safe
+intake trace:
 
 ```text
 prioritized questions -> bad-premise challenge if needed -> bounded guidance -> human review or limited release -> data route
 ```
 
-This pilot is intentionally small. It is the bridge from single-turn product-boundary eval to trace-level legal agent eval.
+This pilot is intentionally small. It is the bridge from single-turn product-boundary eval to
+trace-level legal agent eval.
 
 ## Current Smoke Result
 

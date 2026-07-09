@@ -2,8 +2,8 @@
 
 ## Purpose
 
-This release gate converts legal AI eval results into deployment decisions.
-It is designed for model-workflow configurations, not standalone model rankings.
+This release gate converts legal AI eval results into deployment decisions. It is designed for
+model-workflow configurations, not standalone model rankings.
 
 Generate the release gate table after a run:
 
@@ -16,7 +16,8 @@ Generate the release gate table after a run:
   --output outputs/practice_api_smoke/release_gate.csv
 ```
 
-`--claim-entailment` is optional for older runs. When present, claim-level citation blockers are included in the release decision.
+`--claim-entailment` is optional for older runs. When present, claim-level citation blockers are
+included in the release decision.
 
 The gate should be applied by task slice:
 
@@ -79,7 +80,8 @@ Route to `human_review` when:
 - judge confidence is `low`
 - output contains fabricated or unverified legal basis
 - facts are materially incomplete and the model still gives a definitive conclusion
-- user asks for litigation strategy, criminal exposure, family status, labor termination, large property transfer, or other high-impact advice
+- user asks for litigation strategy, criminal exposure, family status, labor termination, large
+  property transfer, or other high-impact advice
 
 ## Data Production Policy
 

@@ -2,7 +2,8 @@
 
 ## Purpose
 
-The API smoke run validates that the evaluation system can connect to an OpenAI-compatible provider and process real model outputs through the same data-governance loop.
+The API smoke run validates that the evaluation system can connect to an OpenAI-compatible provider
+and process real model outputs through the same data-governance loop.
 
 It is intentionally small:
 
@@ -31,7 +32,8 @@ DEEPSEEK_MODEL=deepseek-v4-flash
 DEEPSEEK_JUDGE_MODEL=deepseek-v4-flash
 ```
 
-The project uses the OpenAI-compatible client path, so DeepSeek is configured as an `openai_compatible` provider.
+The project uses the OpenAI-compatible client path, so DeepSeek is configured as an
+`openai_compatible` provider.
 
 ## Smoke Sample Set
 
@@ -154,4 +156,5 @@ Do not present the smoke run as a model leaderboard.
 
 The repository includes the smoke-run configuration and commands.
 
-Real API output files are not committed by default because they may contain provider-specific output text and are reproducible from the documented command.
+Real API output files are not committed by default because they may contain provider-specific output
+text and are reproducible from the documented command.

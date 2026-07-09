@@ -2,12 +2,13 @@
 
 ## Positioning
 
-This report evaluates model-workflow configurations for legal AI deployment decisions.
-It is not a model leaderboard and does not provide legal advice.
+This report evaluates model-workflow configurations for legal AI deployment decisions. It is not a
+model leaderboard and does not provide legal advice.
 
 Core question:
 
-> Which model-workflow configurations are suitable for which legal task slices, under what risk controls, and what data assets should be produced from failures?
+> Which model-workflow configurations are suitable for which legal task slices, under what risk
+> controls, and what data assets should be produced from failures?
 
 ## Run Metadata
 
@@ -114,7 +115,9 @@ Use `Data_Routing_Summary` and `Badcase_Cards`.
 For this smoke run:
 
 - 100% of outputs are scored by rubric-based LLM judge.
-- `human_review_calibration.csv` targets 20% of outputs, prioritizing all critical failures and a stratified sample across model/workflow/task. If critical rows exceed 20%, the file intentionally exceeds the target sample rate.
+- `human_review_calibration.csv` targets 20% of outputs, prioritizing all critical failures and a
+  stratified sample across model/workflow/task. If critical rows exceed 20%, the file intentionally
+  exceeds the target sample rate.
 - Critical items override average score.
 - Pairwise comparisons should swap A/B order when used for preference examples.
 - Report judge-human agreement before making claims about model superiority.
@@ -125,4 +128,7 @@ TODO: Write this as a deployment decision, not a ranking.
 
 Example:
 
-> The safest first release policy is to allow auto-answer only for low-risk document-drafting tasks when W3 passes risk checks. Consultation and high-risk case analysis should use W3 plus human_review routing. Overclaim and missing-evidence failures should feed preference and SFT data production respectively, while legal-basis failures should be reserved as regression badcases.
+> The safest first release policy is to allow auto-answer only for low-risk document-drafting tasks
+> when W3 passes risk checks. Consultation and high-risk case analysis should use W3 plus
+> human_review routing. Overclaim and missing-evidence failures should feed preference and SFT data
+> production respectively, while legal-basis failures should be reserved as regression badcases.

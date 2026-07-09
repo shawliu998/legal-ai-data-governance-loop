@@ -2,55 +2,47 @@
 
 ## Positioning
 
-This project should be read as a legal agent product-boundary evaluation system, not as a prompt leaderboard.
+This project should be read as a legal agent product-boundary evaluation system, not as a prompt
+leaderboard.
+
+The evaluation asks whether a legal AI product should answer, ask for missing facts, retrieve
+grounded sources, route to human review, block release, or turn the failure into a reusable data
+asset.
+
+The older `V0` / `V1` / `V3` / `V4` / `V5` workflow names are implementation aliases. The
+product-level interpretation should use the `A0`-`A5` agent architecture names below.
+
+## Why This Is Not A Leaderboard
+
+A legal product can fail even when the final answer sounds fluent.
+
+Important failure modes include:
+
+- missing material facts,
+- unsafe or deceptive drafting,
+- overconfident litigation-outcome claims,
+- fabricated citations,
+- out-of-scope source use,
+- unsupported material legal claims,
+- missed human-review escalation.
+
+The output of the project is therefore not a ranked list of models. It is a set of release gates,
+human-review routes, model-agent boundary decisions, and next-round data-production actions.
+
+## Unit Of Evaluation
 
 The core unit of evaluation is:
 
 ```text
-model x agent architecture x legal task slice x trace
+model x agent architecture x legal slice x trace
 ```
 
-The older `V0` / `V1` / `V3` / `V4` / `V5` workflow names are implementation aliases. The product-level interpretation should use the `A0`-`A5` agent architecture names below.
+This unit is intentionally broader than a final answer. It captures which model was used, which
+product architecture constrained it, what legal slice it handled, and what happened across the
+trace.
 
-## Agent Architecture Taxonomy
-
-| Architecture                     | Product meaning                                                      | Legacy alias | Evaluated capability                                                 |
-| -------------------------------- | -------------------------------------------------------------------- | ------------ | -------------------------------------------------------------------- |
-| A0 baseline closed-book          | Direct answer without product controls                               | V0           | Raw model capability and hallucination risk                          |
-| A1 structured legal counsel      | Structured legal issue spotting and risk-calibrated answer           | V1           | Legal reasoning, missing-fact awareness, overclaim control           |
-| A2 grounded retrieval counsel    | Retrieval-grounded answer using controlled sources                   | V4           | Source use, citation coverage, source-boundary discipline            |
-| A3 verifier-router policy layer  | Post-generation risk/citation verifier and routing policy            | V3           | Release blocking, human-review routing, data routing                 |
-| A4 clarification-first intake    | Single-turn intake that asks before answering when facts are missing | V5           | Material fact elicitation and bad-premise challenge                  |
-| A5 multi-turn legal intake agent | Multi-turn intake simulator with user behavior variants              | New pilot    | Prioritized questioning, user resistance handling, escalation timing |
-
-## Why This Matters
-
-Legal AI product evaluation cannot stop at answer quality. The product has to decide:
-
-- whether the agent should answer now,
-- whether it needs retrieval,
-- whether it should ask clarifying questions,
-- whether the user is asking for unsafe or unsupported help,
-- whether the answer can be released,
-- and what data asset the failure should become.
-
-The A0-A5 taxonomy makes those product decisions explicit. It also separates architecture choices from model choices.
-
-## Trace-Level Eval Surface
-
-Each evaluated interaction should be represented as a trace:
-
-```text
-user_message
-agent_message
-retrieval_events
-citation_checks
-claim_checks
-risk_checks
-human_review_route
-release_gate
-data_route
-```
+For single-turn runs, the trace includes the user message, model output, retrieval events, citation
+checks, claim checks, risk checks, release gate, and data route.
 
 For A5, the trace becomes multi-turn:
 
@@ -61,7 +53,107 @@ turn_2_user -> turn_2_agent
 final_route_or_answer
 ```
 
-The evaluation object is no longer only the final answer. It is the full path from user facts to retrieval, reasoning, escalation, release decision, and data routing.
+## Agent Architecture Conditions
+
+| Architecture                     | Product meaning                                                      | Legacy alias | Evaluated capability                                                 |
+| -------------------------------- | -------------------------------------------------------------------- | ------------ | -------------------------------------------------------------------- |
+| A0 baseline closed-book          | Direct answer without product controls                               | V0           | Raw model capability and hallucination risk                          |
+| A1 structured legal counsel      | Structured legal issue spotting and risk-calibrated answer           | V1           | Legal reasoning, missing-fact awareness, overclaim control           |
+| A2 grounded retrieval counsel    | Retrieval-grounded answer using controlled sources                   | V4           | Source use, citation coverage, source-boundary discipline            |
+| A3 verifier-router policy layer  | Post-generation risk/citation verifier and routing policy            | V3           | Release blocking, human-review routing, data routing                 |
+| A4 clarification-first intake    | Single-turn intake that asks before answering when facts are missing | V5           | Material fact elicitation and bad-premise challenge                  |
+| A5 multi-turn legal intake agent | Multi-turn intake simulator with user behavior variants              | New pilot    | Prioritized questioning, user resistance handling, escalation timing |
+
+The A0-A5 taxonomy makes product decisions explicit and separates architecture choices from model
+choices.
+
+## Why 50 Cases Exist
+
+The 50-case product-boundary bank is a focused legal traffic sample, not a statistically complete
+legal benchmark.
+
+It includes normal, hard, risk-calibration, citation-grounding, adversarial, and counterfactual
+slices so the eval can test product behavior beyond average answer quality.
+
+The 50-case size is large enough to exercise:
+
+- multiple legal task slices,
+- controlled source-limited tasks,
+- adversarial or unsafe requests,
+- near-identical counterfactual cases,
+- release-gate and data-routing behavior.
+
+## Why The Real API Pilot Used 12 Cases
+
+The real API pilot used 12 cases because Qianfan model latency and cost varied significantly by
+model and agent architecture.
+
+The 12-case pilot still covered the product-boundary slices while producing:
+
+```text
+12 cases x 5 models x 5 agent architectures = 300 outputs
+```
+
+That was enough to validate API execution, Qwen judge parsing, priority human review, release-gate
+generation, and evidence-package production.
+
+## Why The Next Focused Experiment Is 450 Outputs
+
+The planned focused experiment is designed to strengthen the product evidence without pretending to
+be a general legal benchmark.
+
+The planned run shape is:
+
+```text
+50 cases x 3 models x 3 architectures = 450 outputs
+```
+
+The 450-output experiment is planned, not completed. It should focus on the architecture comparisons
+that matter most for product release: structured counsel, grounded retrieval, and
+clarification-first intake.
+
+## Trace-Level Eval Versus Final-Answer Scoring
+
+Final-answer-only scoring asks whether the last response looks good.
+
+Trace-level eval asks whether the product behaved correctly along the way:
+
+- Did the agent ask for material facts before reaching a conclusion?
+- Did retrieval include allowed and expected sources?
+- Did the answer cite sources when making material legal claims?
+- Did cited sources actually support the claims?
+- Did risk checks catch unsafe premises or overclaims?
+- Did the system route to human review at the right time?
+- Did the release gate block critical failures?
+- Did the failure become the right data asset?
+
+This matters because a legally polished final answer can still be unreleasable if it used
+unsupported citations, skipped escalation, or violated source boundaries.
+
+## Release Gates And Data Routing
+
+A release gate decides whether an output can be limited-release, requires human review, or must be
+blocked.
+
+Blocking conditions include:
+
+- fabricated citations,
+- invented evidence or facts,
+- contradicted source use,
+- out-of-scope source use in source-limited tasks,
+- unsupported material legal claims,
+- missed escalation on high-risk cases.
+
+Data routing turns each failure into a next action:
+
+| Failure pattern                         | Data route                 |
+| --------------------------------------- | -------------------------- |
+| Missing material facts                  | `sft_candidate`            |
+| Safer answer beats overconfident answer | `preference_candidate`     |
+| Fabricated citation or invented fact    | `badcase`                  |
+| Out-of-scope source use                 | `regression_eval`          |
+| Unsupported material claim              | `human_review` / `badcase` |
+| Repeated judge-human disagreement       | `eval_holdout`             |
 
 ## Current Implementation Mapping
 
@@ -91,17 +183,5 @@ It should evaluate:
 - whether it adapts to cooperative, dependent, withdrawn, or adversarial users,
 - whether it stops asking and routes to human review at the right time.
 
-## Product Release Policy
-
-A0 and A1 can support low-risk draft answers only when no critical failure appears.
-
-A2 is required for source-specific tasks, but the RAG V2 pilot shows that retrieval recall is not enough. Source-boundary and claim-level citation gates must pass before release.
-
-A3 is a policy layer, not a user-facing answer mode. It is useful when release gates and human-review routing are the product requirement.
-
-A4 is appropriate when the first user message lacks material facts.
-
-A5 is required before claiming the product supports legal intake agents.
-The current A5 pilot shows the trace-level eval pipeline can run, but it does not support any product-release claim.
-
-A5 should be evaluated on trace quality, material-fact elicitation, overclaim control, and human-review timing, not only final answer quality.
+The current A5 pilot shows the trace-level eval pipeline can run, but it does not support any
+product-release claim before human-calibrated trace labels are complete.

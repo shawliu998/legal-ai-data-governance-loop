@@ -2,7 +2,8 @@
 
 ## 1. Product Positioning
 
-This product is a legal AI data governance workflow, not a legal question-answering product and not a model leaderboard.
+This product is a legal AI data governance workflow, not a legal question-answering product and not
+a model leaderboard.
 
 Primary operating roles:
 
@@ -48,7 +49,8 @@ Secondary users:
 Legal AI outputs are difficult to operationalize because:
 
 - Evaluation datasets often leak gold labels into the tested Agent.
-- Legal tasks are mixed together, making consultation, case analysis, and document drafting hard to compare.
+- Legal tasks are mixed together, making consultation, case analysis, and document drafting hard to
+  compare.
 - Wide evaluation tables do not scale to multiple models, prompt versions, and repeated runs.
 - Badcases are manually discussed but not converted into standardized data assets.
 - Human review queues lack clear routing rules.
@@ -95,7 +97,8 @@ The data owner separates model-visible input from judge-only labels.
 Key requirements:
 
 - `Eval_Input` includes only prompt-visible facts and metadata.
-- `Gold_Labels` includes missing facts, expected questions, expected answer points, risks, and human review notes.
+- `Gold_Labels` includes missing facts, expected questions, expected answer points, risks, and human
+  review notes.
 - `Rubric_Items` includes atomic scoring items and criticality.
 
 ### Scenario B: Evaluation Owner Runs Multi-Version Experiments
@@ -105,7 +108,8 @@ The evaluation owner runs V0/V3 full diagnostic runs and V1/V2 deep badcase supp
 Key requirements:
 
 - Run log is normalized.
-- Each run records model alias, prompt version, visible input fields, output text, status, and timestamp.
+- Each run records model alias, prompt version, visible input fields, output text, status, and
+  timestamp.
 - V0/V3 are not duplicated in the deep supplement.
 
 ### Scenario C: Judge Scores And Tags Failures
@@ -116,8 +120,10 @@ Key requirements:
 
 - Consultation judge focuses on missing facts, clarification, and risk boundary.
 - Case analysis judge focuses on conclusion, facts, reasoning, and basis.
-- Document drafting judge focuses on structure, claims or defenses, fact organization, and risk omissions.
-- Judge returns dimension scores, atomic scores, error tags, risk level, confidence, and human review flag.
+- Document drafting judge focuses on structure, claims or defenses, fact organization, and risk
+  omissions.
+- Judge returns dimension scores, atomic scores, error tags, risk level, confidence, and human
+  review flag.
 
 ### Scenario D: Router Converts Failures Into Data Actions
 

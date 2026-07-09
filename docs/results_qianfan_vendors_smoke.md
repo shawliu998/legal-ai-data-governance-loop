@@ -2,12 +2,13 @@
 
 ## Positioning
 
-This report compares Qianfan-hosted model vendor slots as model-workflow configurations for legal AI deployment.
-It is not a vendor leaderboard.
+This report compares Qianfan-hosted model vendor slots as model-workflow configurations for legal AI
+deployment. It is not a vendor leaderboard.
 
 Core question:
 
-> For each legal task slice, which vendor/model family and workflow combination is safe, cost-effective, and suitable for auto-answer, human review, or data production?
+> For each legal task slice, which vendor/model family and workflow combination is safe,
+> cost-effective, and suitable for auto-answer, human review, or data production?
 
 ## Run Metadata
 

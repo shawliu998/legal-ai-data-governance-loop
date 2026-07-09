@@ -15,23 +15,33 @@ auto-answer, grounded answer, clarification-first, human review, or blocked.
 
 ## Main Findings
 
-The real API pilot used 12 legal product-boundary cases, 5 Qianfan-accessible models, and 5 agent configurations.
-It produced 300 model outputs.
+The real API pilot used 12 legal product-boundary cases, 5 Qianfan-accessible models, and 5 agent
+configurations. It produced 300 model outputs.
 
-Full-run scoring used Qwen3.5-27B as the structured judge because it produced 300 / 300 parseable judge outputs during the pilot.
-An 80-row priority human review sample was then completed for high-risk outputs, citation issues, and likely release blockers.
+Full-run scoring used Qwen3.5-27B as the structured judge because it produced 300 / 300 parseable
+judge outputs during the pilot. An 80-row priority human review sample was then completed for
+high-risk outputs, citation issues, and likely release blockers.
 
 This memo is a product boundary memo, not a leaderboard.
 
-Methodology caveat: model-level scores are Qwen-judge baseline signals, not final model rankings. Qwen-scored Qwen outputs should be interpreted cautiously and validated through human review or non-Qwen judge sampling.
+Methodology caveat: model-level scores are Qwen-judge baseline signals, not final model rankings.
+Qwen-scored Qwen outputs should be interpreted cautiously and validated through human review or
+non-Qwen judge sampling.
 
-1. Best model/architecture for routine consultation: Qwen3.5-27B or ERNIE/Kimi under A1 structured legal counsel, limited to low-risk consultation and no citation defect.
-2. Best architecture for clarification and risk intake: A4 clarification-first intake, especially when material facts are missing or the user asks for risky procedural strategy.
-3. Best architecture for citation-grounded answers: A2 grounded retrieval counsel is required for source-specific tasks.
-   The pilot still showed source-boundary failures, so grounded answers need citation verification and human review before release.
-4. Most conservative architecture: A3 verifier-router policy layer routed 59 / 60 outputs to human review, useful for triage but too conservative for user-facing efficiency without refinement.
-5. Most likely failure pattern: insufficient human-review escalation and unsupported or out-of-scope source use, not merely low answer quality.
-6. Cost-effective deployment policy: use A1 for low-risk routine consultation, A4 for intake and missing-fact scenarios, and A2/A3 only where source grounding or release policy enforcement is mandatory.
+1. Best model/architecture for routine consultation: Qwen3.5-27B or ERNIE/Kimi under A1 structured
+   legal counsel, limited to low-risk consultation and no citation defect.
+2. Best architecture for clarification and risk intake: A4 clarification-first intake, especially
+   when material facts are missing or the user asks for risky procedural strategy.
+3. Best architecture for citation-grounded answers: A2 grounded retrieval counsel is required for
+   source-specific tasks. The pilot still showed source-boundary failures, so grounded answers need
+   citation verification and human review before release.
+4. Most conservative architecture: A3 verifier-router policy layer routed 59 / 60 outputs to human
+   review, useful for triage but too conservative for user-facing efficiency without refinement.
+5. Most likely failure pattern: insufficient human-review escalation and unsupported or out-of-scope
+   source use, not merely low answer quality.
+6. Cost-effective deployment policy: use A1 for low-risk routine consultation, A4 for intake and
+   missing-fact scenarios, and A2/A3 only where source grounding or release policy enforcement is
+   mandatory.
 
 ## Observed Metrics
 
@@ -79,7 +89,8 @@ Human review on the priority sample:
 
 Auto-answer:
 
-- Candidate scope: routine low-risk consultation where the agent architecture has no critical failure, no fabricated citation, and no unresolved judge disagreement.
+- Candidate scope: routine low-risk consultation where the agent architecture has no critical
+  failure, no fabricated citation, and no unresolved judge disagreement.
 - Prefer A1 structured legal counsel for the first release gate.
 - Do not auto-answer high-risk labor, adversarial drafting, or citation-boundary cases.
 
@@ -89,14 +100,16 @@ RAG required:
 - Contract, document, or provided-source interpretation.
 - Any answer that makes source-specific legal or factual claims.
 - RAG output must pass source-id citation checks and human calibration before user-facing release.
-- If the user asks "only based on these materials", any outside statute, case, or policy source should be treated as a source-boundary issue unless explicitly allowed.
+- If the user asks "only based on these materials", any outside statute, case, or policy source
+  should be treated as a source-boundary issue unless explicitly allowed.
 
 Clarification required:
 
 - Missing material facts.
 - Ambiguous labor, contract, family, or dispute posture.
 - Win-rate, litigation outcome, or probability questions.
-- Prefer A4 clarification-first intake when the correct product behavior is to slow down, ask for facts, or refuse to draft unsafe content.
+- Prefer A4 clarification-first intake when the correct product behavior is to slow down, ask for
+  facts, or refuse to draft unsafe content.
 
 Human review required:
 
@@ -112,7 +125,8 @@ Blocked:
 - Overconfident win probability.
 - Missed human review on high-risk cases.
 - Unsafe or deceptive action suggestions.
-- RAG answers that cite retrieved source IDs but use them to support claims they do not actually entail.
+- RAG answers that cite retrieved source IDs but use them to support claims they do not actually
+  entail.
 
 ## Data Policy
 
@@ -124,8 +138,10 @@ Blocked:
 
 Data routing after human review:
 
-- Passing high-risk answers are not `badcase`; use them as human-review calibration, positive regression examples, or preference winners.
-- Partial answers with good legal analysis but missing escalation should become SFT/intake-routing examples.
+- Passing high-risk answers are not `badcase`; use them as human-review calibration, positive
+  regression examples, or preference winners.
+- Partial answers with good legal analysis but missing escalation should become SFT/intake-routing
+  examples.
 - Source-boundary failures should become citation-grounding regression cases.
 - Unsafe or deceptive drafting failures should stay in badcase and release-gate tests.
 
@@ -135,7 +151,10 @@ No model-agent configuration should be fully auto-released from this pilot alone
 
 Recommended first release gate:
 
-- Allow limited auto-answer only for low-risk routine consultation under A1 when citation checks and risk tags are clean.
+- Allow limited auto-answer only for low-risk routine consultation under A1 when citation checks and
+  risk tags are clean.
 - Use A4 for intake and clarification where facts are missing.
-- Require RAG plus citation verification for source-specific tasks, but route citation-bound answers to human review until claim-level entailment improves.
-- Block or human-review all adversarial drafting, invented-evidence, fabricated-citation, and high-risk labor strategy outputs.
+- Require RAG plus citation verification for source-specific tasks, but route citation-bound answers
+  to human review until claim-level entailment improves.
+- Block or human-review all adversarial drafting, invented-evidence, fabricated-citation, and
+  high-risk labor strategy outputs.
