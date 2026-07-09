@@ -13,37 +13,10 @@ This project evaluates legal AI model-agent configurations under realistic legal
 
 The goal is not to rank models. The goal is to turn legal agent behavior into product launch policy, risk-control policy, and next-round data production decisions.
 
-Core artifacts:
-
-- PRD,
-- labeling SOP,
-- leakage-safe dataset,
-- controlled RAG corpus,
-- rubric-based Judge,
-- judge ensemble,
-- normalized run log,
-- data router,
-- human calibration queue,
-- release gate,
-- dashboard,
-- technical case study.
-
-The implementation includes a reproducible eval harness for running model calls, RAG checks, judge scoring, release gates, and data-routing reports.
-The product framing is the legal AI product-boundary and data-governance system.
+Core artifacts include a leakage-safe eval dataset, controlled RAG corpus, rubric-based judge, normalized run logs, human calibration queue, release gate, data router, evidence packages, and product decision memos.
 
 The project is intentionally scoped:
 controlled local RAG, no Web UI, no database, and no open-web legal retrieval.
-
-It focuses on data-product capabilities:
-
-- leakage-safe datasets,
-- legal agent architecture evaluation,
-- trace-level evaluation design,
-- retrieval/citation verification,
-- human review queueing,
-- error taxonomy,
-- error-to-data routing,
-- dashboard-driven data production decisions.
 
 It is not a legal advice system and not a model leaderboard.
 
@@ -77,65 +50,13 @@ Agent architecture naming:
 
 The legacy `V0` / `V1` / `V3` / `V4` / `V5` labels remain in code and artifacts for reproducibility. The product-level interpretation uses A0-A5.
 
-## Next Formal Run Plan
-
-The next focused full run is intentionally smaller than the mock diagnostic suite and cleaner than the pilot chain:
-
-```text
-50 legal product-boundary cases
-x 3 Qianfan-accessible models
-x 3 agent architectures
-= 450 model outputs
-```
-
-Planned scope:
-
-- Models: ERNIE 5.0, DeepSeek V4 Pro, Qwen3.5-27B.
-- Architectures: A1 structured legal counsel, A2 grounded retrieval counsel, A4 clarification-first intake.
-- Human calibration target: 120 rows, including priority blocker rows and a random floor.
-- Output target: a lightweight committed evidence package plus local full artifacts.
-
-Run-plan files:
-
-- [docs/legal_agent_product_eval_v2_focused_run_plan.md](docs/legal_agent_product_eval_v2_focused_run_plan.md)
-- [configs/experiments/legal_agent_product_eval_v2_focused.yaml](configs/experiments/legal_agent_product_eval_v2_focused.yaml)
-
 ## Current Evidence
 
-Real API pilot takeaways:
-
-- 300 / 300 Qianfan model-agent outputs completed across ERNIE 5.0, DeepSeek V4 Pro, Qwen3.5-27B, GLM-5.2, and Kimi K2.6.
-- Qwen3.5-27B was selected as the full-run structured judge after smoke tests; it produced 300 / 300 parseable judge outputs.
-- 80 priority real outputs were human-reviewed: 4 pass, 27 partial pass, 49 fail, with 92.5% agreement on a high-risk/blocker-enriched review sample.
-- A1 structured counsel and A4 clarification-first were stronger release candidates than closed-book or current RAG/verifier variants.
-- RAG is still required for source-specific tasks, but the pilot showed citation-boundary and unsupported-claim failures that must be caught by verification and human review.
-- Real API pilot evidence package: [outputs/product_boundary_api_pilot_v1/](outputs/product_boundary_api_pilot_v1/)
-
-RAG V2 focused pilot takeaways:
-
-- 72 / 72 Qianfan outputs completed on 8 source-limited citation/document cases across ERNIE 5.0, DeepSeek V4 Pro, and Qwen3.5-27B.
-- Retrieval found all expected allowed sources for A2/RAG runs, but average source-boundary precision was only 0.50 because top-k also included extra sources.
-- Claim-level triage found 555 citation-gate issues among 630 reviewable legal claims; this is a strict material-claim citation gate designed to expose release risk, not an overall answer-accuracy rate.
-- A2/RAG improved citation coverage versus A1 and A4, but also produced 74 out-of-scope source claims, so RAG must be paired with source-boundary and claim-level verification.
-- RAG V2 evidence package: [outputs/rag_v2_focused_pilot_v1/](outputs/rag_v2_focused_pilot_v1/)
-
-A5 and trace-level eval additions:
-
-- A0-A5 architecture design: [docs/legal_agent_product_eval_v2_design.md](docs/legal_agent_product_eval_v2_design.md)
-- Trace-level eval schema: [docs/trace_level_eval_schema.md](docs/trace_level_eval_schema.md)
-- A5 multi-turn intake smoke completed: 6 traces / 18 turns across Qwen3.5-27B and DeepSeek V4 Pro.
-- A5 trace smoke pass rate was 100% under deterministic triage checks.
-- The smoke run had 83.3% average material-fact coverage and 100% bad-premise challenge / human-review / safe-redirection rates.
-- This proves the runner and trace checks work, not production readiness.
-- A5 full pilot completed: 24 traces / 72 turns across 8 cases and ERNIE 5.0, DeepSeek V4 Pro, and Qwen3.5-27B.
-- A5 full pilot trace pass rate was 75.0% under deterministic triage checks; 6 traces were flagged for overclaim review and routed into the human calibration template.
-- A5 smoke evidence package: [outputs/a5_multiturn_intake_smoke/](outputs/a5_multiturn_intake_smoke/)
-- A5 full pilot evidence package: [outputs/a5_multiturn_intake_pilot_v1/](outputs/a5_multiturn_intake_pilot_v1/)
-- A5 multi-turn intake pilot design: [docs/multiturn_intake_pilot.md](docs/multiturn_intake_pilot.md)
-- A5 full pilot results: [docs/a5_multiturn_pilot_results.md](docs/a5_multiturn_pilot_results.md)
-- A5 trace judge rubric: [docs/a5_trace_judge_rubric.md](docs/a5_trace_judge_rubric.md)
-- Redacted A5 trace example: [outputs/a5_multiturn_intake_smoke/redacted_trace_example.md](outputs/a5_multiturn_intake_smoke/redacted_trace_example.md)
-- 8 multi-turn intake cases: [data/eval_sets/legal_agent_multiturn_intake_pilot_v1.jsonl](data/eval_sets/legal_agent_multiturn_intake_pilot_v1.jsonl)
+- 300 / 300 real Qianfan API model-agent outputs completed across 5 models and 5 agent configurations.
+- 80 priority real outputs were human-reviewed; agreement was 92.5% on a high-risk/blocker-enriched review sample.
+- 72-output RAG V2 pilot showed retrieval helps evidence availability, but source-boundary and claim-level citation gates remain required.
+- 24-trace A5 pilot shows the trace-level legal intake eval pipeline can run and exposes material-fact elicitation and overclaim-control calibration needs.
+- The project produces release-gate, human-review, data-routing, and redacted evidence artifacts instead of a model ranking.
 
 ## Open First
 

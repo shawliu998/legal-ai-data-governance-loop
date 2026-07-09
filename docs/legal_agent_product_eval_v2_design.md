@@ -102,6 +102,6 @@ A3 is a policy layer, not a user-facing answer mode. It is useful when release g
 A4 is appropriate when the first user message lacks material facts.
 
 A5 is required before claiming the product supports legal intake agents.
-The current A5 pilot proves the trace-level eval pipeline can run, but it does not prove release readiness.
+The current A5 pilot shows the trace-level eval pipeline can run, but it does not support any product-release claim.
 
 A5 should be evaluated on trace quality, material-fact elicitation, overclaim control, and human-review timing, not only final answer quality.

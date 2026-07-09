@@ -246,7 +246,7 @@ Detailed results:
 
 ## A5 Multi-Turn Intake Smoke
 
-After adding the A0-A5 architecture layer, a small A5 smoke test was run to prove the trace-level legal intake loop.
+After adding the A0-A5 architecture layer, a small A5 smoke test was run to show that the trace-level legal intake loop can execute.
 
 Evidence package:
 

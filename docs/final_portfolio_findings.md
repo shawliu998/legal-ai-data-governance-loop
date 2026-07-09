@@ -46,12 +46,12 @@ Recommended policy:
 - Use A4 for single-turn clarification before answering.
 - Use A5 for multi-turn intake scenarios with cooperative, dependent, withdrawn, or adversarial user behavior.
 - Evaluate A5 at the trace level: fact elicitation, bad-premise challenge, overclaim control, and human-review timing.
-- Do not claim A5 is release-ready until human-calibrated trace labels are complete.
+- Do not make an A5 product-release claim until human-calibrated trace labels are complete.
 
 Product interpretation:
 
-A5 has proven that the trace-level eval pipeline can run on real multi-turn legal intake traffic.
-It has not proven autonomous legal intake readiness.
+A5 shows that the trace-level eval pipeline can run on real multi-turn legal intake traffic.
+It has not shown autonomous legal intake readiness.
 
 The next calibration priority is material-fact elicitation and overclaim control.
 
@@ -106,4 +106,4 @@ online or pilot failures become eval holdouts, SFT candidates, preference pairs,
 - Do not claim the controlled RAG corpus is a complete legal knowledge base.
 - Do not claim claim entailment is final legal correctness.
 - Do not claim Qwen-judge model scores are final rankings.
-- Do not claim A5 is production-ready before human trace calibration.
+- Do not claim A5 product readiness before human trace calibration.
