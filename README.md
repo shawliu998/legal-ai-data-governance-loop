@@ -1,22 +1,20 @@
 # Legal AI Data Governance & Evaluation Harness
 
-## 项目概览
+## 这个项目做了什么
 
 这个项目关注法律 AI 在产品场景里的使用边界。法律问题的回答不只看是否流畅，还要看事实是否足够、依据是否可靠、风险是否被提示，以及某些场景是否应该交给人工处理。
 
 项目里构造了一组法律任务样本，覆盖普通咨询、复杂案情分析、文书起草、引用依据、风险校准和对抗性请求。不同模型和 agent 配置会在同一批样本上运行，输出再经过规则化评分、人工复核、发布门槛检查和数据分流。
 
-最终关注的不是给模型做排名，而是把一次评测里的问题整理成后续可复用的数据：哪些样本适合作为回归测试，哪些适合进入人审，哪些可以改成训练或偏好数据，哪些应该作为发布阻断案例保留下来。
+我更关心的是评测之后怎么处理这些问题：哪些样本适合作为回归测试，哪些应该进入人审，哪些可以改成训练或偏好数据，哪些需要作为发布阻断案例保留下来。
 
-## 解决的问题
+## 我为什么做这个项目
 
-- 法律 AI 在当前问题中是否可以直接回答，还是应先追问关键事实。
-- 回答是否需要检索或引用指定来源，引用是否真的支持关键结论。
-- 高风险、事实不足、对抗性文书或过度承诺的回答是否需要人工复核。
-- 哪些输出可以 limited release，哪些应被 release gate 阻断。
-- 失败样本如何转成下一轮评测、训练、人审或回归测试数据。
+法律 AI 的风险经常不在于“完全不会答”，而在于答得太像那么回事。比如事实还没问清就给结论，引用了看起来相关但不在允许范围内的来源，或者在劳动、交通事故、催收文书这类场景里没有及时提示风险。
 
-## 核心流程
+所以这个项目没有只看平均分，而是把每条输出放回产品流程里看：能不能直接答，是否应该追问，是否需要检索和引用来源，是否要转人工，是否应被发布门槛拦住。
+
+## 项目里实际完成了什么
 
 1. 构造法律场景样本，并把模型可见输入、标准标签和评分规则分开保存，降低标注泄漏风险。
 2. 为法律咨询、案情分析、文书起草和 source-limited QA 设计评分规则。
@@ -24,7 +22,11 @@
 4. 根据 critical failure、citation issue、source-boundary issue 和 human-review route 设置发布门槛。
 5. 将问题样本路由到 eval、SFT、preference、badcase、regression 或 human_review 等后续数据用途。
 
-## 项目产出
+## 它和法律数据产品经理有什么关系
+
+这个项目做的事情比较接近法律数据产品的日常问题：先把场景拆清楚，再定义什么是可接受输出，接着设计人审和质检口径，最后把 badcase 变成下一轮可用的数据资产。dashboard、release gate 和 redacted evidence package 不是为了展示分数，而是为了让产品决策有证据可查。
+
+## 怎么快速看这个项目
 
 - 50-case legal product-boundary eval bank。
 - 300 条真实 Qianfan API model-agent 输出。
@@ -32,6 +34,11 @@
 - 72-output RAG V2 focused pilot。
 - 24-trace / 72-turn A5 multi-turn intake pilot。
 - PRD、标注 SOP、rubric、judge prompts、human review queue、release gate、data routing、dashboard 和 redacted evidence package。
+- 一页结论：[docs/final_portfolio_findings.md](docs/final_portfolio_findings.md)。
+- 项目总览：[docs/project_summary.md](docs/project_summary.md)。
+- 真实 API 与 release gate 结果：[docs/results_product_boundary_eval.md](docs/results_product_boundary_eval.md)。
+- RAG source-boundary 结果：[docs/rag_v2_focused_results.md](docs/rag_v2_focused_results.md)。
+- 多轮 intake trace 结果：[docs/a5_multiturn_pilot_results.md](docs/a5_multiturn_pilot_results.md)。
 
 ## 方法来源与项目边界
 
@@ -41,13 +48,13 @@
 
 当前结果应理解为 pilot scale 的产品诊断证据，不应解读为统计显著的公开模型排行榜。
 
-## This Is Not
+## Scope
 
 - Not a public model leaderboard.
 - Not only a prompt comparison.
 - Not a legal chatbot demo.
 
-## Core Questions
+## Questions Tracked
 
 - Can the model answer?
 - Should it answer?
@@ -119,7 +126,7 @@ The product-level interpretation uses A0-A5.
 - A5 full pilot evidence package:
   [outputs/a5_multiturn_intake_pilot_v1/](outputs/a5_multiturn_intake_pilot_v1/)
 
-## Open First / Recommended Reading Order
+## Where To Start
 
 - Final portfolio findings: [docs/final_portfolio_findings.md](docs/final_portfolio_findings.md)
 - Project summary: [docs/project_summary.md](docs/project_summary.md)
@@ -129,7 +136,7 @@ The product-level interpretation uses A0-A5.
   [docs/legal_agent_product_eval_v2_design.md](docs/legal_agent_product_eval_v2_design.md)
 - Model boundary memo: [docs/model_boundary_memo.md](docs/model_boundary_memo.md)
 
-## What Not To Claim
+## Scope Notes
 
 This repository should not be read as:
 

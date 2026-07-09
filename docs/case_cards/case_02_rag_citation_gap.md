@@ -1,68 +1,35 @@
-# Case 02: RAG Citation Gap
+# Case 02：RAG 回答里的引用边界问题
 
-## User Scenario
+## 场景
 
-An anonymized RAG sample, `LPB-CITE-001`, asks whether a consumer can directly claim triple
-compensation for delayed shipment using only two provided sources: `CONTRACT-001` and
-`PLATFORM-001`. Another source-limited sample, `LPB-CITE-002`, asks whether three late arrivals
-allow direct employment termination using only `POLICY-001` and `POLICY-002`.
+匿名样本 `LPB-CITE-001` 要求模型只根据 `CONTRACT-001` 和 `PLATFORM-001` 判断延迟发货是否能直接三倍赔偿。`LPB-CITE-002` 要求模型只根据 `POLICY-001` 和 `POLICY-002` 判断迟到三次能否直接解除劳动合同。
 
-## Model Failure
+这类题的重点不是让模型展示法律知识，而是看它能不能守住“只能用给定来源”的边界。
 
-The model retrieves or references plausible legal material but fails the product source boundary.
-In the RAG V2 redacted evidence, `LPB-CITE-001` and related source-limited cases include outputs
-with unsupported-claim labels, no-citation rows, and out-of-scope source counts. The failure is not
-that retrieval found nothing; it is that the answer did not keep every material claim inside the
-allowed source set.
+## 模型出了什么问题
 
-## Product Risk
+RAG 输出有时会引用看起来合理的外部规则，或者对关键结论没有给出明确 citation。RAG V2 的 redacted evidence 里，相关 source-limited case 出现过 unsupported-claim label、no-citation rows 和 out-of-scope source counts。
 
-The product risk is false grounding. A user sees a cited answer and assumes it is source-supported,
-while the answer may have added an external statute, omitted citation for the decisive claim, or
-used a source that was plausible but not allowed for this task.
+这说明问题不在于“有没有检索到材料”，而在于生成阶段有没有把每个关键 claim 都限制在允许来源里。
 
-## Rubric Diagnosis
+## 风险在哪里
 
-Relevant rubric dimensions:
+用户看到有引用的回答，会自然认为结论已经被来源支持。但如果引用来源越界，或者 citation 没有真正支持 claim，这类回答在法律产品里不能直接放行。
 
-- Expected-source recall.
-- Source-boundary precision.
-- Material-claim citation coverage.
-- Claim-level support status.
-- Fabricated, contradicted, or out-of-scope citation.
+## 我怎么判断这个问题
 
-The RAG V2 focused pilot showed 100% expected-source recall on W4/RAG retrieval, but average
-source-boundary precision was 0.50 and claim-level citation gates still surfaced release blockers.
-That makes this a release-risk case, not a simple retrieval recall case.
+RAG V2 focused pilot 里，W4/RAG retrieval 的 expected-source recall 是 100%，但 average source-boundary precision 是 0.50。也就是说，检索能找到目标来源，但 top-k 里仍可能混入额外来源。
 
-## Human Review Decision
+因此我把 source-boundary、citation coverage 和 claim-level support 分开看。只看 retrieval recall 不够。
 
-Route to human review when a material claim has no citation, cites an out-of-scope source, or is not
-supported by the cited source. Reviewers should label whether the fix is citation formatting,
-source-boundary filtering, claim deletion, or substantive legal review.
+## 应该进入哪类处理流程
 
-## Release Gate Decision
+- `human_review`：人工确认 claim 是否被来源支持。
+- `regression`：把 out-of-scope source 做成边界回归样本。
+- `sft`：训练每个 material claim 都要引用允许来源。
+- `preference`：偏好不越界、不强行扩展来源的回答。
+- `badcase`：保留 fabricated citation、contradicted source 或 unsupported claim。
 
-Block release for fabricated citation, contradicted source use, out-of-scope source use in a
-source-limited task, or unsupported material legal claims. Do not treat retrieval recall alone as
-release readiness.
+## 这个样本后续怎么用
 
-## Data Routing
-
-- `badcase`: fabricated, contradicted, or unsupported citation patterns.
-- `regression`: source-boundary tests and hard-negative retrieval cases.
-- `sft`: examples requiring every material claim to cite an allowed source.
-- `preference`: safer answers that refuse to overextend weak sources.
-- `human_review`: claim-support labeling and citation repair triage.
-
-## Next Data Action
-
-Build hard-negative retrieval pairs for extra top-k sources, add source-boundary regression cases,
-and create answer-format examples that force material claims into an explicit claim-to-source
-mapping.
-
-## Why This Matters for Legal AI Data Product
-
-Legal RAG is not just retrieval. A data product manager must define which sources are allowed, how
-claims are checked against those sources, and which failures become release blockers or new data
-assets.
+它适合做 RAG release gate 的测试样本：检索命中不是放行条件，关键 claim 必须有允许来源支持。

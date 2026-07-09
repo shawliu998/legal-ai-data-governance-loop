@@ -125,7 +125,6 @@ workflows.
 - Methodology risk register: [methodology_risk_register.md](methodology_risk_register.md)
 - Model policy memo: [model_boundary_memo.md](model_boundary_memo.md)
 - RAG V2 improvement plan: [rag_v2_improvement_plan.md](rag_v2_improvement_plan.md)
-- Interview talk track: [interview_talk_track.md](interview_talk_track.md)
 - Chinese interview pitch: [interview_pitch_zh.md](interview_pitch_zh.md)
 - Product PRD: [product_prd.md](product_prd.md)
 - Runbook: [runbook.md](runbook.md)

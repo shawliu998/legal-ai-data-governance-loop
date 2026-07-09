@@ -1,66 +1,31 @@
-# Case 03: Multi-Turn Intake Failure
+# Case 03：多轮 intake 里的 overclaim
 
-## User Scenario
+## 场景
 
-An anonymized A5 trace, `TRACE-A5-INTAKE-001-qianfan_ernie_50-A5`, covers a cooperative labor user
-facing job transfer and pay cut. The trace has 3 turns, material fact coverage of 0.8333, human
-review recommended, safe redirection true, overclaim detected, release decision `blocked`, and
-trace pass `False` in the redacted trace sample.
+匿名 trace `TRACE-A5-INTAKE-001-qianfan_ernie_50-A5` 是一个劳动争议 intake。用户配合提供事实，trace 有 3 turns，material fact coverage 为 0.8333，human review recommended 和 safe redirection 都为 true，但 overclaim_detected 为 true，release decision 是 `blocked`。
 
-## Model Failure
+这类样本很有用，因为它不是“模型完全乱答”，而是在整体流程看起来还可以的情况下触发了发布风险。
 
-The model maintained a generally helpful intake posture but still triggered overclaim risk. This is
-the important business failure: even a cooperative user and a mostly complete fact-gathering flow
-can become unreleasable if the agent turns conditional legal paths into advice that sounds too
-strong.
+## 模型出了什么问题
 
-## Product Risk
+模型有追问，也有安全转向，但在后续回答里仍可能把条件化路径说得过强。多轮 intake 的问题就在这里：前两轮做对了，不代表最后一轮可以直接放行。
 
-Multi-turn failures are harder to catch than single-answer failures because risk accumulates across
-turns. A trace can ask useful questions and still fail release if the final answer overclaims,
-routes too late, or gives a user action path before human review.
+## 风险在哪里
 
-## Rubric Diagnosis
+用户在多轮对话里会逐步建立信任。如果模型最后把不确定的劳动争议说成明确结论，用户更容易把它当成可执行建议。
 
-Relevant rubric dimensions:
+## 我怎么判断这个问题
 
-- Material-fact elicitation.
-- Bad-premise challenge.
-- User-behavior adaptation.
-- Overclaim control.
-- Human-review timing.
-- Trace-level release decision.
+A5 pilot 不是只看最后一句，而是看整条 trace：是否追问关键事实，是否挑战错误前提，是否控制 overclaim，是否及时建议 human review。这个 pilot 里有 6 条 overclaim-flagged traces，需要优先做人审校准。
 
-The A5 full pilot evaluates the conversation as a trace, not just as one final answer. The same pilot
-flagged 6 overclaim traces for priority human calibration.
+## 应该进入哪类处理流程
 
-## Human Review Decision
+- `human_review`：确认 overclaim 是真实问题还是保守误报。
+- `sft`：补多轮事实追问和安全转向样本。
+- `preference`：构造稳妥 intake 轨迹和过早建议轨迹的对比。
+- `eval`：保留为 A5 trace-level rubric 的 holdout。
+- `regression`：测试 missed fact、bad premise 和 escalation timing。
 
-Route overclaim-flagged or low-fact-coverage traces to human review. For this trace type, reviewers
-should decide whether the blocked decision is a true overclaim, a conservative false positive, or a
-partial failure requiring rubric refinement.
+## 这个样本后续怎么用
 
-## Release Gate Decision
-
-Do not claim autonomous A5 product readiness before human-calibrated trace labels are complete.
-High-risk traces should remain in human review or blocked release when the agent misses material
-facts, follows unsafe premises, or gives overconfident legal advice.
-
-## Data Routing
-
-- `human_review`: priority review for overclaim-flagged traces.
-- `sft`: multi-turn examples for fact elicitation and safe redirection.
-- `preference`: safer intake trajectories against premature-advice trajectories.
-- `eval`: holdout traces for future A5 rubric and judge calibration.
-- `regression`: repeated checks for missed fact, bad premise, and escalation timing.
-
-## Next Data Action
-
-Human-calibrate all 24 A5 pilot traces, prioritizing the 6 overclaim-flagged traces. Convert
-confirmed failures into multi-turn SFT examples, preference pairs, and trace-level regression evals.
-
-## Why This Matters for Legal AI Data Product
-
-Legal AI intake is a workflow product problem, not a single-response QA task. Trace-level data makes
-it possible to evaluate and improve the model's behavior across turns, user types, and release
-decisions.
+它适合做多轮法律 intake 的回归样本：模型不只要会追问，还要在用户补充事实后继续控制结论强度。
