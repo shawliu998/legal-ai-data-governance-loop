@@ -337,3 +337,16 @@ Later:
 - Generated full output CSVs remain reproducible but not committed.
 - Tests and validation pass.
 - Repository topics and description are configured.
+
+## Next Steps in a Real Product Team
+
+This project validates an offline data and evaluation loop using controlled samples and pilot outputs. In a real product team, the next step would be to connect the same workflow to broader product evidence, including:
+
+- Redacted real user query logs.
+- Lawyer-reviewed answer samples.
+- User feedback signals such as escalation, report, retry, and abandonment.
+- Jurisdiction-specific legal content governance.
+- Annotation QA and reviewer calibration.
+- Post-release regression monitoring after model, prompt, or RAG changes.
+
+These additions would extend the evidence base for product decisions. They are not claimed as completed in this repository.
