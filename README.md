@@ -1,8 +1,91 @@
-# Legal AI Product Boundary Eval & Data Governance System
+# 投递版作品集摘要
 
-This portfolio project evaluates legal AI model-agent configurations under realistic product
-conditions, then turns their behavior into release policy, human-review policy, risk-control policy,
-and next-round data production decisions.
+## 一句话定位
+
+这是一个**法律 AI 数据产品与治理系统**：把法律 AI 评测产品化为需求拆解、数据标准、
+rubric eval、人审校准、release gate、badcase routing、RAG source-boundary 检查、dashboard
+证据包，以及下一轮 eval / SFT / preference / regression / human review 数据生产闭环。
+
+方法上受 PLawBench 等 rubric-based legal evaluation 思路启发，但本项目不是 PLawBench 复现，
+也不是单纯 benchmark 或模型排行榜。
+
+## 目标岗位
+
+- 专业领域数据产品经理
+- 法律数据产品经理
+- 模型数据策略 / 模型评测与数据治理相关岗位
+
+## 解决的问题
+
+法律 AI 产品不能只问“模型答得好不好”，还必须判断：
+
+- 这个场景是否应该自动回答，还是应该先追问、检索、转人工或阻断发布。
+- RAG 输出是否真的只使用允许来源，关键法律主张是否有来源支持。
+- 高风险、事实不足、引用缺陷、过度承诺、对抗性需求如何进入人审和 release gate。
+- 失败样本应该沉淀成 eval、SFT、preference、badcase、regression 或 human review 数据资产。
+
+## 核心机制
+
+- **Rubric eval**：按法律咨询、案情分析、文书起草等任务设计 judge rubric。
+- **数据标准**：将 `Eval_Input`、`Gold_Labels`、`Rubric_Items`、run logs、release gate 和
+  data route 分层管理，避免标注泄漏。
+- **人审校准**：对高风险、citation issue、release blocker 富集样本进行人工复核。
+- **Release gate**：把 fabricated citation、unsupported claim、out-of-scope source、missed
+  escalation 等问题转成发布阻断或 limited release 策略。
+- **Badcase routing**：把失败样本路由到 eval、SFT、preference、badcase、regression、human_review。
+- **RAG source-boundary 检查**：在 source-limited 任务里检查检索来源、引用覆盖和 claim-level
+  support。
+- **A5 多轮 intake trace eval**：评估模型在多轮法律 intake 中是否追问关键事实、挑战错误前提、控制
+  overclaim 并转人工。
+
+## 关键产出
+
+- 50-case legal product-boundary eval bank。
+- 300 条真实 Qianfan API model-agent 输出。
+- 80 条 priority real outputs 人审校准结果。
+- 72-output RAG V2 focused pilot。
+- 24-trace / 72-turn A5 multi-turn intake pilot。
+- Release gate、人审队列、data routing、dashboard、redacted evidence package、模型边界 memo
+  和面试材料。
+
+## 关键结果
+
+- 300 / 300 真实 Qianfan API 输出完成，300 / 300 Qwen judge 输出成功解析。
+- 80 条 priority 输出已完成人审；在高风险 / blocker 富集样本上 judge-human agreement 为 92.5%。
+- RAG V2 72 条真实输出显示：retrieval 能提升证据可用性，但 source-boundary 和 claim-level
+  citation gate 仍是上线前必需控制。
+- A5 full pilot 完成 24 traces / 72 turns；deterministic trace pass rate 为 75.0%，并将 6 条
+  overclaim-flagged traces 路由为优先人审候选。
+- 项目产出的不是“谁分最高”的结论，而是 auto-answer、RAG required、clarification required、
+  human review、blocked release 和下一轮数据生产策略。
+
+## 推荐阅读路径
+
+1. 先看本 README 的摘要和主线。
+2. 看一页结论：[docs/final_portfolio_findings.md](docs/final_portfolio_findings.md)。
+3. 看项目总览：[docs/project_summary.md](docs/project_summary.md)。
+4. 看真实 API 与 release gate 结果：
+   [docs/results_product_boundary_eval.md](docs/results_product_boundary_eval.md)。
+5. 看 RAG source-boundary 结果：
+   [docs/rag_v2_focused_results.md](docs/rag_v2_focused_results.md)。
+6. 看多轮 intake trace eval：
+   [docs/a5_multiturn_pilot_results.md](docs/a5_multiturn_pilot_results.md)。
+7. 面试前看：[docs/role_fit_deepseek_data_pm.md](docs/role_fit_deepseek_data_pm.md) 和
+   [docs/interview_pitch_deepseek_zh.md](docs/interview_pitch_deepseek_zh.md)。
+
+## 投递时不要这样说
+
+- 不要说这是 PLawBench 复现。
+- 不要说这是统计显著的公开法律模型 benchmark。
+- 不要说 RAG 已经解决法律幻觉。
+- 不要说 A5 已具备自动法律 intake 发布能力。
+- 不要把 Qwen judge 分数包装成最终模型排名。
+
+# Legal AI Data Governance Loop
+
+This portfolio project turns legal AI evaluation into a data-governance loop: rubric evaluation,
+human calibration, release gates, badcase routing, RAG source-boundary checks, dashboards, and
+next-round data production decisions.
 
 ## This Is Not
 
@@ -123,6 +206,14 @@ This repository should not be read as:
 - RAG V2 improvement plan: [docs/rag_v2_improvement_plan.md](docs/rag_v2_improvement_plan.md)
 - Interview talk track: [docs/interview_talk_track.md](docs/interview_talk_track.md)
 - Chinese interview pitch: [docs/interview_pitch_zh.md](docs/interview_pitch_zh.md)
+- DeepSeek role fit: [docs/role_fit_deepseek_data_pm.md](docs/role_fit_deepseek_data_pm.md)
+- DeepSeek Chinese interview pitch:
+  [docs/interview_pitch_deepseek_zh.md](docs/interview_pitch_deepseek_zh.md)
+- Chinese resume bullets: [docs/resume_bullets_zh.md](docs/resume_bullets_zh.md)
+- Badcase case cards:
+  [case 01](docs/case_cards/case_01_overconfident_legal_advice.md),
+  [case 02](docs/case_cards/case_02_rag_citation_gap.md),
+  [case 03](docs/case_cards/case_03_multiturn_intake_failure.md)
 - Labeling SOP: [docs/labeling_sop.md](docs/labeling_sop.md)
 - Technical case study: [docs/case_study.md](docs/case_study.md)
 - API smoke run plan: [docs/api_smoke_run.md](docs/api_smoke_run.md)

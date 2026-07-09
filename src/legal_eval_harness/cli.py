@@ -416,7 +416,7 @@ def cmd_all(args: argparse.Namespace) -> None:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Legal AI data-loop governance evaluation harness")
+    parser = argparse.ArgumentParser(description="Legal AI data governance loop")
     parser.set_defaults(func=None)
     parser.add_argument("--config", default="config.yaml")
     parser.add_argument("--prompt-dir", default="prompts")

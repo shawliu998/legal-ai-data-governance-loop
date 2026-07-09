@@ -3,9 +3,9 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "legal-agent-eval-harness"
+name = "legal-ai-data-governance-loop"
 version = "0.3.0"
-description = "Legal AI data-loop governance harness for diagnostic agent evaluation."
+description = "Legal AI data governance loop for product-boundary evaluation, release gates, and next-round data production."
 requires-python = ">=3.11"
 dependencies = [
   "pandas",
@@ -22,7 +22,7 @@ dependencies = [
 test = ["pytest"]
 
 [project.scripts]
-legal-eval-harness = "legal_eval_harness.cli:main"
+legal-ai-data-loop = "legal_eval_harness.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

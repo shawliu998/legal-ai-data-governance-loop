@@ -78,7 +78,7 @@ git commit -m "Build legal AI product eval data governance system"
 
 在 GitHub 网页新建 repository，建议：
 
-- Repository name: `legal-ai-data-governance-eval-harness`
+- Repository name: `legal-ai-data-governance-loop`
 - Visibility: public 或 private 均可
 - 不要勾选 `Add a README file`
 - 不要勾选 `.gitignore`
@@ -91,14 +91,14 @@ git commit -m "Build legal AI product eval data governance system"
 把下面的 URL 换成你的 GitHub 仓库地址：
 
 ```bash
-git remote add origin https://github.com/<your-username>/legal-ai-data-governance-eval-harness.git
+git remote add origin https://github.com/<your-username>/legal-ai-data-governance-loop.git
 git remote -v
 ```
 
 如果你使用 SSH：
 
 ```bash
-git remote add origin git@github.com:<your-username>/legal-ai-data-governance-eval-harness.git
+git remote add origin git@github.com:<your-username>/legal-ai-data-governance-loop.git
 git remote -v
 ```
 
@@ -143,7 +143,7 @@ git push -u origin codex/legal-data-governance-eval
 
 ```text
 项目：Legal AI Product Eval & Data Governance System
-链接：https://github.com/<your-username>/legal-ai-data-governance-eval-harness
+链接：https://github.com/<your-username>/legal-ai-data-governance-loop
 说明：构建法律 AI 数据闭环治理评测工作流，覆盖 gold label 防泄漏、多任务 rubric 评测、normalized run log、错误标签标准化、人审队列和 badcase-to-data routing。
 ```
 
@@ -165,7 +165,7 @@ Built a leakage-safe legal AI evaluation and data-loop governance system with 85
 
 ```bash
 git remote -v
-git remote set-url origin https://github.com/<your-username>/legal-ai-data-governance-eval-harness.git
+git remote set-url origin https://github.com/<your-username>/legal-ai-data-governance-loop.git
 ```
 
 如果误提交了不该提交的文件，但还没 push：

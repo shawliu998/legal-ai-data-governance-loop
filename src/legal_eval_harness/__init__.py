@@ -1,4 +1,4 @@
-"""Legal AI data-loop governance evaluation harness."""
+"""Legal AI data governance loop."""
 
 __all__ = ["__version__"]
 
