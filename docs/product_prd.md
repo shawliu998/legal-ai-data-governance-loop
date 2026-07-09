@@ -330,7 +330,7 @@ Later:
 
 ## 14. Launch Checklist
 
-- README first screen explains target role, core problem, and artifacts.
+- README first screen explains the core problem, evaluation flow, and reviewable artifacts.
 - PRD and SOP are linked.
 - Dashboard preview image is visible.
 - `outputs/executive_dashboard.xlsx` is committed.

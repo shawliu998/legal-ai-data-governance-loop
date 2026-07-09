@@ -23,12 +23,12 @@
 
 本项目对应法律数据产品中的场景拆解、评价标准设计、质检与人审流程、风险样本沉淀和数据资产流转。dashboard、release gate 和脱敏证据包用于记录判断依据，支持后续产品策略和数据生产安排。
 
-## 概览
+## 阅读顺序
 
 - [docs/final_portfolio_findings.md](docs/final_portfolio_findings.md)：项目结论
 - [docs/project_summary.md](docs/project_summary.md)：整体流程和 pilot 汇总
 - [docs/data_card.md](docs/data_card.md)：数据范围、脱敏、使用边界和质控说明
-- [docs/product_surface.md](docs/product_surface.md)：可服务的法律 AI 产品形态和未覆盖的产品层
+- [docs/product_surface.md](docs/product_surface.md)：该评测层可支持的法律 AI 产品形态
 - [docs/case_cards/](docs/case_cards/)：典型 badcase 复盘
 - [docs/results_product_boundary_eval.md](docs/results_product_boundary_eval.md)：真实 API 与 release gate 结果
 - [docs/rag_v2_focused_results.md](docs/rag_v2_focused_results.md)：RAG source-boundary 结果
@@ -36,7 +36,7 @@
 
 ## 项目边界
 
-本项目为 pilot-scale 产品诊断实验，RAG 语料和评测样本均为受控实验材料。结果用于分析模型输出问题、发布门槛、人审路由和后续数据流转，不用于法律咨询服务或公开模型排名。
+本项目为 pilot-scale 产品诊断实验，RAG 语料和评测样本均为受控实验材料。结果用于分析模型输出问题、发布门槛、人审路由和后续数据流转，不用于法律咨询服务。
 
 ## Evaluation Questions
 
@@ -111,7 +111,7 @@ The project-level discussion uses A0-A5.
 - [docs/final_portfolio_findings.md](docs/final_portfolio_findings.md): final portfolio findings
 - [docs/project_summary.md](docs/project_summary.md): project summary
 - [docs/data_card.md](docs/data_card.md): data scope, privacy, redaction, intended use, and quality-control notes
-- [docs/product_surface.md](docs/product_surface.md): product surfaces supported by this evaluation harness
+- [docs/product_surface.md](docs/product_surface.md): legal AI product surfaces supported by the evaluation layer
 - [docs/results_product_boundary_eval.md](docs/results_product_boundary_eval.md): product-boundary results
 - [docs/rag_v2_focused_results.md](docs/rag_v2_focused_results.md): RAG V2 focused results
 - [docs/a5_multiturn_pilot_results.md](docs/a5_multiturn_pilot_results.md): A5 multi-turn intake results
@@ -131,28 +131,7 @@ The project-level discussion uses A0-A5.
 
 ## Reproduction
 
-Environment setup, data preparation, validation, mock runs, API runs, release-gate generation, and
-dashboard reproduction are documented in [docs/runbook.md](docs/runbook.md).
-
-Main dataset files:
-
-- [dataset_manifest.yaml](dataset_manifest.yaml)
-- [data/eval_input.csv](data/eval_input.csv)
-- [data/gold_labels.csv](data/gold_labels.csv)
-- [data/rubric_items.csv](data/rubric_items.csv)
-- [data/sample_metadata.csv](data/sample_metadata.csv)
-
-Generated CSV outputs are reproducible and ignored by Git. The dashboard workbook is committed as a
-reviewable output artifact: [outputs/executive_dashboard.xlsx](outputs/executive_dashboard.xlsx).
-
-## Supporting Tracks
-
-- 85-sample diagnostic dataset for pipeline stress testing and dashboard reproduction.
-- Practice benchmark pilot for adapted real-practice task coverage.
-- Qianfan vendor smoke tests for endpoint and model availability.
-- RAG citation and claim-entailment checks for source-boundary analysis.
-
-These tracks support reproducibility and engineering checks. They are not the primary evaluation path.
+For reproduction steps, see [docs/runbook.md](docs/runbook.md).
 
 ## Project Boundary
 
