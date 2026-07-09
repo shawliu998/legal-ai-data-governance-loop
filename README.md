@@ -38,23 +38,18 @@ docs/a5_multiturn_pilot_results.md：多轮 intake trace 结果
 
 
 
-## Questions Tracked
+## Evaluation Questions
 
-- Can the model answer?
-- Should it answer?
-- Should it ask clarifying questions?
-- Should it retrieve grounded sources?
-- Are citations supported?
-- Should it route to human review?
-- Should it be blocked by release gate?
-- What data asset should the failure become?
+The project tracks legal AI outputs through product and data-governance decisions:
 
-The project is intentionally scoped to controlled local RAG, with no Web UI, no database, and no
-open-web legal retrieval.
-
-Core artifacts include a leakage-safe eval dataset, controlled RAG corpus, rubric-based judge,
-normalized run logs, human calibration queue, release gate, data router, evidence packages, and
-product decision memos.
+Can the model answer directly?
+Should it ask clarifying questions first?
+Does the answer need grounded sources?
+Are cited sources within the allowed corpus?
+Are key claims supported by the cited material?
+Should the case route to human review?
+Should the output be blocked by the release gate?
+What data asset should the failure become?
 
 ![Product evaluation system preview](assets/product_eval_system_preview.png)
 
@@ -84,8 +79,7 @@ Agent architecture naming:
 | A4 clarification-first intake    | Single-turn clarification before answering                | V5           |
 | A5 multi-turn legal intake agent | Multi-turn intake with user behavior variants             | New pilot    |
 
-The legacy `V0` / `V1` / `V3` / `V4` / `V5` labels remain in code and artifacts for reproducibility.
-The product-level interpretation uses A0-A5.
+
 
 ## Current Evidence
 
@@ -120,15 +114,19 @@ The product-level interpretation uses A0-A5.
   [docs/legal_agent_product_eval_v2_design.md](docs/legal_agent_product_eval_v2_design.md)
 - Model boundary memo: [docs/model_boundary_memo.md](docs/model_boundary_memo.md)
 
-## Scope Notes
+## Core Artifacts
 
-This repository should not be read as:
-
-- a public legal model leaderboard,
-- a production legal advice system,
-- a claim that the 450-output focused run has already been completed,
-- a claim that RAG alone solves legal hallucination,
-- a claim that Qwen-judge scores are final model rankings.
+Leakage-safe eval dataset
+Controlled RAG corpus
+Rubric-based judge prompts
+Normalized model run logs
+Human calibration queue
+Release gate table
+Data routing table
+Claim and citation checks
+Dashboard workbook
+Redacted evidence packages
+Product decision memos
 
 ## Appendix
 
