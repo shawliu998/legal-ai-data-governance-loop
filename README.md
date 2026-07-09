@@ -27,8 +27,8 @@
 
 - [docs/final_portfolio_findings.md](docs/final_portfolio_findings.md)：项目结论
 - [docs/project_summary.md](docs/project_summary.md)：整体流程和 pilot 汇总
-- [docs/data_card.md](docs/data_card.md)：数据范围、用途、边界和路由说明
-- [docs/product_surface.md](docs/product_surface.md)：评测层可服务的法律 AI 产品形态
+- [docs/data_card.md](docs/data_card.md)：数据范围、脱敏、使用边界和质控说明
+- [docs/product_surface.md](docs/product_surface.md)：可服务的法律 AI 产品形态和未覆盖的产品层
 - [docs/case_cards/](docs/case_cards/)：典型 badcase 复盘
 - [docs/results_product_boundary_eval.md](docs/results_product_boundary_eval.md)：真实 API 与 release gate 结果
 - [docs/rag_v2_focused_results.md](docs/rag_v2_focused_results.md)：RAG source-boundary 结果
@@ -110,8 +110,8 @@ The project-level discussion uses A0-A5.
 
 - [docs/final_portfolio_findings.md](docs/final_portfolio_findings.md): final portfolio findings
 - [docs/project_summary.md](docs/project_summary.md): project summary
-- [docs/data_card.md](docs/data_card.md): dataset scope, intended use, boundaries, and routing
-- [docs/product_surface.md](docs/product_surface.md): product surfaces supported by the evaluation layer
+- [docs/data_card.md](docs/data_card.md): data scope, privacy, redaction, intended use, and quality-control notes
+- [docs/product_surface.md](docs/product_surface.md): product surfaces supported by this evaluation harness
 - [docs/results_product_boundary_eval.md](docs/results_product_boundary_eval.md): product-boundary results
 - [docs/rag_v2_focused_results.md](docs/rag_v2_focused_results.md): RAG V2 focused results
 - [docs/a5_multiturn_pilot_results.md](docs/a5_multiturn_pilot_results.md): A5 multi-turn intake results
