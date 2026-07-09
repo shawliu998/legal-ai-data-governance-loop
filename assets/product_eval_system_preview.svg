@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1600" height="980" viewBox="0 0 1600 980">
   <rect width="1600" height="980" fill="#f6f8fb"/>
   <rect width="1600" height="140" fill="#121f34"/>
-  <text x="54" y="66" fill="#ffffff" font-family="Arial, Helvetica, sans-serif" font-size="42" font-weight="700">Legal AI Product Boundary Eval &amp; Data Governance System</text>
+  <text x="54" y="66" fill="#ffffff" font-family="Arial, Helvetica, sans-serif" font-size="42" font-weight="700">Legal AI Product Boundary Eval &amp; Data Governance Harness</text>
   <text x="56" y="102" fill="#cbd5e1" font-family="Arial, Helvetica, sans-serif" font-size="23">Model routing | RAG reliability | A5 trace eval | Human review | Release gates | Data asset routing</text>
 
   <g font-family="Arial, Helvetica, sans-serif">
@@ -32,7 +32,7 @@
     <g transform="translate(1270 175)">
       <rect width="282" height="128" rx="8" fill="#ffffff" stroke="#cbd5e1"/>
       <rect width="7" height="128" fill="#d97706"/>
-      <text x="25" y="38" fill="#64748b" font-size="18" font-weight="700">A5 pass rate</text>
+      <text x="25" y="38" fill="#64748b" font-size="18" font-weight="700">A5 trace pass rate</text>
       <text x="25" y="86" fill="#1f2937" font-size="40" font-weight="700">75.0%</text>
     </g>
   </g>
@@ -87,7 +87,7 @@
       <text x="635" y="0" fill="#64748b" font-size="17">92.5%</text>
     </g>
     <g transform="translate(30 228)">
-      <text x="0" y="0" fill="#1f2937" font-size="17">RAG V2 citation-gate issue rate</text>
+      <text x="0" y="0" fill="#1f2937" font-size="17">RAG V2 citation-gate flagged rate</text>
       <rect x="300" y="-14" width="315" height="16" rx="8" fill="#e2e8f0"/><rect x="300" y="-14" width="277" height="16" rx="8" fill="#d97706"/>
       <text x="635" y="0" fill="#64748b" font-size="17">88.1%</text>
     </g>
@@ -123,5 +123,5 @@
     </g>
   </g>
 
-  <text x="56" y="946" fill="#64748b" font-family="Arial, Helvetica, sans-serif" font-size="15">Boundary: portfolio project for legal data product roles; not legal advice, not statistical model ranking.</text>
+  <text x="56" y="946" fill="#64748b" font-family="Arial, Helvetica, sans-serif" font-size="15">Pilot-scale product diagnosis; not legal advice, production retrieval, or public model ranking.</text>
 </svg>
