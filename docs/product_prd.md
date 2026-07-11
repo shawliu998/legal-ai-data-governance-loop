@@ -63,7 +63,9 @@ Workflow goals:
 - Prevent gold label leakage in model-facing prompts.
 - Support three legal task categories: consultation, case analysis, document drafting.
 - Standardize rubric-based scoring across task types.
-- Route badcases into fixed data uses: `eval`, `sft`, `preference`, `badcase`, `human_review`.
+- Separate record-level `response_policy`, review `workflow_status`, group-level
+  `release_gate_decision`, and multi-label data assets (`eval`, `sft`, `preference`, `badcase`,
+  `regression`).
 - Provide a dashboard that tells the data team what to produce next.
 - Keep the workflow reproducible from local files and CLI commands.
 
@@ -73,7 +75,8 @@ Success criteria:
 - Judge can access `Gold_Labels` and `Rubric_Items`.
 - V2 blind review cannot access gold labels.
 - One model run maps to one normalized run log row.
-- Every Judge score maps to a fixed `data_route`.
+- Every Judge score maps to a workflow status, a response policy, and zero or more candidate data
+  assets; group-level deployment evaluation produces a separate release-gate decision.
 - Dashboard can support a 3-minute product walkthrough.
 
 ## 5. Non-Goals
@@ -125,17 +128,18 @@ Key requirements:
 - Judge returns dimension scores, atomic scores, error tags, risk level, confidence, and human
   review flag.
 
-### Scenario D: Router Converts Failures Into Data Actions
+### Scenario D: Router Converts Failures Into Workflow And Data Actions
 
-The router maps each score row into a fixed data route.
+The router maps each score row into three separate decisions.
 
 Routing examples:
 
-- High risk or low confidence -> `human_review`
-- Overclaim -> `preference` or `badcase`
-- Missing facts -> `eval` or `sft`
-- Missing evidence warning -> `sft`
-- Weak fact-rule application -> `eval`
+- High risk or low confidence -> `workflow_status=pending_review`, `response_policy=human_review`
+- Fabricated citation or unsafe action -> `response_policy=block`, candidate assets
+  `badcase+regression`
+- Overclaim -> assets `preference+regression`
+- Missing facts -> `response_policy=clarify`, candidate asset `sft`
+- Weak fact-rule application -> asset `eval`
 
 ### Scenario E: Product Manager Reviews Dashboard
 
@@ -159,12 +163,14 @@ Expected dashboard questions:
 | Normalized run log          | Supports multi-model and multi-version runs      | P0       | Done         |
 | Task-specific Judge prompts | Aligns evaluation with legal task type           | P0       | Done         |
 | Error taxonomy              | Enables aggregation and routing                  | P0       | Done         |
-| Data router                 | Converts errors into data production actions     | P0       | Done         |
-| Executive dashboard         | Supports product decision review                 | P0       | Done         |
+| Data router                 | Separates response policy, review state, and asset candidates | P0 | Done |
+| Executive dashboard         | Supports product decision review                 | P0       | Done; canonical schema |
 | Labeling SOP                | Supports scalable annotation operations          | P0       | Done         |
-| API smoke run config        | Validates provider integration without full cost | P1       | Ready        |
+| API pilots                  | Validate hosted-provider integration and product signals | P1 | Completed at pilot scale |
+| Controlled RAG pilot        | Tests retrieval, source boundary, citation, and claims | P1 | Completed at pilot scale |
+| A5 multi-turn pilot         | Validates trace logging and review design        | P1       | 24 traces; human calibration pending |
 | Web UI                      | Nice-to-have for operations                      | P3       | Not included |
-| RAG/legal retrieval         | Separate legal QA capability                     | P3       | Not included |
+| Production legal retrieval | Authoritative, versioned legal knowledge service | P3       | Not included |
 
 ## 8. Prioritization
 
@@ -201,7 +207,7 @@ P3:
 
 North Star:
 
-- Percentage of risky legal AI outputs converted into reusable, reviewed data assets.
+- Percentage of risky legal AI records reviewed and accepted into fit-for-purpose data assets.
 
 Input quality metrics:
 
@@ -221,13 +227,15 @@ Risk metrics:
 
 - High risk rate
 - Human review queue size
+- P0 unsafe-output miss rate
+- Human-review routing precision and recall on a random calibration sample
 - Low judge confidence rate
 - Fabricated citation rate
 - Overclaim rate
 
 Data production metrics:
 
-- Route distribution across `eval`, `sft`, `preference`, `badcase`, `human_review`
+- Multi-label asset distribution across `eval`, `sft`, `preference`, `badcase`, `regression`
 - Reusable gold sample count
 - Preference pair candidate count
 - SFT candidate acceptance rate
@@ -236,6 +244,9 @@ Operational metrics:
 
 - Time from badcase detection to route decision
 - Human review backlog size
+- Cost per safely released answer
+- Median reviewer turnaround time
+- Time from confirmed badcase to regression-test inclusion
 - Rework rate after human review
 - Annotation guideline violation rate
 
@@ -269,9 +280,11 @@ Judge:
 
 Router:
 
-- `data_route` is one of `eval`, `sft`, `preference`, `badcase`, `human_review`.
-- High risk or low confidence routes to `human_review`.
-- Fabricated citation routes to `human_review`.
+- `workflow_status`, `response_policy`, and `data_asset_routes` are populated separately.
+- High risk or low confidence becomes `pending_review` with `response_policy=human_review`.
+- Fabricated citation blocks release and becomes `badcase + regression` after review.
+- Group-level output uses `release_gate_decision`; the legacy `release_decision` alias is not used
+  for internal routing logic.
 
 Dashboard:
 
@@ -290,9 +303,12 @@ flowchart LR
     D --> E["Error Tags"]
     E --> F["Data Router"]
     F --> G["Human Review Queue"]
-    F --> H["Eval/SFT/Preference/Badcase Pool"]
-    G --> I["Guideline Update"]
-    H --> I
+    F --> H["Low-risk eval candidates"]
+    G --> J["Adjudication and correction"]
+    J --> L["Asset acceptance QA"]
+    H --> L
+    L --> K["Accepted Eval/SFT/Preference/Badcase/Regression assets"]
+    K --> I["Guideline and regression update"]
     I --> A
 ```
 
@@ -302,39 +318,41 @@ flowchart LR
 | -------------------------------- | ------------------------- | -------------------------------------------------------- |
 | Gold label leakage               | Invalid evaluation        | Strict file split and prompt visibility tests            |
 | Judge instability                | Incorrect routing         | `parsed_ok`, judge confidence, and human review fallback |
-| Over-reliance on mock mode       | Weak external credibility | Add small API smoke run                                  |
+| Over-reliance on mock mode       | Weak external credibility | Keep mock and API evidence layers explicitly separated  |
 | Ambiguous labels                 | Inconsistent annotation   | Labeling SOP and examples                                |
 | Dashboard misread as leaderboard | Wrong product framing     | README and dashboard boundary language                   |
 | Legal correctness overclaim      | Compliance risk           | Boundary statements and human review triggers            |
 
-## 13. Iteration Plan
+## 13. Current Iteration Plan
 
-Week 1:
+Immediate:
 
-- Add product PRD and labeling SOP.
-- Run 12-sample API smoke test if API key is available.
-- Curate 5 badcase cards for review and calibration discussion.
+- Human-review all 24 A5 traces and calibrate the regenerated deterministic flags against those
+  labels.
+- Retain legacy aliases only while downstream consumers migrate; keep all internal decisions on
+  `response_policy`, `workflow_status`, `data_asset_routes`, and `release_gate_decision`.
+- Preserve anonymous reviewer A/B and adjudicated labels for reproducible IAA.
 
-Week 2:
+Next pilot:
 
-- Add annotation QA sampling.
-- Add preference pair export template.
-- Add cost/latency columns for API mode.
+- Add a random review stratum alongside priority review.
+- Preregister release metrics and thresholds.
+- Add claim/evidence span labels and authoritative source-version metadata.
+- Track annotation cost, turnaround time, backlog, and badcase-to-regression lead time.
 
 Later:
 
-- Add reviewer assignment workflow.
-- Add inter-annotator agreement metrics.
-- Add storage layer only after workflow stabilizes.
-- Add Web UI only after CLI workflow and data schema are validated.
+- Add storage and reviewer-assignment workflow only after the schema stabilizes.
+- Add a Web UI only after CLI, lineage, and QA workflows are validated.
 
 ## 14. Launch Checklist
 
 - README first screen explains the core problem, evaluation flow, and reviewable artifacts.
 - PRD and SOP are linked.
 - Dashboard preview image is visible.
-- `outputs/executive_dashboard.xlsx` is committed.
-- Generated full output CSVs remain reproducible but not committed.
+- Synthetic/mock Dashboard and full CSVs are reproducible locally but are not presented as public
+  empirical evidence.
+- Public evidence packages contain only clearly labeled API summaries and redacted samples.
 - Tests and validation pass.
 - Repository topics and description are configured.
 

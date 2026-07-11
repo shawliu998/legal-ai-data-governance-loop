@@ -1,20 +1,38 @@
-# 为什么这个项目适合专业领域数据产品经理岗位
+# 与 DeepSeek 法律数据产品经理岗位的能力映射
 
-我做这个项目时，起点不是“做一个法律模型排行榜”。最开始只是想验证法律 AI 在一些真实产品场景里会怎么出错：事实没问全时会不会直接下结论，引用依据时会不会越界，高风险问题会不会转人工，对抗性文书会不会被模型顺手写出来。
+## 项目定位
 
-做下去以后，我发现更有价值的部分不是单次评分，而是把这些错误整理成后续能继续使用的数据。比如一个过度自信的劳动争议回答，可以进入 human review；一个引用越界的 RAG 输出，可以变成 source-boundary regression case；一个更安全的回答和一个更冒进的回答，可以做成 preference pair。
+这个项目不是法律问答 Demo，也不是模型排行榜。我关注的是专业领域数据产品经理需要持续回答的四个问题：场景边界如何定义、数据怎样被可靠标注、哪些模型行为阻断发布、失败记录如何进入下一轮数据生产。
 
-这个过程和专业领域数据产品经理的工作有直接关系：需要理解业务场景，定义数据标准和评测口径，安排人审和质检，判断哪些问题影响发布，再把 badcase 分到下一轮 eval、SFT、preference、regression 或 human review 数据里。
+## 能力映射
 
-项目里已经完成的部分包括：
+| 岗位能力 | 我在项目中的工作 | 可核验证据 | 当前边界 |
+| --- | --- | --- | --- |
+| 法律场景抽象 | 将咨询、案情分析、文书、限定来源 QA、对抗请求和多轮 intake 拆成 case/schema | 50-case boundary bank、85 条基础样本、A0–A5 taxonomy | 场景为项目构造，不代表真实线上分布 |
+| 数据标准设计 | 定义 gold 隔离、rubric、错误 taxonomy、source/claim/citation 字段 | Data Card、Labeling SOP、380 rubric items | 尚未形成生产级本体和版本治理 |
+| 评测与实验 | 设计 mock 管线与三组 API pilot，保留空响应和解析失败 | 300 API runs、72 RAG runs、24 A5 traces | pilot-scale，不支持模型优劣结论 |
+| 人审与质检 | 组织两名法律背景 reviewer 独立复核 priority 样本并归并分歧 | 80-row 脱敏汇总、Human Review Methodology | 非随机样本；公开数据不能复算 reviewer-level IAA |
+| 发布治理 | 区分回答策略、复核状态、组级发布闸门和数据资产候选 | PRD、release gate、router、Dashboard | 旧字段仅作兼容别名；内部判断使用 canonical schema |
+| 数据闭环 | 将问题记录转成 eval/SFT/preference/badcase/regression 候选 | case cards、router、review writeback、回归设计 | 候选不等于已验收训练数据 |
+| RAG 可靠性 | 拆分 retrieval、source boundary、citation coverage、claim support | 8 × 3 × 3 的 RAG V2 pilot | controlled corpus，不是完整法律知识库 |
+| 项目沟通 | 输出 PRD、SOP、runbook、风险登记和证据包 | `docs/` 与 lightweight evidence packages | 尚未接入真实业务 SLA 和成本台账 |
 
-- 50-case legal product-boundary eval bank，覆盖咨询、案情分析、文书起草、引用 grounding、风险校准和对抗性请求。
-- 300 条真实 Qianfan API model-agent 输出，并完成 300 / 300 Qwen judge 结构化解析。
-- 80 条 priority 输出人审校准；这个样本是高风险 / blocker 富集样本，所以我只把 92.5% agreement 作为该样本上的校准信号。
-- 72-output RAG V2 focused pilot，用来观察 source-boundary、citation coverage 和 claim-level citation gate。
-- 24-trace / 72-turn A5 multi-turn intake pilot，用来观察多轮 intake 里的事实追问、错误前提挑战、overclaim 和人审时机。
-- release gate、human review queue、data routing、dashboard、redacted evidence package 和 model boundary memo。
+## 可诚实陈述的实验规模
 
-如果放到真实团队里，我会优先补三件事。第一，把 priority review 和随机抽样 review 分开，避免把富集样本结论误读成整体准确率。第二，把 RAG 的 claim-to-source 标注做得更细，尤其是 out-of-scope source 和 unsupported claim。第三，把线上 badcase、人工客服记录、检索日志和 release gate 结果接到同一个数据流里，方便持续补 eval、SFT、preference 和 regression 数据。
+- Product-boundary API pilot：12 cases × 5 千帆托管模型槽位 × 5 workflows = 300 API run records，其中 271 条非空回答、29 条空响应。
+- Priority review：80 条高风险或 blocker 富集记录，由两名法律背景 reviewer 独立复核并归并分歧；不报告无法由公开标签复算的一致率。
+- RAG V2：8 cases × 3 千帆托管模型槽位 × 3 workflows = 72 API runs。
+- A5：8 cases × 3 千帆托管模型槽位 = 24 traces / 72 turns；deterministic 标记待人工校准。
+- Mock/synthetic：用于验证数据管线、字段、路由和 Dashboard，不作为真实模型质量证据。
 
-我不会把这个项目说成完整法律知识库，也不会说它能判断哪个模型更强。它更像一个小规模的产品诊断样例：从场景拆解，到评测和人审，再到发布判断和下一轮数据生产。
+## 如果进入真实团队，我会优先补什么
+
+1. 将 priority review 与随机抽样分开，保存匿名 reviewer A/B 和 adjudicated labels，报告分项 IAA、precision/recall 与置信区间。
+2. 将 query、source、claim、citation span、support label、release action 和 reviewer override 接入统一的数据 lineage。
+3. 建立 P0 漏放率、转人工 precision/recall、review backlog、单位安全放行成本和 badcase 闭环时间。
+4. 对模型、服务商封装、prompt、检索库和评测器分别做版本化，避免把供应商或工作流影响误归因于基础模型。
+5. 把数据资产从“候选路由”推进到抽检、验收、去重、污染检查和训练后回归的完整状态机。
+
+## 面试中的边界表述
+
+我可以说明自己完成了一个小规模、可复现的法律 AI 产品诊断闭环；不能声称完成了生产法律知识库、统计显著模型评测、自动法律 intake，或证明某个模型已经适合法律意见发布。

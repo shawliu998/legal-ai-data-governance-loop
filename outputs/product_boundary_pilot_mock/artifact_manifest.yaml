@@ -1,0 +1,17 @@
+schema_version: "2.0"
+artifact_class: "SYNTHETIC_FIXTURE"
+publication_status: "documentation_only"
+contains_real_model_outputs: false
+contains_verified_human_annotations: false
+permitted_uses:
+  - schema validation
+  - deterministic pipeline tests
+  - dashboard layout checks
+prohibited_claims:
+  - model quality evidence
+  - reviewer agreement evidence
+  - production readiness evidence
+tracked_files:
+  - README.md
+  - artifact_manifest.yaml
+generated_artifacts_policy: "Local generated CSV/XLSX files are ignored by Git."

@@ -1,160 +1,73 @@
-# Model Boundary Memo: Legal Product Eval
+# Model-Agent Product Boundary Memo
 
-## Compared Models
+## Decision Unit
 
-- ERNIE 5.0
-- DeepSeek V4 Pro
-- Qwen3.5-27B
-- GLM-5.2
-- Kimi K2.6
+The unit of analysis is a model-slot × workflow × legal-case API run, not a foundation-model leaderboard score. The five slots were accessed through Baidu AI Cloud Qianfan and therefore include provider hosting, model version, prompt, retrieval, and generation-parameter effects.
 
-The comparison is model-agent-architecture based, not a public leaderboard.
+## Pilot Shape
 
-The unit of decision is whether a model-agent configuration is suitable for a legal product policy:
-auto-answer, grounded answer, clarification-first, human review, or blocked.
+```text
+12 legal product-boundary cases
+× 5 Qianfan-hosted model slots
+× 5 workflows
+= 300 API run records
+```
 
-## Main Findings
+- 271 records contain non-empty model answers.
+- 29 records contain empty responses, despite run-level status being recorded as successful.
+- The five slots were ERNIE 5.0, DeepSeek V4 Pro, Qwen3.5-27B, GLM-5.2, and Kimi K2.6 as exposed through Qianfan at run time.
+- Qwen3.5-27B was used as a structured judge baseline. Parseability is an engineering signal, not evidence of judge accuracy.
+- Two legal-background reviewers independently reviewed 80 priority-enriched records and reconciled disagreements. The public evidence does not preserve reviewer A/B labels, so no agreement rate is reported.
 
-The real API pilot used 12 legal product-boundary cases, 5 Qianfan-accessible models, and 5 agent
-configurations. It produced 300 model outputs.
+## What The Pilot Supports
 
-Full-run scoring used Qwen3.5-27B as the structured judge because it produced 300 / 300 parseable
-judge outputs during the pilot. An 80-row priority human review sample was then completed for
-high-risk outputs, citation issues, and likely release blockers.
+The pilot supports qualitative product-boundary findings:
 
-This memo is a product boundary memo, not a leaderboard.
+1. Empty responses and schema failures must remain visible in reliability metrics.
+2. Low-risk routine consultation may be considered for limited release only after critical checks pass.
+3. Missing material facts should trigger clarification before substantive advice.
+4. Source-specific tasks need grounded retrieval plus source-boundary, citation, and claim-support checks.
+5. High-risk, coercive, deceptive, or unsupported outputs require human review or blocking.
+6. A single judge score cannot determine release or training-data acceptance.
 
-Methodology caveat: model-level scores are Qwen-judge baseline signals, not final model rankings.
-Qwen-scored Qwen outputs should be interpreted cautiously and validated through human review or
-non-Qwen judge sampling.
+It does not support:
 
-1. Best model/architecture for routine consultation: Qwen3.5-27B or ERNIE/Kimi under A1 structured
-   legal counsel, limited to low-risk consultation and no citation defect.
-2. Best architecture for clarification and risk intake: A4 clarification-first intake, especially
-   when material facts are missing or the user asks for risky procedural strategy.
-3. Best architecture for citation-grounded answers: A2 grounded retrieval counsel is required for
-   source-specific tasks. The pilot still showed source-boundary failures, so grounded answers need
-   citation verification and human review before release.
-4. Most conservative architecture: A3 verifier-router policy layer routed 59 / 60 outputs to human
-   review, useful for triage but too conservative for user-facing efficiency without refinement.
-5. Most likely failure pattern: insufficient human-review escalation and unsupported or out-of-scope
-   source use, not merely low answer quality.
-6. Cost-effective deployment policy: use A1 for low-risk routine consultation, A4 for intake and
-   missing-fact scenarios, and A2/A3 only where source grounding or release policy enforcement is
-   mandatory.
+- a public ranking of the five model names;
+- a conclusion about DeepSeek official API performance;
+- statistical superiority between models or workflows;
+- production legal-advice readiness;
+- population accuracy inferred from the priority review sample.
 
-## Observed Metrics
+## Canonical Product Actions
 
-| Signal                                        |                            Result |
-| --------------------------------------------- | --------------------------------: |
-| Real model outputs                            |                               300 |
-| Judge parse success                           |                         300 / 300 |
-| Priority human review rows                    |                                80 |
-| Human pass / partial / fail                   |                       4 / 27 / 49 |
-| Judge-human agreement                         | 92.5% on priority-enriched sample |
-| Confirmed citation or evidence-support issues |                                45 |
-| Human route overrides                         |                                47 |
+| Situation | `response_policy` | `workflow_status` | Proposed `data_asset_routes` |
+| --- | --- | --- | --- |
+| Low risk, facts sufficient, no critical issue | `auto_answer` | `released` after checks | `eval`, positive regression candidate |
+| Answer depends on allowed sources and support checks pass | `grounded_answer` | `released` after checks | `eval`, grounded regression candidate |
+| Material facts missing | `clarify` | `released` | `sft`, intake eval candidates after correction |
+| High risk or unresolved uncertainty | `human_review` | `pending_review` | decided after review |
+| Fabricated citation, unsafe action, invented evidence, contradicted source | `block` | `blocked` | `badcase`, `regression`; preference only with a reviewed safe counterpart |
 
-Model-level judge baseline:
+`human_review` is not a final training-data asset. Likewise, a router-selected SFT or preference destination is only a candidate until correction, review, privacy checks, deduplication, and acceptance are complete.
 
-| Model           | Avg score | Human-review route count |
-| --------------- | --------: | -----------------------: |
-| Qwen3.5-27B     |     0.878 |                  48 / 60 |
-| ERNIE 5.0       |     0.765 |                  49 / 60 |
-| DeepSeek V4 Pro |     0.756 |                  49 / 60 |
-| Kimi K2.6       |     0.730 |                  47 / 60 |
-| GLM-5.2         |     0.462 |                  50 / 60 |
+## RAG Policy
 
-Architecture-level judge baseline:
+RAG is required when an answer depends on a supplied clause, policy excerpt, contract fragment, statute excerpt, or other source-specific material. Retrieval alone is insufficient. Before release, the product should verify:
 
-| Architecture                    | Legacy alias | Avg score | Human-review rate | Product interpretation                                                       |
-| ------------------------------- | ------------ | --------: | ----------------: | ---------------------------------------------------------------------------- |
-| A1 structured legal counsel     | V1           |     0.883 |             71.7% | Best low-risk baseline; still needs routing rules.                           |
-| A4 clarification-first intake   | V5           |     0.851 |             68.3% | Strong for missing facts and risk calibration.                               |
-| A2 grounded retrieval counsel   | V4           |     0.706 |             95.0% | Required for source-specific answers, but citation discipline is not solved. |
-| A0 baseline closed-book         | V0           |     0.616 |             70.0% | Useful as baseline, not a release candidate for high-risk tasks.             |
-| A3 verifier-router policy layer | V3           |     0.533 |             98.3% | Conservative triage layer; too much over-routing in current form.            |
+- retrieved sources fall within the allowed source boundary;
+- material claims carry citations where required;
+- cited passages support the associated claims;
+- no critical claim is contradicted or fabricated;
+- unresolved cases enter review rather than being auto-released.
 
-Human review on the priority sample:
+The current RAG corpus is controlled and small. It tests the workflow, not full legal retrieval reliability.
 
-| Architecture | Fail | Partial | Pass |
-| ------------ | ---: | ------: | ---: |
-| A0 / V0      |    2 |      11 |    0 |
-| A1 / V1      |    2 |       7 |    3 |
-| A3 / V3      |   25 |       0 |    0 |
-| A2 / V4      |   18 |       0 |    0 |
-| A4 / V5      |    2 |       9 |    1 |
+## Human Review Policy
 
-## Product Policy
+Human review is required for high-risk domains, missing facts with material consequences, coercive or deceptive drafting, unsafe action suggestions, unsupported material claims, source-boundary failures, and unresolved judge uncertainty.
 
-Auto-answer:
-
-- Candidate scope: routine low-risk consultation where the agent architecture has no critical
-  failure, no fabricated citation, and no unresolved judge disagreement.
-- Prefer A1 structured legal counsel for the first release gate.
-- Do not auto-answer high-risk labor, adversarial drafting, or citation-boundary cases.
-
-RAG required:
-
-- Citation-grounding tasks.
-- Contract, document, or provided-source interpretation.
-- Any answer that makes source-specific legal or factual claims.
-- RAG output must pass source-id citation checks and human calibration before user-facing release.
-- If the user asks "only based on these materials", any outside statute, case, or policy source
-  should be treated as a source-boundary issue unless explicitly allowed.
-
-Clarification required:
-
-- Missing material facts.
-- Ambiguous labor, contract, family, or dispute posture.
-- Win-rate, litigation outcome, or probability questions.
-- Prefer A4 clarification-first intake when the correct product behavior is to slow down, ask for
-  facts, or refuse to draft unsafe content.
-
-Human review required:
-
-- High-risk labor, marriage/family, accident, administrative penalty, or criminal-civil overlap.
-- Deceptive or coercive document drafting.
-- Unsupported claims or fabricated citations.
-- Judge disagreement on risk, route, or critical failure.
-
-Blocked:
-
-- Fabricated citations.
-- Invented evidence or facts.
-- Overconfident win probability.
-- Missed human review on high-risk cases.
-- Unsafe or deceptive action suggestions.
-- RAG answers that cite retrieved source IDs but use them to support claims they do not actually
-  entail.
-
-## Data Policy
-
-- `eval_holdout`: stable routine samples and counterfactual pairs for regression.
-- `sft_candidate`: repeated missing-fact, evidence-warning, or intake-quality failures.
-- `preference_candidate`: paired outputs where one answer is better calibrated or safer.
-- `badcase`: critical failures, adversarial traps, fabricated citations, and release blockers.
-- `human_review`: high-risk, low-confidence, judge-disagreement, or citation-support cases.
-
-Data routing after human review:
-
-- Passing high-risk answers are not `badcase`; use them as human-review calibration, positive
-  regression examples, or preference winners.
-- Partial answers with good legal analysis but missing escalation should become SFT/intake-routing
-  examples.
-- Source-boundary failures should become citation-grounding regression cases.
-- Unsafe or deceptive drafting failures should stay in badcase and release-gate tests.
+Future review exports should preserve anonymous reviewer A/B labels, adjudicated labels, guideline version, timestamps, and conflict reasons so that IAA and routing performance can be independently reproduced.
 
 ## Release Recommendation
 
-No model-agent configuration should be fully auto-released from this pilot alone.
-
-Recommended first release gate:
-
-- Allow limited auto-answer only for low-risk routine consultation under A1 when citation checks and
-  risk tags are clean.
-- Use A4 for intake and clarification where facts are missing.
-- Require RAG plus citation verification for source-specific tasks, but route citation-bound answers
-  to human review until claim-level entailment improves.
-- Block or human-review all adversarial drafting, invented-evidence, fabricated-citation, and
-  high-risk labor strategy outputs.
+No model-agent configuration should be fully auto-released from this pilot alone. The next valid step is a larger preregistered evaluation with random blind review, reviewer-level labels, calibrated release metrics, and separate attribution for model, host, workflow, retrieval, and judge effects.

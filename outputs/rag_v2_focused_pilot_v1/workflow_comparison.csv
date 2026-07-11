@@ -1,4 +1,4 @@
-﻿version,workflow_condition,workflow_name,runs,avg_score_rate,human_review_rate,avg_latency_ms,citation_coverage_rate,citation_gate_issue_rate,claim_release_blocker_rate,no_citation_claims,out_of_scope_source_claims,fabricated_claim_citations,contradicted_claims
-V1,W1,structured legal prompt,24,0.9223,0.375,22269.96,0.1166,0.9148,0.0045,197,0,0,1
-V4,W2,provided-context grounded answer,24,0.7528,0.7917,23067.46,0.3614,0.8421,0.2596,182,74,0,0
-V5,W4,clarification-first intake agent,24,0.8142,0.4583,22613.08,0.0984,0.9098,0.0,110,0,0,0
+﻿version,workflow_condition,workflow_name,runs,avg_score_rate,human_review_rate,avg_latency_ms,citation_coverage_rate,reviewable_strict_citation_defect_count,reviewable_strict_citation_defect_rate,reviewable_claim_needs_review_count,reviewable_claim_needs_review_rate,all_claim_source_boundary_blocker_count,all_claim_source_boundary_blocker_rate,no_citation_claims,out_of_scope_source_claims,fabricated_claim_citations,contradicted_claims
+V1,W1,structured legal prompt,24,0.9223,0.375,22269.96,0.1166,204,0.9148,212,0.9507,1,0.0014,197,0,0,1
+V4,W2,provided-context grounded answer,24,0.7528,0.7917,23067.46,0.3614,240,0.8421,262,0.9193,74,0.0996,182,74,0,0
+V5,W4,clarification-first intake agent,24,0.8142,0.4583,22613.08,0.0984,111,0.9098,117,0.959,0,0.0,110,0,0,0

@@ -1,5 +1,22 @@
-package: a5_multiturn_intake_lightweight_evidence
+schema_version: '2.0'
+package: a5_multiturn_intake_pilot_v1_lightweight_evidence
+run_stage: pilot
+current_portfolio_evidence: true
+generated_at_utc: '2026-07-11T05:59:53+00:00'
+base_git_commit: 98f02b4bfdd70b0297e2d629e1430fe19addda19
+working_tree_state: clean
+working_tree_scope: source_and_configuration_excluding_outputs
 purpose: Trace-level A5 multi-turn legal intake evidence package.
+recomputation_basis: recalculated_from_existing_local_trace_log_without_external_model_calls
+source_artifact_sha256:
+  trace_log: 13783798dc3a0aae8c395cf3b8356999af27d1d7c3c5747facbf9d5380210f96
+  cases_jsonl: e48b3d7480c295c7e34b7340dd6f80966c07e63ca931935b06d451104fff499d
+  evaluation_implementation: 32d47266088e3ba1ea0286b576b9cc574dce6f31cb74cb6585e946c8db989db0
+  pilot_config: d6cd318ee9aec91d61f269229d37179bda63b0c68f25f26050f40f310ab7258b
+rule_versions:
+  lexical_overclaim: a5_lexical_overclaim_v2
+human_calibration_status: pending
+model_behavior_pass_rate_reported: false
 source_run:
   traces: 24
   turns: 72
@@ -7,8 +24,10 @@ source_run:
   models: 3
 methodology_caveats:
 - This is a limited A5 smoke/pilot run, not a statistically powered benchmark.
-- The trace pass rate is a deterministic triage signal, not human-validated product
-  readiness.
+- No model behavior pass rate is reported before human trace calibration.
+- lexical_overclaim_flag is a lexical triage signal, not a human-validated semantic
+  overclaim finding.
+- A zero lexical flag count does not establish that no semantic overclaim exists.
 - Trace-level checks are deterministic triage signals and should be human-calibrated
   before release decisions.
 - Raw full model outputs remain local/ignored; this package commits summaries and

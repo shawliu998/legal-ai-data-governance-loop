@@ -12,13 +12,20 @@ From the project root:
 
 ```bash
 python3 -m venv .venv
-.venv/bin/python -m pip install -r requirements.txt
-.venv/bin/python -m pip install .
+.venv/bin/python -m pip install -e ".[test]"
 cp .env.example .env
 ```
 
-If package import fails in a local editable setup, use the installed wheel command above (`pip
-install .`) rather than editable install.
+Editable install keeps CLI runs aligned with the current `src/` tree during development. Before
+regenerating artifacts, verify the imported module path:
+
+```bash
+.venv/bin/python -c "import legal_eval_harness; print(legal_eval_harness.__file__)"
+```
+
+For an immutable clean-checkout reproduction, `pip install .` is also supported, but reinstall after
+every source change; otherwise the CLI can execute a stale site-packages copy while pytest reads
+`src/`.
 
 ## 2. Data Preparation
 
@@ -90,7 +97,8 @@ Gold-only fields must not appear in `Eval_Input`:
 ## 4. Run the Mock Pipeline
 
 Mock mode is the default reproducible path because it is deterministic and does not require API
-keys.
+keys. Every artifact generated in this section is synthetic/mock pipeline evidence. It validates
+code paths and schemas, not real model quality, and is not part of the public empirical package.
 
 ```bash
 .venv/bin/python -m legal_eval_harness.cli all \
@@ -105,7 +113,8 @@ Expected pipeline shape:
 - 85 samples
 - 546 normalized model runs
 - 546 judge score rows
-- data routes across `eval`, `sft`, `preference`, `badcase`, and `human_review`
+- release/review signals plus candidate assets across `eval`, `sft`, `preference`, `badcase`, and
+  `regression`; `human_review` is a workflow action, not a training-data asset
 
 Expected output files:
 
@@ -131,10 +140,13 @@ Key sheets:
 - `Task_Category_Summary`: behavior patterns by legal task type.
 - `Badcase_Cards`: concrete examples for human review or data routing.
 - `Data_Routing_Summary`: counts by route and task category.
+- `Workflow_Release`: workflow-status and current-answer-action summary when the new schema is used.
+- `Data_Asset_Routes`: candidate asset counts when the new schema is used.
 - `Error_Taxonomy`: standardized coarse error tags.
 - `Data_Route_Taxonomy`: fixed route definitions.
 
-Do not present this workbook as a model ranking report. It is a data production decision panel.
+Do not present this workbook as a model ranking or API result. It is a locally generated
+synthetic/mock data-production decision panel.
 
 ## 6. Run Tests
 
@@ -142,13 +154,8 @@ Do not present this workbook as a model ranking report. It is a data production 
 .venv/bin/python -m pytest -q
 ```
 
-Expected:
-
-```text
-9 passed
-```
-
-The tests cover:
+Expected result: all collected tests pass. The exact count grows with the harness, so the portfolio
+does not hard-code a release count. Coverage includes:
 
 - gold label isolation
 - prompt leakage checks
@@ -181,13 +188,17 @@ Then run:
 API mode is optional. Mock mode is enough to validate the full data loop without external provider
 variance.
 
-For a small DeepSeek-compatible smoke test, use `config.deepseek.smoke.yaml`. It selects 12 samples
+For a small DeepSeek-compatible smoke test, use `configs/pilots/deepseek.smoke.yaml`. It selects 12 samples
 and 30 model runs to validate provider integration without turning the project into a model
-leaderboard. See `docs/api_smoke_run.md`.
+leaderboard. See `docs/archive/api_smoke_run.md`.
 
 ## 8. Optional Practice Benchmark Pilot
 
-Generate the separate licensed adapted practice pilot:
+Generate the optional external adapted practice benchmark:
+
+> Evidence boundary: the current repository does not record a verifiable license name/version for
+> this external source. Keep this pilot out of the core public portfolio evidence unless provenance
+> and license metadata are added.
 
 ```bash
 .venv/bin/python -m legal_eval_harness.cli prepare-practice-benchmark \
@@ -202,7 +213,7 @@ Validate the pilot manifest:
 ```bash
 .venv/bin/python -m legal_eval_harness.cli validate \
   --input data/practice_benchmark_pilot/dataset_manifest.yaml \
-  --config config.practice_pilot.yaml
+  --config configs/pilots/practice_pilot.yaml
 ```
 
 Expected pilot shape:
@@ -219,7 +230,7 @@ Run the pilot pipeline:
 ```bash
 .venv/bin/python -m legal_eval_harness.cli all \
   --input data/practice_benchmark_pilot/dataset_manifest.yaml \
-  --config config.practice_pilot.yaml \
+  --config configs/pilots/practice_pilot.yaml \
   --mode mock \
   --output-dir outputs/practice_benchmark_pilot
 ```
@@ -227,7 +238,11 @@ Run the pilot pipeline:
 This pilot is intentionally separate from `dataset_manifest.yaml` so the default diagnostic dataset
 remains stable.
 
-## 9. Real API Deployment-Eval Smoke Run
+## 9. Optional External-Data API Integration Smoke
+
+This section uses the adapted practice benchmark described above. It remains excluded from the core
+public evidence until source provenance and license metadata are independently verifiable. API calls
+do not repair the underlying data-license gap.
 
 After generating `data/practice_benchmark_pilot/`, configure `.env` for:
 
@@ -265,7 +280,7 @@ Run the real API smoke eval:
 ```bash
 .venv/bin/python -m legal_eval_harness.cli all \
   --input data/practice_benchmark_pilot/dataset_manifest.yaml \
-  --config config.practice_api_smoke.yaml \
+  --config configs/pilots/practice_api_smoke.yaml \
   --mode api \
   --output-dir outputs/practice_api_smoke
 ```
@@ -275,10 +290,10 @@ Expected shape:
 - 12 practice samples
 - 3 model aliases
 - 3 workflow conditions: `W0`, `W1`, `W3`
-- 108 model outputs
+- 108 API run records
 
 Use the resulting `Executive_Dashboard`, `Cost_Latency`, `Deployment_Policy`,
-`Data_Routing_Summary`, and `Badcase_Cards` sheets to complete `docs/results_practice_api_smoke.md`.
+`Data_Routing_Summary`, and `Badcase_Cards` sheets to complete `docs/archive/results_practice_api_smoke.md`.
 
 Apply `docs/release_gate.md` before making any auto-answer or model-routing claim.
 
@@ -309,13 +324,16 @@ Generate the release gate table:
 
 The release gate table groups by task, model, and workflow. It outputs:
 
-- `release_decision`
+- `release_gate_decision`
 - hard `blockers`
 - `required_mitigations`
 - critical failure, human review, and overclaim rates
 - latency and cost fields
 
-## 10. Qianfan Multi-Vendor Smoke Run
+## 10. Optional Qianfan Multi-Vendor Integration Smoke
+
+This section also uses the adapted practice benchmark and inherits the same provenance boundary.
+Treat any local output as provider-integration diagnostics, not as public model-ranking evidence.
 
 Qianfan ModelBuilder supports OpenAI-compatible calls through:
 
@@ -338,14 +356,14 @@ QIANFAN_MODEL_KIMI_K26=
 ```
 
 Use exact model names from the Qianfan model center. If one vendor slot is unavailable, remove that
-model block from `config.qianfan_vendors_smoke.yaml` or leave only the vendors you can call.
+model block from `configs/pilots/qianfan_vendors_smoke.yaml` or leave only the vendors you can call.
 
 Run:
 
 ```bash
 .venv/bin/python -m legal_eval_harness.cli all \
   --input data/practice_benchmark_pilot/dataset_manifest.yaml \
-  --config config.qianfan_vendors_smoke.yaml \
+  --config configs/pilots/qianfan_vendors_smoke.yaml \
   --mode api \
   --output-dir outputs/qianfan_vendors_smoke
 ```
@@ -355,7 +373,7 @@ Expected default shape:
 - 8 practice samples
 - 5 Qianfan-hosted model slots: ERNIE 5.0, DeepSeek V4 Pro, Qwen3.5-27B, GLM 5.2, Kimi K2.6
 - 3 workflow conditions: `W0`, `W1`, `W3`
-- 120 model outputs
+- 120 planned API run records; report non-empty answers and failures separately after execution
 
 Generate calibration and release-gate files:
 
@@ -373,12 +391,12 @@ Generate calibration and release-gate files:
   --output outputs/qianfan_vendors_smoke/release_gate.csv
 ```
 
-Report this as a deployment policy experiment:
+Use this locally to test deployment-policy questions:
 
 - Which task slice fits which vendor/model family?
 - Which workflow reduces high-risk routing?
 - Which failures become badcase, SFT, preference, or holdout eval?
-- Which model-workflow combinations pass or fail release gates?
+- Which model-workflow combinations trigger candidate, limited, or blocked group-level gates?
 
 ## 11. Stratified Product Boundary Eval
 
@@ -395,16 +413,25 @@ Validate it:
 Expected shape:
 
 - 50 cases
-- 6 `normal_practice`
-- 6 `hard_legal_reasoning`
-- 5 `risk_calibration`
-- 5 `citation_grounding`
-- 4 `adversarial_trap`
-- 6 `counterfactual_pair`
+- 10 `normal_practice`
+- 9 `hard_legal_reasoning`
+- 8 `risk_calibration`
+- 8 `citation_grounding`
+- 7 `adversarial_trap`
+- 8 `counterfactual_pair`
 
-Use `config.qianfan_product_boundary_eval.yaml` as the product-boundary experiment spec. The first
-version is intentionally schema-validated and mock-compatible; automatic RAG retrieval can be added
-later without changing the dataset schema.
+Use `configs/pilots/qianfan_product_boundary_eval.yaml` as the product-boundary experiment spec. The
+suite is schema-validated and mock-compatible; the runnable pilot configuration also supports RAG
+retrieval and citation checks.
+
+If a legacy case file still uses `expected_data_route`, migrate it before validation:
+
+```bash
+.venv/bin/python scripts/migrate_case_route_taxonomy.py
+```
+
+The canonical case field is `expected_data_asset_routes`, with values limited to `eval`, `sft`,
+`preference`, `badcase`, and `regression`; `human_review` belongs to the review workflow instead.
 
 Prepare normalized CSV files and a manifest for the existing runner:
 
@@ -428,7 +455,7 @@ Validate the runnable manifest:
 ```bash
 .venv/bin/python -m legal_eval_harness.cli validate \
   --input data/product_boundary_pilot/dataset_manifest.yaml \
-  --config config.qianfan_product_boundary_runnable.yaml
+  --config configs/pilots/qianfan_product_boundary_runnable.yaml
 ```
 
 Expected planned run count:
@@ -445,17 +472,18 @@ Current runnable workflow mapping:
 - `V3` -> `w3_risk_control_workflow`
 - `V5` -> `w4_clarification_first`
 
-Run the mock-compatible product-boundary pipeline:
+Run the mock-compatible product-boundary pipeline. The resulting directory is a regenerable
+synthetic fixture and should not be cited as real API evidence:
 
 ```bash
 .venv/bin/python -m legal_eval_harness.cli all \
   --input data/product_boundary_pilot/dataset_manifest.yaml \
-  --config config.qianfan_product_boundary_runnable.yaml \
+  --config configs/pilots/qianfan_product_boundary_runnable.yaml \
   --mode mock \
   --output-dir outputs/product_boundary_pilot_mock
 ```
 
-RAG is enabled in `config.qianfan_product_boundary_runnable.yaml` for `V4` and `V3`. The corpus is
+RAG is enabled in `configs/pilots/qianfan_product_boundary_runnable.yaml` for `V4` and `V3`. The corpus is
 `data/rag_corpus/legal_sources.csv`.
 
 Expected RAG outputs:
@@ -481,9 +509,10 @@ This produces:
 
 - `claim_entailment.csv`: one row per extracted claim, with cited source IDs, allowed source IDs,
   best source, support score, entailment label, and product action.
-- `claim_entailment_summary.csv`: counts for reviewable claims, citation-gate issues, release
-  blockers, supported claims, unsupported claims, no-citation claims, out-of-scope source usage,
-  fabricated citations, and contradiction signals.
+- `claim_entailment_summary.csv`: separate counts for strict citation defects, broader
+  support-needs-review flags (including `partially_supported`), all-claim release blockers,
+  supported claims, unsupported claims, no-citation claims, out-of-scope source usage, fabricated
+  citations, and contradiction signals.
 
 The entailment labels are deterministic triage signals for review queues and release gates. They are
 not final legal conclusions.
@@ -493,7 +522,7 @@ Run judge ensemble calibration after `model_run_log.csv` exists:
 ```bash
 .venv/bin/python -m legal_eval_harness.cli run-judge-ensemble \
   --input data/product_boundary_pilot/dataset_manifest.yaml \
-  --config config.qianfan_product_boundary_runnable.yaml \
+  --config configs/pilots/qianfan_product_boundary_runnable.yaml \
   --runs outputs/product_boundary_pilot_mock/model_run_log.csv \
   --mode mock \
   --output-dir outputs/product_boundary_pilot_mock
@@ -508,9 +537,10 @@ Expected ensemble outputs:
 - `judge_ensemble_summary.csv`: per-run stable/arbitrated/human-calibration status and final risk
   route.
 
-For API mode, set the Qianfan model env vars in `config.qianfan_product_boundary_runnable.yaml`. The
-default design uses DeepSeek V4 Pro and GLM-5.2 as primary judges, Kimi K2.6 as arbiter, and blocks
-judge self-evaluation.
+For API mode, set the Qianfan model env vars in `configs/pilots/qianfan_product_boundary_runnable.yaml`. The
+default targeted-smoke design uses Qianfan-hosted DeepSeek V4 Pro and GLM-5.2 slots as primary
+judges, a Kimi K2.6 slot as arbiter, and blocks judge self-evaluation. It is not the full-run final
+authority or evidence of official model API behavior.
 
 Build the legal-review calibration queue:
 
@@ -561,8 +591,8 @@ readiness until API outputs and human calibration are available.
 
 ## 12. Qianfan API Pilot
 
-Do not start with the full 1250-output run. First run the 1-case API smoke test, then run the
-12-case API pilot.
+Do not start API integration by rerunning the 1,250-record synthetic plan. First run the 1-case API
+smoke test, then run the 12-case API pilot.
 
 ### 12.1 One-Case API Smoke Test
 
@@ -574,7 +604,7 @@ Validate the smoke dataset and run plan:
 ```bash
 .venv/bin/python -m legal_eval_harness.cli validate \
   --input data/product_boundary_api_smoke_1case/dataset_manifest.yaml \
-  --config config.qianfan_product_boundary_api_smoke.yaml
+  --config configs/pilots/qianfan_product_boundary_api_smoke.yaml
 ```
 
 Expected planned run count:
@@ -588,7 +618,7 @@ Run only the target model call first:
 ```bash
 .venv/bin/python -m legal_eval_harness.cli run-models \
   --input data/product_boundary_api_smoke_1case/dataset_manifest.yaml \
-  --config config.qianfan_product_boundary_api_smoke.yaml \
+  --config configs/pilots/qianfan_product_boundary_api_smoke.yaml \
   --mode api \
   --output outputs/product_boundary_api_smoke_1case/model_run_log.csv
 ```
@@ -608,7 +638,7 @@ Optionally run the full one-case smoke chain, including judge and routing:
 ```bash
 .venv/bin/python -m legal_eval_harness.cli all \
   --input data/product_boundary_api_smoke_1case/dataset_manifest.yaml \
-  --config config.qianfan_product_boundary_api_smoke.yaml \
+  --config configs/pilots/qianfan_product_boundary_api_smoke.yaml \
   --mode api \
   --output-dir outputs/product_boundary_api_smoke_1case
 ```
@@ -629,13 +659,13 @@ Validate the pilot dataset and run plan:
 ```bash
 .venv/bin/python -m legal_eval_harness.cli validate \
   --input data/product_boundary_api_pilot_v1/dataset_manifest.yaml \
-  --config config.qianfan_product_boundary_api_pilot.yaml
+  --config configs/pilots/qianfan_product_boundary_api_pilot.yaml
 ```
 
 Expected planned run count:
 
 ```text
-12 cases × 5 models × 5 workflows = 300 normalized runs
+12 cases × 5 Qianfan-hosted model slots × 5 workflows = 300 normalized API runs
 ```
 
 Run the real API pilot after setting Qianfan environment variables in `.env`:
@@ -643,7 +673,7 @@ Run the real API pilot after setting Qianfan environment variables in `.env`:
 ```bash
 .venv/bin/python -m legal_eval_harness.cli all \
   --input data/product_boundary_api_pilot_v1/dataset_manifest.yaml \
-  --config config.qianfan_product_boundary_api_pilot.yaml \
+  --config configs/pilots/qianfan_product_boundary_api_pilot.yaml \
   --mode api \
   --output-dir outputs/product_boundary_api_pilot_v1
 ```
@@ -653,11 +683,23 @@ Run judge ensemble on the API outputs:
 ```bash
 .venv/bin/python -m legal_eval_harness.cli run-judge-ensemble \
   --input data/product_boundary_api_pilot_v1/dataset_manifest.yaml \
-  --config config.qianfan_product_boundary_api_pilot.yaml \
+  --config configs/pilots/qianfan_product_boundary_api_pilot.yaml \
   --runs outputs/product_boundary_api_pilot_v1/model_run_log.csv \
   --mode api \
   --output-dir outputs/product_boundary_api_pilot_v1
 ```
+
+If judge scores are regenerated separately, rebuild routing with the run log. `--runs` supplies the
+workflow/RAG and non-empty-output signals needed for response policies such as `grounded_answer`:
+
+```bash
+.venv/bin/python -m legal_eval_harness.cli route-data \
+  --scores outputs/product_boundary_api_pilot_v1/judge_scores.csv \
+  --runs outputs/product_boundary_api_pilot_v1/model_run_log.csv \
+  --output outputs/product_boundary_api_pilot_v1/data_routing.csv
+```
+
+The `all` command already passes run metadata to the router automatically.
 
 Build the API human-review calibration queue:
 
@@ -711,7 +753,7 @@ Run the full 8-case A5 pilot:
 
 ```bash
 PYTHONPATH=src .venv/bin/python -m legal_eval_harness.cli run-a5-multiturn \
-  --config config.qianfan_a5_multiturn_pilot.yaml \
+  --config configs/pilots/qianfan_a5_multiturn_pilot.yaml \
   --mode api \
   --output-dir outputs/a5_multiturn_intake_pilot_v1
 ```
@@ -745,7 +787,7 @@ for path in [
 PY
 ```
 
-Confirm route vocabulary:
+Inspect the legacy compatibility route vocabulary:
 
 ```bash
 .venv/bin/python - <<'PY'
@@ -754,11 +796,16 @@ print(sorted(pd.read_csv("outputs/data_routing.csv")["data_route"].unique()))
 PY
 ```
 
-Allowed values:
+Legacy primary values may include:
 
 ```text
-eval, sft, preference, badcase, human_review
+eval, sft, preference, badcase, regression, human_review
 ```
+
+For new outputs, validate `response_policy`, `workflow_status`, and `data_asset_routes` separately,
+then inspect group-level `release_gate_decision`. Only `data_asset_routes` describes candidate data
+assets; `human_review` is a response policy that enters a review workflow. `release_decision` and
+`data_route` are compatibility aliases only.
 
 ## 15. Walkthrough Script
 

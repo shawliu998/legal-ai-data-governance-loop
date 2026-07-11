@@ -1,43 +1,35 @@
 ﻿metric,value,note
-real_model_outputs,300.0,Qianfan API model-workflow outputs
-unique_cases,12.0,12-case product-boundary API pilot
-models,5.0,"qianfan_deepseek_v4_pro, qianfan_ernie_50, qianfan_glm_52, qianfan_kimi_k26, qianfan_qwen35_27b"
-workflow_versions,5.0,"V0, V1, V3, V4, V5"
-judge_rows,300.0,Qwen3.5-27B structured judge baseline
-judge_parse_success,300.0,parseable judge outputs
-judge_parse_success_rate,1.0,"Qwen judge parse stability, not accuracy"
-avg_score_rate,0.7179,Qwen-judge baseline signal
-human_review_route_count,243.0,router output count
-eval_route_count,45.0,
-sft_route_count,9.0,
-badcase_route_count,3.0,
-release_gate_rows,75.0,task x model x workflow groups
-release_gate_blocked,31.0,
-release_gate_limited_release_or_human_review,44.0,
-release_gate_candidate_auto_answer,0.0,
-retrieval_log_rows,120.0,RAG-enabled runs
-rag_context_rows,480.0,retrieved source chunks
-citation_verification_rows,120.0,RAG citation verification rows
-citation_label_citation_supported,3.0,source-id and lexical support triage
-citation_label_fabricated_citation,1.0,source-id and lexical support triage
-citation_label_missing_citation,24.0,source-id and lexical support triage
-citation_label_unsupported_claim,92.0,source-id and lexical support triage
-claim_entailment_total_claim_rows,3597.0,deterministic claim-level triage
-claim_entailment_reviewable_claim_rows,716.0,deterministic claim-level triage
-claim_entailment_citation_gate_issue_rows,648.0,deterministic claim-level triage
-claim_entailment_release_blocker_rows,60.0,deterministic claim-level triage
-claim_entailment_supported_rows,56.0,deterministic claim-level triage
-claim_entailment_partially_supported_rows,41.0,deterministic claim-level triage
-claim_entailment_unsupported_rows,46.0,deterministic claim-level triage
-claim_entailment_no_citation_rows,542.0,deterministic claim-level triage
-claim_entailment_out_of_scope_source_rows,56.0,deterministic claim-level triage
-claim_entailment_fabricated_citation_rows,3.0,deterministic claim-level triage
-claim_entailment_contradicted_rows,1.0,deterministic claim-level triage
-human_calibration_total_review_rows,80.0,"80-row priority review sample, not random"
-human_calibration_completed_review_rows,80.0,"80-row priority review sample, not random"
-human_calibration_review_completion_rate,1.0,"80-row priority review sample, not random"
-human_calibration_agreement_labeled_rows,80.0,"80-row priority review sample, not random"
-human_calibration_judge_human_agreement_rate,0.925,"80-row priority review sample, not random"
-human_calibration_confirmed_critical_failure_count,76.0,"80-row priority review sample, not random"
-human_calibration_confirmed_citation_issue_count,45.0,"80-row priority review sample, not random"
-human_calibration_human_route_override_count,47.0,"80-row priority review sample, not random"
+api_run_count,300,Qianfan model x case x workflow API rows
+nonempty_answer_count,271,API runs with non-empty answer content
+empty_answer_count,29,Completed API calls with empty answer content; reliability failures
+nonempty_answer_rate,0.9033,"Availability metric, not legal-answer quality"
+unique_cases,12,"Real pilot subset, not the full 50-case bank"
+models,5,"qianfan_deepseek_v4_pro, qianfan_ernie_50, qianfan_glm_52, qianfan_kimi_k26, qianfan_qwen35_27b"
+workflow_versions,5,"V0, V1, V3, V4, V5"
+judge_rows,300,Structured judge rows
+judge_parse_success,300,Parsing stability only; not judge accuracy
+judge_parse_success_rate,1.0,Parsing stability only; not judge accuracy
+release_gate_group_count,75,task x model x workflow groups
+retrieval_log_rows,120,RAG-enabled retrieval rows
+citation_verification_rows,120,Deterministic citation-verification rows
+claim_row_count,3597,All deterministic claim rows
+reviewable_claim_count,716,Rows eligible for legal-claim support review
+reviewable_claim_strict_citation_defect_flag_count,619,Reviewable strict defects; excludes partially supported claims and is not a confirmed model-error count
+reviewable_claim_strict_citation_defect_flag_rate,0.8645,Reviewable-only numerator and denominator; lower is better
+reviewable_claim_needs_review_count,660,Strict defects plus partially supported reviewable claims; used by the release gate
+reviewable_claim_needs_review_rate,0.9218,Reviewable-only numerator and denominator; lower is better
+all_claim_source_boundary_blocker_count,60,"Out-of-scope, fabricated, or contradicted source rows across all claims"
+priority_review_row_count,80,Priority-enriched review set; not random
+priority_review_nonempty_answer_count,51,Rows with reviewable answer content
+priority_review_empty_answer_count,29,Reliability failures; not legal-content judgments
+completed_final_review_rows,80,Rows with populated final review fields; does not recreate independent reviewer A/B labels
+reviewer_level_independent_label_rows,0,Reviewer A/B raw labels are not present in the current public evidence schema
+formal_reviewer_iaa,not_reported,Not reproducible without reviewer-level independent labels
+formal_judge_human_agreement,not_reported,Legacy manually aggregated summary is not published as a formal agreement statistic
+release_gate_blocked_count,35,Group-level release-gate decision
+release_gate_limited_release_count,40,Group-level release-gate decision
+response_policy_auto_answer_count,41,Output-level candidate response policy
+response_policy_block_count,84,Output-level candidate response policy
+response_policy_clarify_count,12,Output-level candidate response policy
+response_policy_grounded_answer_count,4,Output-level candidate response policy
+response_policy_human_review_count,159,Output-level candidate response policy

@@ -1,0 +1,81 @@
+project:
+  name: Legal AI Practice API Smoke Eval
+  experiment_id: EXP-PRACTICE-API-SMOKE
+  boundary: small real-API deployment-eval pilot; not legal advice; not model ranking
+  jurisdiction: 中国大陆
+  law_snapshot_date: "2026-07-07"
+  legal_advice_boundary: 仅用于法律 AI 诊断评测和数据治理工作流，不构成法律咨询或最终法律意见。
+
+models:
+  - alias: DeepSeek_Target
+    provider: openai_compatible
+    base_url: ${DEEPSEEK_BASE_URL}
+    api_key: ${DEEPSEEK_API_KEY}
+    model: ${DEEPSEEK_MODEL}
+    input_cost_per_1k: ${DEEPSEEK_INPUT_COST_PER_1K}
+    output_cost_per_1k: ${DEEPSEEK_OUTPUT_COST_PER_1K}
+    cost_currency: USD
+  - alias: Strong_Closed_Baseline
+    provider: openai_compatible
+    base_url: ${MODEL_B_BASE_URL}
+    api_key: ${MODEL_B_API_KEY}
+    model: ${MODEL_B_NAME}
+    input_cost_per_1k: ${MODEL_B_INPUT_COST_PER_1K}
+    output_cost_per_1k: ${MODEL_B_OUTPUT_COST_PER_1K}
+    cost_currency: USD
+  - alias: Open_or_CN_Baseline
+    provider: openai_compatible
+    base_url: ${MODEL_C_BASE_URL}
+    api_key: ${MODEL_C_API_KEY}
+    model: ${MODEL_C_NAME}
+    input_cost_per_1k: ${MODEL_C_INPUT_COST_PER_1K}
+    output_cost_per_1k: ${MODEL_C_OUTPUT_COST_PER_1K}
+    cost_currency: USD
+
+judge:
+  provider: openai_compatible
+  base_url: ${JUDGE_BASE_URL}
+  api_key: ${JUDGE_API_KEY}
+  model: ${JUDGE_MODEL}
+  temperature: 0.0
+
+run_plan:
+  full_samples:
+    - PB-CASE-001
+    - PB-CASE-002
+    - PB-CASE-003
+    - PB-CASE-004
+    - PB-CONS-001
+    - PB-CONS-002
+    - PB-CONS-003
+    - PB-DOC-D-001
+    - PB-DOC-D-002
+    - PB-DOC-P-001
+    - PB-DOC-P-002
+    - PB-CASE-005
+  full_versions: [V0, V1, V3]
+  deep_samples: []
+  deep_versions: [V0, V1, V2, V3]
+  deep_run_skip_existing_versions: [V0, V1, V3]
+
+generation:
+  temperature: 0.2
+  max_output_tokens: 2200
+  retry_attempts: 3
+  timeout_seconds: 90
+
+scoring:
+  dimensions:
+    - missing_facts_awareness
+    - clarification_quality
+    - legal_grounding
+    - fact_rule_application
+    - conditional_reasoning
+    - risk_coverage
+    - overclaim_control
+    - hallucination_control
+    - data_tag_usability
+
+routing:
+  high_risk_threshold: high
+  low_judge_confidence: low

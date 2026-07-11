@@ -1,4 +1,9 @@
+schema_version: '2.0'
 package: rag_v2_focused_pilot_lightweight_evidence
+generated_at_utc: '2026-07-11T05:59:53+00:00'
+base_git_commit: 98f02b4bfdd70b0297e2d629e1430fe19addda19
+working_tree_state: clean
+working_tree_scope: source_and_configuration_excluding_outputs
 purpose: Focused RAG V2 evidence package for citation grounding, source-boundary precision,
   and claim-level release gates.
 source_run:
@@ -15,16 +20,45 @@ source_run:
   - V1
   - V4
   - V5
-  model_outputs: 72
+  api_run_records: 72
   retrieval_rows: 24
   claim_rows: 1766
+  model_aliases:
+  - qianfan_deepseek_v4_pro
+  - qianfan_ernie_50
+  - qianfan_qwen35_27b
+source_artifact_sha256:
+  runs: 87a8ddff2886e101edf7c50d51a86de92694808ecf11af15f12328ed72d5c4e2
+  retrieval: 771aefcb082ba6188424feb40c8606b0c56d2a32dda4915598a57481ffd9dfa6
+  citation_verification: 7912647cd8cb2ab0f3ee1fe04f53024fa4896cfd5de98bd50070151913c7e8d3
+  claim_entailment: 21b276556eef5995c7b4abfdad19a6582a446ecb59d7cf4552d5428b1cfb8088
+  cases_jsonl: ab6804b84855d080cad59f1056ad9e7524fb06d21e20ae7ec4ca6529aadee234
+  judge_scores: 709d9833d4d37a790318facee0e60ea1ee3730dd4e592c9d7b2534d40d1611fa
+  routing: d963fb0033bc7149b91c3b57b419cfbc630cb7b581e13a6f3dcee20ebed4a165
+  release_gate: 938b078af6e740713b6443c0f396372bb86536554bce18f68bb6d8420682599e
+reproducibility_inputs_sha256:
+  pilot_config: 40341470923bc25989743defee9603100d034925a673b13253858bb63e123e17
+  evaluation_implementation: 0cdb6d933e02a41dc59fa1e8d5163ddbe5c260489b6a4d8b860839408a3287f6
 methodology_caveats:
 - Focused citation/document slice, not a full legal knowledge-base benchmark.
 - Claim entailment labels are deterministic triage signals, not final legal conclusions.
+- Strict citation-defect flags exclude partially supported claims and use reviewable
+  legal claims only.
+- Needs-review counts include partially supported claims and are used by the release
+  gate.
+- Source-boundary blocker counts scan all claim rows; blocker rates use all claim
+  rows as denominator.
 - Qwen judge scores are baseline signals and should not be treated as final model
   rankings.
 - Raw full model outputs remain local/ignored; this package commits summaries and
   redacted samples only.
+metric_definitions:
+  reviewable_claim_strict_citation_defect_rows: reviewable claims labeled unsupported,
+    contradicted, no_citation, out_of_scope_source, or fabricated_citation
+  reviewable_claim_needs_review_rows: strict citation defects plus partially_supported
+    reviewable claims
+  all_claim_source_boundary_blocker_rows: all claim rows labeled out_of_scope_source,
+    fabricated_citation, or contradicted
 included_artifacts:
 - README.md
 - artifact_manifest.yaml

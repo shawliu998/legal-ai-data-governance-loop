@@ -4,6 +4,8 @@ import json
 from pathlib import Path
 from typing import Any
 
+from .schemas import DATA_ASSET_ROUTES
+
 
 ALLOWED_BOUNDARY_SLICES = {
     "normal_practice",
@@ -14,14 +16,7 @@ ALLOWED_BOUNDARY_SLICES = {
     "counterfactual_pair",
 }
 
-ALLOWED_BOUNDARY_DATA_ROUTES = {
-    "eval_holdout",
-    "sft_candidate",
-    "preference_pair",
-    "badcase",
-    "human_review",
-    "regression_eval",
-}
+ALLOWED_BOUNDARY_DATA_ASSET_ROUTES = set(DATA_ASSET_ROUTES)
 
 ALLOWED_BOUNDARY_RUBRIC_DIMENSIONS = {
     "legal_issue_spotting",
@@ -58,7 +53,7 @@ REQUIRED_BOUNDARY_FIELDS = {
     "allowed_sources",
     "forbidden_claims",
     "expected_human_review",
-    "expected_data_route",
+    "expected_data_asset_routes",
     "rubric",
     "critical_failure_triggers",
 }
@@ -104,13 +99,13 @@ def validate_product_boundary_cases(cases: list[dict[str, Any]]) -> list[str]:
         if not str(case.get("expected_behavior") or "").strip():
             errors.append(prefix + "expected_behavior is empty")
 
-        routes = case.get("expected_data_route")
+        routes = case.get("expected_data_asset_routes")
         if not isinstance(routes, list) or not routes:
-            errors.append(prefix + "expected_data_route must be a non-empty list")
+            errors.append(prefix + "expected_data_asset_routes must be a non-empty list")
         else:
-            invalid_routes = sorted(set(map(str, routes)) - ALLOWED_BOUNDARY_DATA_ROUTES)
+            invalid_routes = sorted(set(map(str, routes)) - ALLOWED_BOUNDARY_DATA_ASSET_ROUTES)
             if invalid_routes:
-                errors.append(prefix + f"invalid expected_data_route values {invalid_routes}")
+                errors.append(prefix + f"invalid expected_data_asset_routes values {invalid_routes}")
 
         rubric = case.get("rubric")
         if not isinstance(rubric, list) or not rubric:

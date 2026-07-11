@@ -6,17 +6,17 @@ This is the next formal experiment plan after the completed pilots.
 
 The current repo already contains:
 
-- 300-output real API product-boundary pilot,
-- 72-output RAG V2 focused pilot,
-- 24-trace A5 multi-turn intake pilot.
+- 300-run product-boundary API pilot with 271 non-empty answers and 29 empty responses,
+- 72-run RAG V2 focused API pilot,
+- 24-trace / 72-turn A5 multi-turn intake API pilot with quality labels pending human calibration.
 
 The focused run consolidates the main product question into one clearer experiment:
 
 ```text
 50 legal product-boundary cases
-x 3 Qianfan-accessible models
+x 3 Qianfan-hosted model slots
 x 3 agent architectures
-= 450 model outputs
+= 450 planned API runs
 ```
 
 ## Why This Run
@@ -31,7 +31,7 @@ It tests whether each model-agent configuration should:
 - ask clarifying questions,
 - route to human review,
 - block release,
-- or produce a reusable data asset.
+- or produce a reviewed data-asset candidate.
 
 ## Config
 
@@ -77,7 +77,8 @@ Priority rows:
 - high-risk human review,
 - counterfactual pair.
 
-Keep at least 40 random rows so agreement metrics are not only priority-enriched.
+Keep at least 40 random rows and preserve anonymous reviewer A/B plus adjudicated labels so any
+agreement or routing-performance metric is independently reproducible.
 
 ## Expected Outputs
 

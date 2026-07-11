@@ -7,11 +7,13 @@ The pilot focuses on source-limited legal QA and document-interpretation cases. 
 ## Scope
 
 - Focus cases: 8
-- Model-workflow outputs analyzed: 72
+- Model-workflow API run records analyzed: 72
 - RAG retrieval rows: 24
 - Claim rows analyzed: 1766
-- Citation-gate issue rate: 0.881
-- Claim-level release blocker rate: 0.119
+- Strict citation-defect flag rate: 0.881
+- Claim-support needs-review rate: 0.9381
+- All-claim source-boundary blocker count: 75
+- All-claim source-boundary blocker rate: 0.0425
 
 ## Included
 

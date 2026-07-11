@@ -8,9 +8,11 @@ files:
   rubric_items: rubric_items.csv
   sample_metadata: sample_metadata.csv
 sources:
-- source_dataset: licensed_practice_benchmark_adapted
+- source_dataset: external_practice_benchmark_adapted
   expected_samples: 30
-  role: licensed adapted legal-practice pilot cases
+  role: externally sourced adapted legal-practice pilot cases
+  license_status: not recorded in this local manifest; verify upstream before redistribution
+  publication_status: excluded from core portfolio evidence pending license verification
 task_categories:
 - consultation
 - case_analysis

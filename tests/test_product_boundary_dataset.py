@@ -3,6 +3,7 @@ from pathlib import Path
 import yaml
 
 from legal_eval_harness.product_boundary_dataset import (
+    ALLOWED_BOUNDARY_DATA_ASSET_ROUTES,
     ALLOWED_BOUNDARY_SLICES,
     load_product_boundary_cases,
     validate_product_boundary_cases,
@@ -11,8 +12,8 @@ from legal_eval_harness.product_boundary_dataset import (
 
 ROOT = Path(__file__).resolve().parents[1]
 DATASET = ROOT / "data/eval_sets/legal_product_boundary_pilot_v1.jsonl"
-CONFIG = ROOT / "config.qianfan_product_boundary_eval.yaml"
-RUNNABLE_CONFIG = ROOT / "config.qianfan_product_boundary_runnable.yaml"
+CONFIG = ROOT / "configs/pilots/qianfan_product_boundary_eval.yaml"
+RUNNABLE_CONFIG = ROOT / "configs/pilots/qianfan_product_boundary_runnable.yaml"
 
 
 def test_product_boundary_dataset_schema_and_slice_counts():
@@ -36,6 +37,10 @@ def test_product_boundary_dataset_schema_and_slice_counts():
         "adversarial_trap": 7,
         "counterfactual_pair": 8,
     }
+    for case in cases:
+        assert set(case["expected_data_asset_routes"]).issubset(ALLOWED_BOUNDARY_DATA_ASSET_ROUTES)
+        assert "human_review" not in case["expected_data_asset_routes"]
+        assert "expected_data_route" not in case
 
 
 def test_product_boundary_counterfactual_pairs_are_complete():

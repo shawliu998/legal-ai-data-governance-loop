@@ -1,2 +1,8 @@
-﻿total_review_rows,completed_review_rows,review_completion_rate,agreement_labeled_rows,judge_human_agreement_rate,confirmed_critical_failure_count,confirmed_citation_issue_count,human_route_override_count,human_data_action_count
-80,80,1.0,80,0.925,76,45,47,80
+﻿metric,value,note
+priority_review_row_count,80,Priority-enriched review set; not random
+rows_with_nonempty_answer,51,Eligible for legal-content review
+rows_with_empty_answer,29,Reliability failures; legal-content label is not applicable
+completed_final_review_rows,80,Rows with populated final review fields; does not recreate independent reviewer A/B labels
+reviewer_level_a_b_label_rows,0,Rows with both independent reviewer A/B triage labels
+formal_reviewer_iaa,not_reported,Requires reviewer-level independent labels
+formal_judge_human_agreement,not_reported,Legacy manually aggregated summary is not treated as a formal statistic

@@ -1,0 +1,68 @@
+project:
+  name: Legal AI Product Boundary API Smoke - Qianfan
+  experiment_id: EXP-QIANFAN-LEGAL-PRODUCT-BOUNDARY-API-SMOKE-1CASE
+  boundary: 1-case API smoke test using Kimi K2.6 and one workflow; validates Qianfan
+    OpenAI-compatible connectivity only
+  jurisdiction: 中国大陆
+  law_snapshot_date: '2026-07-08'
+  legal_advice_boundary: 仅用于法律 AI 产品边界评测和数据治理工作流，不构成法律咨询或最终法律意见。
+models:
+- alias: qianfan_kimi_k26
+  role: api_smoke_candidate
+  vendor: Moonshot
+  family: Kimi K2.6
+  provider: openai_compatible
+  base_url: ${QIANFAN_BASE_URL}
+  api_key: ${QIANFAN_API_KEY}
+  model: ${QIANFAN_MODEL_KIMI_K26}
+  input_cost_per_1k: ${QIANFAN_KIMI_K26_INPUT_COST_PER_1K}
+  output_cost_per_1k: ${QIANFAN_KIMI_K26_OUTPUT_COST_PER_1K}
+  cost_currency: CNY
+judge:
+  provider: openai_compatible
+  base_url: ${QIANFAN_BASE_URL}
+  api_key: ${QIANFAN_API_KEY}
+  model: ${QIANFAN_JUDGE_MODEL}
+  temperature: 0.0
+run_plan:
+  full_samples: all
+  full_versions:
+  - V1
+  deep_samples: []
+  deep_versions: []
+  deep_run_skip_existing_versions: []
+generation:
+  temperature: 0.2
+  max_output_tokens: 900
+  retry_attempts: 2
+  timeout_seconds: 60
+rag:
+  enabled: false
+  corpus_path: data/rag_corpus/legal_sources.csv
+  retrieval_versions: []
+  top_k: 4
+  min_score: 0.0
+scoring:
+  dimensions:
+  - missing_facts_awareness
+  - clarification_quality
+  - legal_grounding
+  - fact_rule_application
+  - conditional_reasoning
+  - risk_coverage
+  - overclaim_control
+  - hallucination_control
+  - data_tag_usability
+routing:
+  high_risk_threshold: high
+  low_judge_confidence: low
+api_smoke:
+  dataset: data/product_boundary_api_smoke_1case/dataset_manifest.yaml
+  output_dir: outputs/product_boundary_api_smoke_1case
+  case_count: 1
+  model_count: 1
+  workflow_versions:
+  - V1
+  expected_api_run_records: 1
+  purpose: verify Qianfan API key, base_url, Kimi model ID, response parsing, and
+    CSV write path before running the 300-output API pilot

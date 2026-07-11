@@ -17,9 +17,9 @@ source-boundary enforcement and claim-level verification.
 | Field                   |                                                  Value |
 | ----------------------- | -----------------------------------------------------: |
 | Cases                   |               8 source-limited citation/document cases |
-| Models                  |                                                      3 |
+| Qianfan-hosted model slots |                                                   3 |
 | Workflows               | V1 structured, V4 RAG-grounded, V5 clarification-first |
-| Model outputs           |                                                     72 |
+| API run records         |                                                     72 |
 | Judge rows              |                                                     72 |
 | RAG retrieval rows      |                                                     24 |
 | Claim rows              |                                                   1766 |
@@ -29,25 +29,26 @@ Lightweight evidence package:
 
 `outputs/rag_v2_focused_pilot_v1/`
 
-Full raw outputs remain local and ignored by Git. The committed package contains summaries and
+Full answer text remains local and ignored by Git. The committed package contains summaries and
 redacted samples only.
 
 ## Main Results
 
-| Metric                                      | Result |
-| ------------------------------------------- | -----: |
-| Expected-source recall on W4/RAG retrieval  |   100% |
-| Average source-boundary precision           |   0.50 |
-| Citation-gate issue rows                    |    555 |
-| Citation-gate issue rate                    |  88.1% |
-| Claim-level release blocker rows            |     75 |
-| Claim-level release blocker rate            |  11.9% |
-| Human-review rate under Qwen judge baseline |  54.2% |
+| Metric                                            | Result |
+| ------------------------------------------------- | -----: |
+| Expected-source recall on V4/A2 RAG retrieval     | 100% across 24 controlled retrieval rows |
+| Average source-boundary precision                 |   0.50 |
+| Reviewable-claim strict citation-defect flags     | 555 / 630 (88.1%) |
+| Reviewable-claim support needs-review flags       | 591 / 630 (93.81%; includes 36 `partially_supported`) |
+| All-claim source-boundary blockers                 | 75 / 1766 (4.25%) |
 
-The 88.1% citation-gate issue rate is a strict material-claim citation gate.
+The 88.1% figure is the trigger rate of a strict deterministic citation rule among 630 claims marked
+reviewable. The release gate uses the broader 591/630 needs-review count: the 555 strict defects plus
+36 `partially_supported` claims. The 4.25% blocker rate uses all 1,766 extracted claim rows as its
+denominator and counts 75 `out_of_scope_source` or `contradicted` rows.
 
-It is designed to surface claims that would need citation repair, source-boundary filtering, human
-review, or data routing before release. It is not an overall model accuracy rate.
+All three metrics are designed to surface claims that need citation repair, source-boundary filtering, or
+human review. They are not answer-error rates, legal-accuracy rates, or human-confirmed labels.
 
 Interpretation:
 
@@ -59,11 +60,11 @@ Interpretation:
 
 ## Workflow Comparison
 
-| Workflow               | Avg score | Citation coverage | Citation-gate issue rate | Release-blocker rate | Product interpretation                                                   |
-| ---------------------- | --------: | ----------------: | -----------------------: | -------------------: | ------------------------------------------------------------------------ |
-| V1 structured prompt   |     0.922 |             11.7% |                    91.5% |                 0.5% | Strong answer quality, weak citation discipline.                         |
-| V4 RAG-grounded        |     0.753 |             36.1% |                    84.2% |                26.0% | Better citation coverage, but source-boundary failures block release.    |
-| V5 clarification-first |     0.814 |              9.8% |                    91.0% |                 0.0% | Safer intake behavior, not sufficient for source-grounded final answers. |
+| Workflow               | All claim rows | Reviewable claims | Citation flags | Source-boundary blockers | Product interpretation |
+| ---------------------- | -------------: | ----------------: | -------------: | -----------------------: | ---------------------- |
+| V1 structured prompt   | 719 | 223 | 204 | 1 | Structured answer path still needs explicit citation requirements. |
+| V4 RAG-grounded        | 743 | 285 | 240 | 74 | Retrieval adds citations but also concentrates out-of-scope-source flags. |
+| V5 clarification-first | 304 | 122 | 111 | 0 | Intake behavior is not a substitute for a grounded final answer. |
 
 ## Failure Taxonomy
 
@@ -76,13 +77,14 @@ Interpretation:
 
 Product conclusion:
 
-- W4 should not be released as "RAG-safe" yet.
+- V4/A2 should not be described as "RAG-safe" from this pilot.
 - Source-limited tasks need retrieval filtering, not just retrieval ranking.
 - Material legal claims should be forced into a claim-citation schema before final answer.
 - Out-of-scope source use should remain a release blocker even when the source itself is legally
   plausible.
-- The project value is the ability to locate unreleasable RAG behavior and convert it into
-  hard-negative retrieval pairs, SFT examples, preference pairs, and regression evals.
+- The project value is the ability to locate unreleasable RAG behavior and route it to review.
+  Only reviewed and corrected records may then become hard-negative retrieval candidates, SFT
+  examples, preference pairs, or regression evals.
 
 ## Deployment Policy
 
@@ -104,10 +106,11 @@ Human review required:
 
 Next data production:
 
-- Add hard-negative retrieval pairs for the extra top-k sources.
-- Create SFT examples that require every material claim to cite an allowed source.
-- Create preference pairs where the winner refuses to overextend a source.
-- Add source-boundary regression cases for each out-of-scope citation pattern.
+- After review, add hard-negative retrieval candidates for the extra top-k sources.
+- After correction and acceptance, create SFT examples that require every material claim to cite an
+  allowed source.
+- Create reviewed preference pairs where the winner refuses to overextend a source.
+- Add confirmed source-boundary patterns to regression evals.
 
 ## Caveats
 

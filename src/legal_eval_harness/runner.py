@@ -19,7 +19,7 @@ from .rag import (
     retrieve_contexts,
     verify_output_citations,
 )
-from .utils import json_dumps, utc_now_iso
+from .utils import json_dumps, safe_text, utc_now_iso
 
 
 WORKFLOW_CONDITIONS = {
@@ -30,6 +30,44 @@ WORKFLOW_CONDITIONS = {
     "V4": ("W2", "provided-context grounded answer"),
     "V5": ("W4", "clarification-first intake agent"),
 }
+
+
+def normalize_run_output_statuses(runs: pd.DataFrame) -> pd.DataFrame:
+    """Backfill content validity without conflating it with API completion.
+
+    Legacy run logs used ``run_status=ok`` for both non-empty answers and empty
+    provider responses.  This normalizer is intentionally deterministic so old
+    evidence can be migrated without re-calling a model provider.
+    """
+
+    normalized = runs.copy()
+    if "output_text" not in normalized.columns:
+        normalized["output_text"] = ""
+    normalized["output_text"] = normalized["output_text"].map(safe_text)
+    inferred_nonempty = normalized["output_text"].map(lambda text: bool(text.strip()))
+
+    if "run_status" not in normalized.columns:
+        normalized["run_status"] = "ok"
+    prior_status = normalized["run_status"].map(safe_text)
+    failed = prior_status.eq("failed")
+
+    normalized["api_call_status"] = failed.map({True: "failed", False: "completed"})
+    normalized["has_nonempty_output"] = inferred_nonempty
+    normalized["content_status"] = "nonempty"
+    normalized.loc[~inferred_nonempty & ~failed, "content_status"] = "empty"
+    normalized.loc[failed, "content_status"] = "not_available"
+    normalized["run_status"] = "ok"
+    normalized.loc[~inferred_nonempty & ~failed, "run_status"] = "empty_output"
+    normalized.loc[failed, "run_status"] = "failed"
+
+    if "error_message" not in normalized.columns:
+        normalized["error_message"] = ""
+    normalized["error_message"] = normalized["error_message"].map(safe_text)
+    empty_without_reason = normalized["run_status"].eq("empty_output") & normalized["error_message"].eq("")
+    normalized.loc[empty_without_reason, "error_message"] = (
+        "API call completed but returned empty answer content"
+    )
+    return normalized
 
 
 @dataclass(frozen=True)
@@ -140,8 +178,12 @@ def run_models(
                 sample_id=spec.sample_id,
                 v0_output=v0_output,
             )
-            run_status = "ok"
-            error_message = ""
+            output_text = safe_text(output_text)
+            api_call_status = "completed"
+            has_nonempty_output = bool(output_text.strip())
+            content_status = "nonempty" if has_nonempty_output else "empty"
+            run_status = "ok" if has_nonempty_output else "empty_output"
+            error_message = "" if has_nonempty_output else "API call completed but returned empty answer content"
         except Exception as exc:  # preserve failed runs for auditability
             visible_fields = []
             output_text = ""
@@ -154,6 +196,9 @@ def run_models(
                 "cost_currency": spec.model_config.get("cost_currency", "USD"),
                 "usage_source": "failed",
             }
+            api_call_status = "failed"
+            content_status = "not_available"
+            has_nonempty_output = False
             run_status = "failed"
             error_message = str(exc)
         output_by_key[(spec.sample_id, spec.model_alias, spec.version)] = output_text
@@ -174,6 +219,9 @@ def run_models(
             "prompt_id": spec.version,
             "input_visible_fields": json_dumps(visible_fields),
             "output_text": output_text,
+            "api_call_status": api_call_status,
+            "content_status": content_status,
+            "has_nonempty_output": has_nonempty_output,
             "run_status": run_status,
             "error_message": error_message,
             "output_length": len(output_text),
@@ -196,7 +244,7 @@ def run_models(
                 verify_output_citations(run_row=run_record, contexts=contexts, output_text=output_text)
             )
 
-    df = pd.DataFrame(rows)
+    df = normalize_run_output_statuses(pd.DataFrame(rows))
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(output_path, index=False, encoding="utf-8-sig")

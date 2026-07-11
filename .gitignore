@@ -12,7 +12,6 @@ data/Legal_Agent_Eval_Harness_20_Samples.xlsx
 outputs/*.csv
 outputs/*.xlsx
 !outputs/.gitkeep
-!outputs/executive_dashboard.xlsx
 outputs/practice_benchmark_pilot/
 outputs/practice_api_smoke/
 outputs/practice_api_smoke_mock/
@@ -20,6 +19,10 @@ outputs/qianfan_vendors_smoke/
 outputs/qianfan_vendors_smoke_mock/
 outputs/product_boundary_pilot/
 outputs/product_boundary_pilot_mock/
+!outputs/product_boundary_pilot_mock/
+outputs/product_boundary_pilot_mock/*
+!outputs/product_boundary_pilot_mock/README.md
+!outputs/product_boundary_pilot_mock/artifact_manifest.yaml
 outputs/product_boundary_api_smoke_1case/
 outputs/product_boundary_api_pilot_v1/
 !outputs/product_boundary_api_pilot_v1/

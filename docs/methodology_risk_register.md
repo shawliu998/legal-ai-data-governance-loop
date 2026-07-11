@@ -4,20 +4,23 @@ This file turns known evaluation limitations into explicit product and data-gove
 
 ## Risk Register
 
-### A5 Was Only A Smoke Test
+### A5 Quality Signals Are Not Human-Calibrated
 
 Current status:
 
-- Upgraded from 6 traces to a 24-trace real API pilot across 8 cases and 3 models.
+- Upgraded from 6 traces to a 24-trace / 72-turn API pilot across 8 cases and 3 Qianfan-hosted model
+  slots.
+- Fixed lexical matching and negation-scope false positives; the current offline rerun has 0 lexical
+  flags, which still does not establish 0 human-confirmed overclaims.
 
 Mitigation already added:
 
-- Added `config.qianfan_a5_multiturn_pilot.yaml`, `outputs/a5_multiturn_intake_pilot_v1/`, A5
+- Added `configs/pilots/qianfan_a5_multiturn_pilot.yaml`, `outputs/a5_multiturn_intake_pilot_v1/`, A5
   rubric, redacted trace example, and human calibration template.
 
 Remaining work:
 
-- Human-review all 24 traces before claiming A5 readiness.
+- Human-review all 24 traces before reporting A5 quality metrics or claiming readiness.
 
 ### RAG Corpus Is Controlled And Small
 
@@ -42,8 +45,9 @@ Current status:
 
 Mitigation already added:
 
-- Results now describe the 88.1% citation-gate issue rate as a strict material-claim release gate,
-  not model accuracy.
+- Results separate 555/630 strict citation-defect flags, 591/630 claim-support needs-review flags
+  (including 36 `partially_supported`), and 75/1766 all-claim source-boundary blockers; none is
+  described as model accuracy.
 
 Remaining work:
 
@@ -54,7 +58,8 @@ Remaining work:
 
 Current status:
 
-- Full 300-output scoring uses Qwen3.5-27B as a stable structured judge baseline.
+- The 300-run pilot uses the Qwen3.5-27B hosted slot as a structured judge baseline. Parseability is
+  not judge accuracy, and 29 model responses are empty.
 
 Mitigation already added:
 
@@ -62,13 +67,15 @@ Mitigation already added:
 
 Remaining work:
 
-- Run non-Qwen judge sampling on a stratified subset and report judge-human agreement by slice.
+- Preserve reviewer A/B and adjudicated labels, then run non-Qwen judge sampling on random and
+  priority strata before reporting reproducible evaluator metrics.
 
 ### API Sample Size Is Pilot-Scale
 
 Current status:
 
-- Real API evidence is 300 product-boundary outputs, 72 RAG V2 outputs, and 72 A5 turns.
+- API evidence is 300 product-boundary run records (271 non-empty, 29 empty), 72 RAG V2 run records,
+  and 24 A5 traces / 72 turns.
 
 Mitigation already added:
 
@@ -91,8 +98,9 @@ The project should not claim:
 
 The project can claim:
 
-- real API outputs were collected,
+- pilot-scale API run records were collected with empty responses preserved,
 - model-agent-workflow behavior was converted into release gates,
 - RAG failures were decomposed into retrieval, citation, claim, and source-boundary issues,
 - A5 multi-turn intake is now evaluated at trace level,
-- failures are routed into human review, badcase, SFT, preference, and regression-eval data assets.
+- failures enter release/review workflows and, after review, may become badcase, eval, SFT,
+  preference, or regression data-asset candidates.

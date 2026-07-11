@@ -10,18 +10,25 @@ The data is pilot-scale. Results should be read as product diagnosis evidence fo
 
 The evaluation inputs are controlled project materials and practice-style legal scenarios. The repository does not claim to use private user query logs, confidential case files, or production customer data.
 
+An optional external adapted practice benchmark exists locally. Because the current repository does
+not record independently verifiable source-license name/version metadata, that pilot is excluded
+from the core public evidence and should not be presented as licensed evidence until provenance is
+repaired.
+
 RAG-related examples use a controlled source setting. They are intended to test whether answers stay within provided materials and cite support for material claims, not to validate a live legal retrieval system.
 
 ## Intended Use
 
-The dataset is intended for:
+After review and acceptance, records may support these data assets:
 
 - `eval`: measuring product-boundary behavior and regression risk.
 - `sft`: identifying answer patterns that may be useful for supervised fine-tuning candidates.
 - `preference`: creating comparison candidates for safer or more grounded responses.
 - `badcase`: documenting failures that require product or data follow-up.
 - `regression`: rechecking known failure modes after prompt, model, or RAG changes.
-- `human_review`: routing high-risk, ambiguous, or blocker-enriched samples to manual review.
+
+Separately, `human_review` is a workflow action for high-risk, ambiguous, or blocker-enriched
+records. It is not a training-data asset.
 
 ## Out of Scope
 
@@ -47,15 +54,26 @@ Evaluation inputs, gold labels, and rubric items are kept as separate artifacts 
 
 High-risk rows, blocker-enriched rows, citation/source-boundary failures, and low-confidence cases are expected to enter human review. Human review samples in this repo are used for calibration and diagnosis; they should not be treated as random population estimates.
 
-## Data Asset Routing
+## Workflow, Release, And Data Asset Routing
 
-Each output can be routed into one or more downstream data assets:
+The current routing model separates four concepts that were previously overloaded:
+
+- `workflow_status`: `pending_review`, `reviewed`, `blocked`, or `released`.
+- `response_policy`: `auto_answer`, `grounded_answer`, `clarify`, `human_review`, or `block` for an
+  individual response.
+- `release_gate_decision`: `candidate_auto_answer`, `limited_release`, or `blocked` for an evaluated
+  model-workflow-task slice.
+- `data_asset_routes`: zero or more downstream candidate data assets.
+
+Allowed data assets:
 
 - `eval` for broad product-boundary coverage.
 - `sft` for answer-format and behavior candidates after review.
 - `preference` for pairwise comparisons between safer and weaker outputs.
 - `badcase` for issue tracking and root-cause notes.
-- `regression` for repeat checks after system changes.
-- `human_review` for high-risk, ambiguous, unsupported, or blocker-level cases.
+- `regression` for repeat checks after prompt, model, RAG, or policy changes.
 
-The routing label is a product decision aid. It does not by itself approve an answer for legal use.
+`release_decision` and `data_route` are retained only as backward-compatible aliases; internal
+routing uses the canonical fields above. `human_review` is a response policy that enters a review
+workflow, not a final training-data use. None of these fields by itself approves an answer for legal
+use.

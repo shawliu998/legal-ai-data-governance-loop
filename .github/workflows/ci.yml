@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test-and-validate:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[test]"
+      - name: Run tests
+        run: python -m pytest -q
+      - name: Validate portfolio release
+        run: python scripts/validate_portfolio_release.py
+      - name: Run deterministic mock pipeline
+        if: matrix.python-version == '3.12'
+        run: |
+          python -m legal_eval_harness.cli all \
+            --input dataset_manifest.yaml \
+            --config config.yaml \
+            --mode mock \
+            --output-dir /tmp/legal-ai-mock
+          python scripts/validate_portfolio_release.py \
+            --generated-output-dir /tmp/legal-ai-mock

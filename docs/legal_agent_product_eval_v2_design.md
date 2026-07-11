@@ -6,8 +6,8 @@ This project should be read as a legal agent product-boundary evaluation system,
 leaderboard.
 
 The evaluation asks whether a legal AI product should answer, ask for missing facts, retrieve
-grounded sources, route to human review, block release, or turn the failure into a reusable data
-asset.
+grounded sources, route to human review, block the response, or send a reviewed and corrected
+failure toward a candidate data asset.
 
 The older `V0` / `V1` / `V3` / `V4` / `V5` workflow names are implementation aliases. The
 product-level interpretation should use the `A0`-`A5` agent architecture names below.
@@ -91,13 +91,14 @@ model and agent architecture.
 The 12-case pilot still covered the product-boundary slices while producing:
 
 ```text
-12 cases x 5 models x 5 agent architectures = 300 outputs
+12 cases × 5 Qianfan-hosted model slots × 5 agent architectures = 300 API run records
 ```
 
-That was enough to validate API execution, Qwen judge parsing, priority human review, release-gate
-generation, and evidence-package production.
+The run set contains 271 non-empty answers and 29 empty responses. It was enough to exercise API
+execution, empty-response monitoring, judge parsing, priority human review, release-gate generation,
+and evidence-package production; it was not enough for model ranking.
 
-## Why The Next Focused Experiment Is 450 Outputs
+## Why The Next Focused Experiment Is 450 API Run Records
 
 The planned focused experiment is designed to strengthen the product evidence without pretending to
 be a general legal benchmark.
@@ -105,10 +106,10 @@ be a general legal benchmark.
 The planned run shape is:
 
 ```text
-50 cases x 3 models x 3 architectures = 450 outputs
+50 cases x 3 models x 3 architectures = 450 planned API run records
 ```
 
-The 450-output experiment is planned, not completed. It should focus on the architecture comparisons
+The 450-run experiment is planned, not completed. It should focus on the architecture comparisons
 that matter most for product release: structured counsel, grounded retrieval, and
 clarification-first intake.
 
@@ -125,15 +126,17 @@ Trace-level eval asks whether the product behaved correctly along the way:
 - Did risk checks catch unsafe premises or overclaims?
 - Did the system route to human review at the right time?
 - Did the release gate block critical failures?
-- Did the failure become the right data asset?
+- After review, did the failure enter the right candidate data asset and acceptance workflow?
 
 This matters because a legally polished final answer can still be unreleasable if it used
 unsupported citations, skipped escalation, or violated source boundaries.
 
-## Release Gates And Data Routing
+## Response Policy, Release Gates, And Data Routing
 
-A release gate decides whether an output can be limited-release, requires human review, or must be
-blocked.
+At record level, `response_policy` decides whether to auto-answer, provide a grounded answer,
+clarify, enter human review, or block. At model-workflow-task-slice level,
+`release_gate_decision` aggregates evidence into `candidate_auto_answer`, `limited_release`, or
+`blocked`.
 
 Blocking conditions include:
 
@@ -144,32 +147,34 @@ Blocking conditions include:
 - unsupported material legal claims,
 - missed escalation on high-risk cases.
 
-Data routing turns each failure into a next action:
+After review, data routing turns each failure into a candidate next action:
 
-| Failure pattern                         | Data route                 |
+| Failure pattern                         | Candidate data assets      |
 | --------------------------------------- | -------------------------- |
-| Missing material facts                  | `sft_candidate`            |
-| Safer answer beats overconfident answer | `preference_candidate`     |
-| Fabricated citation or invented fact    | `badcase`                  |
-| Out-of-scope source use                 | `regression_eval`          |
-| Unsupported material claim              | `human_review` / `badcase` |
-| Repeated judge-human disagreement       | `eval_holdout`             |
+| Missing material facts                  | `sft`, `eval`              |
+| Safer answer beats overconfident answer | `preference`, `regression` |
+| Fabricated citation or invented fact    | `badcase`, `regression`    |
+| Out-of-scope source use                 | `regression`, `eval`       |
+| Unsupported material claim              | `badcase`, `regression`    |
+| Evaluator uncertainty                   | `eval`                     |
+
+`human_review` is a workflow action, not a data asset. A candidate route does not approve an
+uncorrected failure as training data.
 
 ## Current Implementation Mapping
 
 | Layer                           | Current artifact                                               | Status                                           |
 | ------------------------------- | -------------------------------------------------------------- | ------------------------------------------------ |
-| A0-A4 prompts/workflows         | `prompts/`, `config.qianfan_product_boundary_api_pilot.yaml`   | Implemented through legacy V aliases             |
+| A0-A4 prompts/workflows         | `prompts/`, `configs/pilots/qianfan_product_boundary_api_pilot.yaml`   | Implemented through legacy V aliases             |
 | 50-case eval bank               | `data/eval_sets/legal_product_boundary_pilot_v1.jsonl`         | Implemented                                      |
-| 300-output real API pilot       | `outputs/product_boundary_api_pilot_v1/`                       | Implemented with lightweight evidence package    |
+| 300-run API pilot               | `outputs/product_boundary_api_pilot_v1/`                       | 271 non-empty answers / 29 empty responses       |
 | RAG V2 focused pilot            | `outputs/rag_v2_focused_pilot_v1/`                             | Implemented with lightweight evidence package    |
 | Claim-level citation triage     | `build-claim-entailment`                                       | Implemented as deterministic review-queue signal |
 | Release gate                    | `release-gate`                                                 | Implemented                                      |
 | A5 multi-turn intake cases      | `data/eval_sets/legal_agent_multiturn_intake_pilot_v1.jsonl`   | 8-case pilot added                               |
-| A5 multi-turn intake smoke      | `outputs/a5_multiturn_intake_smoke/`                           | 6 traces / 18 turns completed                    |
 | A5 multi-turn intake full pilot | `outputs/a5_multiturn_intake_pilot_v1/`                        | 24 traces / 72 turns completed                   |
 | Trace-level schema              | `docs/trace_level_eval_schema.md`                              | Design-level schema added                        |
-| Focused V2 full-run plan        | `configs/experiments/legal_agent_product_eval_v2_focused.yaml` | Planned 450-output formal experiment             |
+| Focused V2 full-run plan        | `configs/experiments/legal_agent_product_eval_v2_focused.yaml` | Planned 450-run formal experiment                |
 
 ## A5 Multi-Turn Intake Goals
 

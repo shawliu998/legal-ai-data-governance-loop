@@ -1,40 +1,73 @@
-package: "product_boundary_api_pilot_v1_lightweight_evidence"
-purpose: "GitHub-friendly evidence package for the real Qianfan API pilot without committing all raw model outputs."
+schema_version: '2.0'
+package: product_boundary_api_pilot_v1_lightweight_evidence
+generated_at_utc: '2026-07-11T05:59:53+00:00'
+base_git_commit: 98f02b4bfdd70b0297e2d629e1430fe19addda19
+working_tree_state: clean
+working_tree_scope: source_and_configuration_excluding_outputs
+purpose: Public summaries deterministically generated from retained local Qianfan
+  pilot artifacts; third-party recomputation requires the excluded raw artifacts.
 source_run:
+  api_runs: 300
+  nonempty_answers: 271
+  empty_answers: 29
   cases: 12
   models: 5
   workflows: 5
-  model_outputs: 300
-  judge_rows: 300
-  judge_parse_success: 300
-  priority_human_review_rows: 80
+source_artifact_sha256:
+  model_run_log.csv: 60c9397fb4f61242c6ff7e7ce40d707cc98a2f2fc1ba72f9049d7d893ccc47ec
+  judge_scores.csv: 93c64f3368bed9d31666ff7b8f2966e7a57d4b63dc12f64c242277514dd430aa
+  data_routing.csv: 0b0c18af5bac352525315751800d60b2edc86ebf61409031d303a87c253f817d
+  release_gate.csv: ca749564224171f5665112e0bbf49ac3a7abd0eef4456690d12c7102dde3383f
+  retrieval_log.csv: f1ff5d39777e9a56795f35ef64ef97ffb04f21fd930597e0fdf4fb6ff74ac8b8
+  citation_verification.csv: 524030439238db26b27d5dec1b829c2a0f10afc8fc87795186022ecbb36ac06b
+  claim_entailment.csv: 427ebb761c1aabf54e46783602e7346dc64143edcb7c378366dafc9ef5043499
+  human_review_priority_80_reviewed.csv: 5f57773b166dbb3ce9fe1d45ee138d37747fd30c5306dc8959a080dd87d905e3
+reproducibility_inputs_sha256:
+  dataset_jsonl: 03d0871b4c58e2dd01013464e30d9375fa934490e3375add31334dd92f5dafd9
+  pilot_config: 4e8c826278d28e956dabb488f6f345c32e0bb981215b917d17767ce38c98e4e9
+  prompt_bundle: d9bbed286b8e4fbcdcb9a04a5cab85791172406a5c04558ab5b4b93bcc6d8b53
+run_window_utc:
+  first_created_at: '2026-07-08T07:18:32+00:00'
+  last_created_at: '2026-07-08T08:13:42+00:00'
+provider_model_records:
+- model_alias: qianfan_deepseek_v4_pro
+  provider: openai_compatible
+  model_name: deepseek-v4-pro
+- model_alias: qianfan_ernie_50
+  provider: openai_compatible
+  model_name: ernie-5.0
+- model_alias: qianfan_glm_52
+  provider: openai_compatible
+  model_name: glm-5.2
+- model_alias: qianfan_kimi_k26
+  provider: openai_compatible
+  model_name: kimi-k2.6
+- model_alias: qianfan_qwen35_27b
+  provider: openai_compatible
+  model_name: qwen3.5-27b
 methodology_caveats:
-  - "Model-level scores are Qwen-judge baseline signals, not final model rankings."
-  - "Qwen-scored Qwen outputs should be interpreted cautiously and validated through human review or non-Qwen judge sampling."
-  - "The 80-row human review sample is priority-enriched for high-risk and likely blocker cases, not a random sample of all 300 outputs."
-  - "Claim-level entailment labels are conservative deterministic triage signals for review queues and release gates, not final legal conclusions."
-  - "Raw full model outputs remain local/ignored; this package commits summaries and redacted samples only."
+- API run count is reported separately from non-empty answer count.
+- Empty answers are reliability failures and are excluded from legal-content quality
+  interpretation.
+- Judge metrics are automated baseline signals, not final model rankings or legal
+  conclusions.
+- The 80-row review set is priority-enriched and contains no public reviewer-level
+  A/B labels.
+- All 80 rows have populated final review fields, but those fields do not recreate
+  independent reviewer A/B labels.
+- Formal reviewer IAA and formal judge-human agreement are therefore not reported.
+- Claim-level labels are deterministic review flags, not confirmed model error rates.
+- Strict citation-defect metrics exclude partially supported claims; release-gate
+  needs-review metrics include them.
 included_artifacts:
-  -
-    path: "README.md"
-    description: "Evidence package overview and caveats."
-  -
-    path: "artifact_manifest.yaml"
-    description: "Machine-readable artifact list and methodology caveats."
-  -
-    path: "metrics_summary.csv"
-    description: "Key run, judge, routing, RAG, claim entailment, and human review metrics."
-  -
-    path: "release_gate_summary.csv"
-    description: "Release gate count summaries."
-  -
-    path: "human_calibration_summary_priority_80.csv"
-    description: "Priority human-review calibration summary."
-  -
-    path: "claim_entailment_summary.csv"
-    description: "Claim-level citation entailment summary."
-  -
-    path: "redacted_sample_outputs_20.csv"
-    description: "20 representative rows with metadata, output length, and output hash; full output text is omitted."
+- README.md
+- artifact_manifest.yaml
+- metrics_summary.csv
+- release_gate_summary.csv
+- human_calibration_summary_priority_80.csv
+- claim_entailment_summary.csv
+- redacted_sample_outputs_20.csv
 excluded_artifacts:
-  - "Full model_run_log.csv, judge_scores.csv, claim_entailment.csv, citation_verification.csv, and human review workbooks are intentionally not committed."
+- Raw answer text, judge rationales, reviewer notes, workbooks, and credentials remain
+  local/ignored.
+output_dir: outputs/product_boundary_api_pilot_v1

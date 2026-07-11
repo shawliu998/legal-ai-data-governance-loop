@@ -1,31 +1,31 @@
 ﻿sample_id,source_dataset,task_category,legal_domain,difficulty,risk_level,visibility_policy,core_sample_flag,deep_badcase_flag,human_review_required
-PB-CASE-001,licensed_practice_benchmark_adapted,case_analysis,个人生活,medium,medium,Eval_Input visible to agent; gold/rubric visible only to judge and human review.,no,no,no
-PB-CASE-002,licensed_practice_benchmark_adapted,case_analysis,个人生活,medium,medium,Eval_Input visible to agent; gold/rubric visible only to judge and human review.,no,no,no
-PB-CASE-003,licensed_practice_benchmark_adapted,case_analysis,婚姻家事,medium,medium,Eval_Input visible to agent; gold/rubric visible only to judge and human review.,no,no,no
-PB-CASE-004,licensed_practice_benchmark_adapted,case_analysis,婚姻家事,medium,medium,Eval_Input visible to agent; gold/rubric visible only to judge and human review.,no,no,no
-PB-CASE-005,licensed_practice_benchmark_adapted,case_analysis,诉讼仲裁,medium,medium,Eval_Input visible to agent; gold/rubric visible only to judge and human review.,no,no,no
-PB-CASE-006,licensed_practice_benchmark_adapted,case_analysis,诉讼仲裁,medium,medium,Eval_Input visible to agent; gold/rubric visible only to judge and human review.,no,no,no
-PB-CASE-007,licensed_practice_benchmark_adapted,case_analysis,公司治理,medium,medium,Eval_Input visible to agent; gold/rubric visible only to judge and human review.,no,no,no
-PB-CASE-008,licensed_practice_benchmark_adapted,case_analysis,公司治理,medium,medium,Eval_Input visible to agent; gold/rubric visible only to judge and human review.,no,no,no
-PB-CASE-009,licensed_practice_benchmark_adapted,case_analysis,劳动人事,medium,medium,Eval_Input visible to agent; gold/rubric visible only to judge and human review.,no,no,no
-PB-CASE-010,licensed_practice_benchmark_adapted,case_analysis,劳动人事,medium,medium,Eval_Input visible to agent; gold/rubric visible only to judge and human review.,no,no,no
-PB-CASE-011,licensed_practice_benchmark_adapted,case_analysis,刑事实务,medium,medium,Eval_Input visible to agent; gold/rubric visible only to judge and human review.,no,no,no
-PB-CASE-012,licensed_practice_benchmark_adapted,case_analysis,刑事实务,medium,medium,Eval_Input visible to agent; gold/rubric visible only to judge and human review.,no,no,no
-PB-CASE-013,licensed_practice_benchmark_adapted,case_analysis,知识产权,medium,medium,Eval_Input visible to agent; gold/rubric visible only to judge and human review.,no,no,no
-PB-CASE-014,licensed_practice_benchmark_adapted,case_analysis,知识产权,medium,medium,Eval_Input visible to agent; gold/rubric visible only to judge and human review.,no,no,no
-PB-CASE-015,licensed_practice_benchmark_adapted,case_analysis,环保安全,medium,medium,Eval_Input visible to agent; gold/rubric visible only to judge and human review.,no,no,no
-PB-CASE-016,licensed_practice_benchmark_adapted,case_analysis,环保安全,medium,medium,Eval_Input visible to agent; gold/rubric visible only to judge and human review.,no,no,no
-PB-CASE-017,licensed_practice_benchmark_adapted,case_analysis,法律科技,medium,medium,Eval_Input visible to agent; gold/rubric visible only to judge and human review.,no,no,no
-PB-CASE-018,licensed_practice_benchmark_adapted,case_analysis,法律科技,medium,medium,Eval_Input visible to agent; gold/rubric visible only to judge and human review.,no,no,no
-PB-CASE-019,licensed_practice_benchmark_adapted,case_analysis,跨国事务,medium,medium,Eval_Input visible to agent; gold/rubric visible only to judge and human review.,no,no,no
-PB-CASE-020,licensed_practice_benchmark_adapted,case_analysis,跨国事务,medium,medium,Eval_Input visible to agent; gold/rubric visible only to judge and human review.,no,no,no
-PB-CONS-001,licensed_practice_benchmark_adapted,consultation,公众法律咨询,hard,high,Eval_Input visible to agent; gold/rubric visible only to judge and human review.,no,yes,yes
-PB-CONS-002,licensed_practice_benchmark_adapted,consultation,公众法律咨询,hard,high,Eval_Input visible to agent; gold/rubric visible only to judge and human review.,no,yes,yes
-PB-CONS-003,licensed_practice_benchmark_adapted,consultation,公众法律咨询,hard,high,Eval_Input visible to agent; gold/rubric visible only to judge and human review.,no,yes,yes
-PB-CONS-004,licensed_practice_benchmark_adapted,consultation,公众法律咨询,hard,high,Eval_Input visible to agent; gold/rubric visible only to judge and human review.,no,yes,yes
-PB-CONS-005,licensed_practice_benchmark_adapted,consultation,公众法律咨询,hard,high,Eval_Input visible to agent; gold/rubric visible only to judge and human review.,no,yes,yes
-PB-CONS-006,licensed_practice_benchmark_adapted,consultation,公众法律咨询,hard,high,Eval_Input visible to agent; gold/rubric visible only to judge and human review.,no,yes,yes
-PB-DOC-D-001,licensed_practice_benchmark_adapted,document_drafting,侵权责任纠纷-损害公司债权人利益责任纠纷,hard,high,Eval_Input visible to agent; gold/rubric visible only to judge and human review.,no,yes,yes
-PB-DOC-D-002,licensed_practice_benchmark_adapted,document_drafting,机动车交通事故责任纠纷（有模板：2. 民商事-机动车交通事故）,hard,high,Eval_Input visible to agent; gold/rubric visible only to judge and human review.,no,yes,yes
-PB-DOC-P-001,licensed_practice_benchmark_adapted,document_drafting,侵权责任纠纷-损害公司债权人利益责任纠纷,hard,high,Eval_Input visible to agent; gold/rubric visible only to judge and human review.,no,yes,yes
-PB-DOC-P-002,licensed_practice_benchmark_adapted,document_drafting,机动车交通事故责任纠纷（有模板：2. 民商事-机动车交通事故）,hard,high,Eval_Input visible to agent; gold/rubric visible only to judge and human review.,no,yes,yes
+PB-CASE-001,external_practice_benchmark_adapted,case_analysis,个人生活,medium,medium,Eval_Input visible to agent; gold/rubric visible only to judge and human review.,no,no,no
+PB-CASE-002,external_practice_benchmark_adapted,case_analysis,个人生活,medium,medium,Eval_Input visible to agent; gold/rubric visible only to judge and human review.,no,no,no
+PB-CASE-003,external_practice_benchmark_adapted,case_analysis,婚姻家事,medium,medium,Eval_Input visible to agent; gold/rubric visible only to judge and human review.,no,no,no
+PB-CASE-004,external_practice_benchmark_adapted,case_analysis,婚姻家事,medium,medium,Eval_Input visible to agent; gold/rubric visible only to judge and human review.,no,no,no
+PB-CASE-005,external_practice_benchmark_adapted,case_analysis,诉讼仲裁,medium,medium,Eval_Input visible to agent; gold/rubric visible only to judge and human review.,no,no,no
+PB-CASE-006,external_practice_benchmark_adapted,case_analysis,诉讼仲裁,medium,medium,Eval_Input visible to agent; gold/rubric visible only to judge and human review.,no,no,no
+PB-CASE-007,external_practice_benchmark_adapted,case_analysis,公司治理,medium,medium,Eval_Input visible to agent; gold/rubric visible only to judge and human review.,no,no,no
+PB-CASE-008,external_practice_benchmark_adapted,case_analysis,公司治理,medium,medium,Eval_Input visible to agent; gold/rubric visible only to judge and human review.,no,no,no
+PB-CASE-009,external_practice_benchmark_adapted,case_analysis,劳动人事,medium,medium,Eval_Input visible to agent; gold/rubric visible only to judge and human review.,no,no,no
+PB-CASE-010,external_practice_benchmark_adapted,case_analysis,劳动人事,medium,medium,Eval_Input visible to agent; gold/rubric visible only to judge and human review.,no,no,no
+PB-CASE-011,external_practice_benchmark_adapted,case_analysis,刑事实务,medium,medium,Eval_Input visible to agent; gold/rubric visible only to judge and human review.,no,no,no
+PB-CASE-012,external_practice_benchmark_adapted,case_analysis,刑事实务,medium,medium,Eval_Input visible to agent; gold/rubric visible only to judge and human review.,no,no,no
+PB-CASE-013,external_practice_benchmark_adapted,case_analysis,知识产权,medium,medium,Eval_Input visible to agent; gold/rubric visible only to judge and human review.,no,no,no
+PB-CASE-014,external_practice_benchmark_adapted,case_analysis,知识产权,medium,medium,Eval_Input visible to agent; gold/rubric visible only to judge and human review.,no,no,no
+PB-CASE-015,external_practice_benchmark_adapted,case_analysis,环保安全,medium,medium,Eval_Input visible to agent; gold/rubric visible only to judge and human review.,no,no,no
+PB-CASE-016,external_practice_benchmark_adapted,case_analysis,环保安全,medium,medium,Eval_Input visible to agent; gold/rubric visible only to judge and human review.,no,no,no
+PB-CASE-017,external_practice_benchmark_adapted,case_analysis,法律科技,medium,medium,Eval_Input visible to agent; gold/rubric visible only to judge and human review.,no,no,no
+PB-CASE-018,external_practice_benchmark_adapted,case_analysis,法律科技,medium,medium,Eval_Input visible to agent; gold/rubric visible only to judge and human review.,no,no,no
+PB-CASE-019,external_practice_benchmark_adapted,case_analysis,跨国事务,medium,medium,Eval_Input visible to agent; gold/rubric visible only to judge and human review.,no,no,no
+PB-CASE-020,external_practice_benchmark_adapted,case_analysis,跨国事务,medium,medium,Eval_Input visible to agent; gold/rubric visible only to judge and human review.,no,no,no
+PB-CONS-001,external_practice_benchmark_adapted,consultation,公众法律咨询,hard,high,Eval_Input visible to agent; gold/rubric visible only to judge and human review.,no,yes,yes
+PB-CONS-002,external_practice_benchmark_adapted,consultation,公众法律咨询,hard,high,Eval_Input visible to agent; gold/rubric visible only to judge and human review.,no,yes,yes
+PB-CONS-003,external_practice_benchmark_adapted,consultation,公众法律咨询,hard,high,Eval_Input visible to agent; gold/rubric visible only to judge and human review.,no,yes,yes
+PB-CONS-004,external_practice_benchmark_adapted,consultation,公众法律咨询,hard,high,Eval_Input visible to agent; gold/rubric visible only to judge and human review.,no,yes,yes
+PB-CONS-005,external_practice_benchmark_adapted,consultation,公众法律咨询,hard,high,Eval_Input visible to agent; gold/rubric visible only to judge and human review.,no,yes,yes
+PB-CONS-006,external_practice_benchmark_adapted,consultation,公众法律咨询,hard,high,Eval_Input visible to agent; gold/rubric visible only to judge and human review.,no,yes,yes
+PB-DOC-D-001,external_practice_benchmark_adapted,document_drafting,侵权责任纠纷-损害公司债权人利益责任纠纷,hard,high,Eval_Input visible to agent; gold/rubric visible only to judge and human review.,no,yes,yes
+PB-DOC-D-002,external_practice_benchmark_adapted,document_drafting,机动车交通事故责任纠纷（有模板：2. 民商事-机动车交通事故）,hard,high,Eval_Input visible to agent; gold/rubric visible only to judge and human review.,no,yes,yes
+PB-DOC-P-001,external_practice_benchmark_adapted,document_drafting,侵权责任纠纷-损害公司债权人利益责任纠纷,hard,high,Eval_Input visible to agent; gold/rubric visible only to judge and human review.,no,yes,yes
+PB-DOC-P-002,external_practice_benchmark_adapted,document_drafting,机动车交通事故责任纠纷（有模板：2. 民商事-机动车交通事故）,hard,high,Eval_Input visible to agent; gold/rubric visible only to judge and human review.,no,yes,yes

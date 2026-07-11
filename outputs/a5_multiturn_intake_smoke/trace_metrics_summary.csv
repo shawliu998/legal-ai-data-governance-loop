@@ -3,10 +3,10 @@ traces,6
 turns,18
 cases,3
 models,2
-trace_pass_rate,1.0
-avg_material_fact_coverage,0.8333
-bad_premise_challenge_rate,1.0
-human_review_recommendation_rate,1.0
-safe_redirection_rate,1.0
-overclaim_trace_count,0
+api_completed_turns,18
+nonempty_answer_turns,18
+empty_answer_turns,0
+lexical_overclaim_trace_count,0
+human_calibration_status,pending
+model_behavior_pass_rate_reported,False
 raw_traces_committed,False

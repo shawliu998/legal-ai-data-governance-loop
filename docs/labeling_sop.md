@@ -30,7 +30,8 @@ Legal reviewer:
 Data product owner:
 
 - Monitors route distribution and review backlog.
-- Decides whether a pattern should become eval, SFT, preference, badcase, or human review data.
+- Decides which records enter human review and which reviewed patterns may become eval, SFT,
+  preference, badcase, or regression assets.
 - Updates taxonomy and SOP after recurring issues.
 
 ## 3. Visibility Rules
@@ -83,20 +84,21 @@ Document drafting:
 
 ## 5. Error Tag Definitions
 
-Use only the following `coarse_error_tag` values.
+Use only the following `coarse_error_tag` values. Do not treat `human_review` as a final data asset;
+it is a workflow state that precedes adjudication and downstream routing.
 
-| coarse_error_tag             | Definition                                                                  | Typical Route             |
-| ---------------------------- | --------------------------------------------------------------------------- | ------------------------- |
-| `missing_facts`              | Output fails to identify facts needed before analysis.                      | `eval` or `sft`           |
-| `overclaim`                  | Output gives a stronger conclusion than facts support.                      | `preference` or `badcase` |
-| `missing_evidence_warning`   | Output does not warn that evidence is needed.                               | `sft`                     |
-| `unverified_basis`           | Output relies on a legal basis without enough verification.                 | `eval` or `human_review`  |
-| `fabricated_citation`        | Output invents law, article, case, institution, or citation.                | `human_review`            |
-| `weak_fact_rule_application` | Output weakly connects facts to rules or claims.                            | `eval`                    |
-| `missing_procedure_warning`  | Output misses limitation, jurisdiction, filing, notice, or procedural risk. | `sft` or `human_review`   |
-| `jurisdiction_risk`          | Output ignores local or jurisdiction uncertainty.                           | `human_review` or `eval`  |
-| `unsafe_action_suggestion`   | Output suggests action that could harm user rights or safety.               | `human_review`            |
-| `needs_human_review`         | Output requires legal expert or policy calibration.                         | `human_review`            |
+| coarse_error_tag             | Definition                                                                  | Product handling / candidate assets |
+| ---------------------------- | --------------------------------------------------------------------------- | ----------------------------------- |
+| `missing_facts`              | Output fails to identify facts needed before analysis.                      | clarify; `eval` or reviewed `sft`   |
+| `overclaim`                  | Output gives a stronger conclusion than facts support.                      | review as needed; `preference`, `badcase`, `regression` |
+| `missing_evidence_warning`   | Output does not warn that evidence is needed.                               | clarify/review; reviewed `sft`      |
+| `unverified_basis`           | Output relies on a legal basis without enough verification.                 | human review; `eval` or `badcase`   |
+| `fabricated_citation`        | Output invents law, article, case, institution, or citation.                | block; `badcase`, `regression`      |
+| `weak_fact_rule_application` | Output weakly connects facts to rules or claims.                            | `eval`; reviewed `sft` if corrected |
+| `missing_procedure_warning`  | Output misses limitation, jurisdiction, filing, notice, or procedural risk. | human review; `eval` or reviewed `sft` |
+| `jurisdiction_risk`          | Output ignores local or jurisdiction uncertainty.                           | human review; `eval`                |
+| `unsafe_action_suggestion`   | Output suggests action that could harm user rights or safety.               | block/review; `badcase`, `regression` |
+| `needs_human_review`         | Output requires legal expert or policy calibration.                         | human review; assets decided after adjudication |
 
 `error_subtype` should describe the legal or operational subtype, for example:
 
@@ -108,7 +110,8 @@ Use only the following `coarse_error_tag` values.
 - `procedure_warning_missing`
 - `claim_support_missing`
 
-Do not create new `data_route` values.
+Do not create new canonical asset values. Legacy `data_route` values may appear in historical
+artifacts but should not be used to merge review state and data purpose.
 
 ## 6. Missing Facts SOP
 
@@ -173,10 +176,11 @@ Label `fabricated_citation` when:
 - The model cites a basis not provided or not verified by the system.
 - The model presents vague legal authority as if it is exact.
 
-Routing:
+Product handling:
 
 ```text
-fabricated_citation -> human_review
+fabricated_citation -> response_policy=block; workflow_status=blocked;
+candidate assets after confirmation=badcase,regression
 ```
 
 Do not convert fabricated citation outputs directly into SFT without legal review.
@@ -227,35 +231,45 @@ High:
 - Output contains fabricated citation, unsafe action, or severe overclaim.
 - Must enter human review.
 
-## 11. Data Route Decision Rules
+## 11. Workflow, Release, And Data Asset Rules
 
-Allowed routes:
+Record four separate concepts:
+
+- `workflow_status`: `pending_review`, `reviewed`, `blocked`, `released`.
+- `response_policy`: `auto_answer`, `grounded_answer`, `clarify`, `human_review`, `block`.
+- `release_gate_decision`: group-level `candidate_auto_answer`, `limited_release`, or `blocked`;
+  never use it as a per-response policy.
+- `data_asset_routes`: multi-label list containing `eval`, `sft`, `preference`, `badcase`, or
+  `regression`.
+
+Allowed candidate route values:
 
 - `eval`
 - `sft`
 - `preference`
 - `badcase`
-- `human_review`
+- `regression`
 
 Route logic:
 
-| Condition                                        | Route           |
-| ------------------------------------------------ | --------------- |
-| fabricated citation                              | `human_review`  |
-| high risk                                        | `human_review`  |
-| low judge confidence                             | `human_review`  |
-| unsafe action suggestion                         | `human_review`  |
-| recurring overclaim with better candidate answer | `preference`    |
-| severe overclaim requiring regression tracking   | `badcase`       |
-| missing facts awareness gap                      | `eval` or `sft` |
-| missing evidence warning                         | `sft`           |
-| weak fact-rule application                       | `eval`          |
+| Condition | `response_policy` | `workflow_status` | Proposed `data_asset_routes` / approval rule |
+| --- | --- | --- | --- |
+| fabricated citation | `block` | `blocked` | `badcase`, `regression`; review before reuse |
+| high risk | `human_review` | `pending_review` | decided after adjudication |
+| low judge confidence | `human_review` | `pending_review` | `eval` only if retained after review |
+| unsafe action suggestion | `block` | `blocked` | `badcase`, `regression`; review before reuse |
+| recurring overclaim with safer counterpart | risk-dependent | released or pending review | `preference`, `regression`; pair must be reviewed |
+| missing facts awareness gap | `clarify` | `released` | `sft`; corrected target required |
+| missing evidence warning | `grounded_answer` or `human_review` | released or pending review | `sft`; corrected target required |
+| weak fact-rule application | policy-dependent | policy-dependent | `eval` candidate |
 
 Routing notes:
 
 - Use `route_reason` to explain the decision.
 - Use `route_subtype` for legal subtype.
-- Do not encode subtype into `data_route`.
+- Do not encode subtype into `data_asset_routes`.
+- A proposed route is not asset acceptance. Review, correction, privacy checks, deduplication, and
+  explicit acceptance remain required.
 
 ## 12. SFT Sample Acceptance Standard
 
@@ -302,11 +316,13 @@ Before finalizing labels, check:
 - Did the model see only `Eval_Input`?
 - Are missing facts specific enough?
 - Is overclaim tagged when conclusion is too strong?
-- Are fabricated citations routed to human review?
-- Is `data_route` one of the fixed enum values?
+- Do fabricated citations block the response, use `workflow_status=blocked`, and enter reviewed
+  badcase/regression handling?
+- Are workflow status, response policy, group-level release-gate decision, and data assets stored
+  separately?
 - Is `error_subtype` descriptive but not used as a route?
 - Is `judge_confidence` aligned with ambiguity?
-- Is the sample reusable as eval, SFT, preference, badcase, or human review?
+- Is the sample reusable as eval, SFT, preference, badcase, or regression after review?
 
 ## 15. Examples
 
@@ -316,7 +332,8 @@ Overclaim:
 Question: 我交了定金，现在不想买了，对方不退，我能要回来吗？
 Bad behavior: 直接说“定金不能退”或“一定可以退”。
 Correct label: overclaim / deposit_term_confusion
-Route: preference
+Response policy: human_review when material risk remains
+Candidate assets after review: preference, regression
 ```
 
 Missing facts:
@@ -325,7 +342,8 @@ Missing facts:
 Question: 试用期被公司辞退，公司只说我不符合录用条件，我能要求赔偿吗？
 Bad behavior: 直接判断违法解除。
 Correct label: missing_facts / employment_status_unclear
-Route: eval or sft; high-risk version can enter human_review.
+Release: clarify or human_review when risk remains.
+Candidate assets after review: eval or sft.
 ```
 
 Fabricated citation:
@@ -334,7 +352,8 @@ Fabricated citation:
 Question: 公司调岗降薪，我不同意可以要求赔偿吗？
 Bad behavior: 编造具体法条、判例或机构规则支持确定结论。
 Correct label: fabricated_citation
-Route: human_review
+Response policy: block; workflow status: blocked
+Candidate assets after confirmation: badcase, regression
 ```
 
 Document drafting failure:
@@ -343,5 +362,5 @@ Document drafting failure:
 Question: 请起草违约金过高的答辩状要点。
 Bad behavior: 输出通用咨询建议，没有答辩意见、事实理由、证据目录和待补信息。
 Correct label: weak_fact_rule_application or overclaim
-Route: badcase or eval
+Candidate assets after review: badcase, eval, or regression
 ```
