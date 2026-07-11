@@ -108,7 +108,7 @@ def test_claim_entailment_flags_uncited_reviewable_claim():
 
 
 def test_run_models_writes_rag_component_logs(tmp_path):
-    config = load_config(ROOT / "config.qianfan_product_boundary_runnable.yaml")
+    config = load_config(ROOT / "configs/pilots/qianfan_product_boundary_runnable.yaml")
     config["models"] = [config["models"][0]]
     config["run_plan"] = {
         "full_samples": ["LPB-CITE-003"],
@@ -157,3 +157,46 @@ def test_claim_entailment_summary_parses_string_false_reviewable_flag(tmp_path):
     summary = summarize_claim_entailment(rows, tmp_path / "claim_summary.csv")
 
     assert summary["reviewable_claim_rows"].item() == 1
+
+
+def test_claim_entailment_summary_separates_reviewable_issues_from_all_claim_blockers(tmp_path):
+    rows = pd.DataFrame(
+        [
+            {
+                "run_id": "RUN-1",
+                "reviewable_legal_claim": True,
+                "entailment_label": "no_citation",
+            },
+            {
+                "run_id": "RUN-1",
+                "reviewable_legal_claim": True,
+                "entailment_label": "supported",
+            },
+            {
+                "run_id": "RUN-1",
+                "reviewable_legal_claim": False,
+                "entailment_label": "out_of_scope_source",
+            },
+            {
+                "run_id": "RUN-1",
+                "reviewable_legal_claim": True,
+                "entailment_label": "partially_supported",
+            },
+        ]
+    )
+
+    summary = summarize_claim_entailment(rows, tmp_path / "claim_summary.csv").iloc[0]
+
+    assert summary["reviewable_claim_rows"] == 3
+    assert summary["reviewable_claim_strict_citation_defect_rows"] == 1
+    assert summary["reviewable_claim_needs_review_rows"] == 2
+    assert summary["reviewable_claim_needs_review_rows"] == 2
+    assert summary["reviewable_claim_needs_review_rate"] == 0.6667
+    assert not {
+        "citation_gate_issue_rows",
+        "reviewable_claim_citation_issue_rows",
+        "reviewable_claim_citation_issue_rate",
+        "release_blocker_rows",
+    }.intersection(summary.index)
+    assert summary["all_claim_source_boundary_blocker_rows"] == 1
+    assert summary["all_claim_source_boundary_blocker_rate"] == 0.25

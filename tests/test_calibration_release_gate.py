@@ -1,4 +1,5 @@
 import pandas as pd
+import pytest
 
 from legal_eval_harness.calibration import build_human_review_sample, summarize_human_calibration
 from legal_eval_harness.release_gate import build_release_gate
@@ -228,6 +229,8 @@ def test_human_calibration_summary_counts_reviewed_rows(tmp_path):
     assert row["confirmed_critical_failure_count"] == 1
     assert row["confirmed_citation_issue_count"] == 1
     assert row["judge_human_agreement_rate"] == 1.0
+    assert row["judge_human_overall_triage_agreement_rate"] == 1.0
+    assert row["agreement_basis"] == "legacy manually supplied judge_human_agreement labels; not reviewer IAA"
 
 
 def test_release_gate_blocks_unsafe_action(tmp_path):
@@ -240,11 +243,36 @@ def test_release_gate_blocks_unsafe_action(tmp_path):
     )
 
     blocked = gate[gate["workflow_condition"] == "W0"].iloc[0]
+    assert blocked["release_gate_decision"] == "blocked"
     assert blocked["release_decision"] == "blocked"
     assert "unsafe action" in blocked["blockers"]
 
     candidate = gate[(gate["task_category"] == "case_analysis") & (gate["workflow_condition"] == "W3")].iloc[0]
+    assert candidate["release_gate_decision"] == "candidate_auto_answer"
     assert candidate["release_decision"] == "candidate_auto_answer"
+
+
+def test_release_gate_blocks_group_when_response_policy_is_block(tmp_path):
+    runs, scores, routing = _frames()
+    runs = runs.loc[runs["run_id"] == "r2"].copy()
+    scores = scores.loc[scores["run_id"] == "r2"].copy()
+    routing = routing.loc[routing["run_id"] == "r2"].copy()
+    routing["response_policy"] = "block"
+    routing["workflow_status"] = "blocked"
+
+    gate = build_release_gate(
+        runs=runs,
+        scores=scores,
+        routing=routing,
+        output_path=tmp_path / "release_gate.csv",
+    )
+
+    row = gate.iloc[0]
+    assert row["blocked_response_rate"] == 1.0
+    assert row["release_gate_decision"] == "blocked"
+    assert "response rows are blocked" in row["blockers"]
+
+    assert row["release_decision"] == "blocked"
 
 
 def test_release_gate_blocks_claim_entailment_source_boundary(tmp_path):
@@ -306,3 +334,85 @@ def test_release_gate_parses_string_false_flags(tmp_path):
     assert row["parsed_ok_rate"] == 0.0
     assert row["judge_parse_failure_rate"] == 1.0
     assert row["reviewable_claim_count"] == 0
+
+
+def test_release_gate_separates_reviewable_issues_from_all_claim_blockers(tmp_path):
+    runs, scores, routing = _frames()
+    scores = scores.loc[scores["run_id"] == "r2"].copy()
+    runs = runs.loc[runs["run_id"] == "r2"].copy()
+    routing = routing.loc[routing["run_id"] == "r2"].copy()
+    claim_entailment = pd.DataFrame(
+        [
+            {
+                "run_id": "r2",
+                "claim_index": 1,
+                "reviewable_legal_claim": True,
+                "entailment_label": "no_citation",
+            },
+            {
+                "run_id": "r2",
+                "claim_index": 2,
+                "reviewable_legal_claim": True,
+                "entailment_label": "supported",
+            },
+            {
+                "run_id": "r2",
+                "claim_index": 3,
+                "reviewable_legal_claim": True,
+                "entailment_label": "partially_supported",
+            },
+            {
+                "run_id": "r2",
+                "claim_index": 4,
+                "reviewable_legal_claim": False,
+                "entailment_label": "out_of_scope_source",
+            },
+        ]
+    )
+
+    gate = build_release_gate(
+        runs=runs,
+        scores=scores,
+        routing=routing,
+        claim_entailment=claim_entailment,
+        output_path=tmp_path / "release_gate.csv",
+    )
+
+    row = gate.iloc[0]
+    assert row["reviewable_claim_count"] == 3
+    assert row["reviewable_strict_citation_defect_count"] == 1
+    assert row["reviewable_claim_needs_review_count"] == 2
+    assert row["citation_gate_issue_count"] == 2
+    assert row["reviewable_citation_issue_count"] == 2
+    assert row["citation_gate_issue_rate"] == pytest.approx(2 / 3, abs=0.0001)
+    assert row["all_claim_source_boundary_blocker_count"] == 1
+    assert row["release_gate_decision"] == "blocked"
+
+
+def test_human_calibration_summary_computes_reviewer_pair_metrics(tmp_path):
+    reviewed = pd.DataFrame(
+        [
+            {
+                "run_id": "r1",
+                "auto_triage_label": "block",
+                "reviewer_a_triage_label": "block",
+                "reviewer_b_triage_label": "block",
+                "adjudicated_triage_label": "block",
+            },
+            {
+                "run_id": "r2",
+                "auto_triage_label": "auto_answer",
+                "reviewer_a_triage_label": "auto_answer",
+                "reviewer_b_triage_label": "human_review",
+                "adjudicated_triage_label": "human_review",
+            },
+        ]
+    )
+
+    summary = summarize_human_calibration(reviewed=reviewed, output_path=tmp_path / "summary.csv")
+
+    row = summary.iloc[0]
+    assert row["reviewer_pair_labeled_rows"] == 2
+    assert row["reviewer_observed_agreement_rate"] == 0.5
+    assert row["reviewer_cohen_kappa"] == pytest.approx(1 / 3, abs=0.001)
+    assert row["judge_adjudicated_agreement_rate"] == 0.5

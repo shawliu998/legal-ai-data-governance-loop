@@ -11,7 +11,7 @@ scope:
   cases: 50
   models: 3
   agent_architectures: 3
-  expected_model_outputs: 450
+  expected_api_run_records: 450
   note: >
     This config is a run plan for the next formal experiment.
     It should not be described as completed until the output artifacts exist.
@@ -63,7 +63,7 @@ judging:
       - judge_disagreement
       - release_blocker
       - high_risk
-      - citation_gate_issue
+      - reviewable_claim_needs_review
 
 human_calibration:
   target_rows: 120

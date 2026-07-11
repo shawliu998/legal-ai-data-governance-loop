@@ -22,7 +22,7 @@ from .rag import build_claim_entailment_rows, summarize_claim_entailment
 from .rag_v2 import DEFAULT_RAG_V2_FOCUS_CASES, build_rag_v2_report
 from .release_gate import build_release_gate
 from .runner import build_run_plan, run_models
-from .router import route_scores
+from .router import apply_review_adjudications, route_scores
 from .schemas import PROTECTED_GOLD_FIELDS, VISIBLE_INPUT_FIELDS
 
 
@@ -187,8 +187,22 @@ def cmd_run_judge_ensemble(args: argparse.Namespace) -> None:
 
 def cmd_route_data(args: argparse.Namespace) -> None:
     scores = pd.read_csv(args.scores)
-    df = route_scores(judge_scores=scores, output_path=args.output)
+    runs = pd.read_csv(args.runs) if args.runs else None
+    df = route_scores(judge_scores=scores, runs=runs, output_path=args.output)
     print(f"Wrote {len(df)} routing decisions to {args.output}")
+
+
+def cmd_apply_review_adjudications(args: argparse.Namespace) -> None:
+    routing = pd.read_csv(args.routing)
+    adjudications = pd.read_csv(args.adjudications)
+    updated = apply_review_adjudications(
+        routing=routing,
+        adjudications=adjudications,
+        output_path=args.output,
+    )
+    status_counts = updated["workflow_status"].value_counts().sort_index().to_dict()
+    print(f"Wrote {len(updated)} adjudicated routing rows to {args.output}")
+    print(f"Workflow statuses: {status_counts}")
 
 
 def cmd_summarize(args: argparse.Namespace) -> None:
@@ -241,7 +255,8 @@ def cmd_release_gate(args: argparse.Namespace) -> None:
         claim_entailment=claim_entailment,
     )
     print(f"Wrote {len(df)} release gate rows to {args.output}")
-    print(df[["task_category", "model_alias", "workflow_condition", "release_decision"]].to_string(index=False))
+    decision_column = "release_gate_decision" if "release_gate_decision" in df.columns else "release_decision"
+    print(df[["task_category", "model_alias", "workflow_condition", decision_column]].to_string(index=False))
 
 
 def cmd_build_claim_entailment(args: argparse.Namespace) -> None:
@@ -404,13 +419,14 @@ def cmd_all(args: argparse.Namespace) -> None:
 
     runs = run_models(bundle=bundle, config=config, mode=args.mode, output_path=model_path)
     scores = run_judge(runs=runs, bundle=bundle, config=config, mode=args.mode, output_path=judge_path)
-    routing = route_scores(judge_scores=scores, output_path=routing_path)
+    routing = route_scores(judge_scores=scores, runs=runs, output_path=routing_path)
     dashboard = build_executive_dashboard(runs=runs, scores=scores, routing=routing, output_path=dashboard_path)
     print("Pipeline complete")
     print(f"Samples: {scores['sample_id'].nunique()}")
     print(f"Runs: {len(runs)}")
     print(f"Scores: {len(scores)}")
-    print(f"Human review queue size: {(routing['data_route'] == 'human_review').sum()}")
+    print(f"Human review queue size: {(routing['response_policy'] == 'human_review').sum()}")
+    print(f"Blocked response count: {(routing['response_policy'] == 'block').sum()}")
     print(f"Dashboard: {dashboard}")
     print(f"Outputs: {model_path}, {judge_path}, {routing_path}, {dashboard_path}")
 
@@ -484,8 +500,15 @@ def build_parser() -> argparse.ArgumentParser:
 
     route_cmd = sub.add_parser("route-data")
     route_cmd.add_argument("--scores", required=True)
+    route_cmd.add_argument("--runs", default="", help="Optional run log supplying retrieval and content-status signals")
     route_cmd.add_argument("--output", default="outputs/data_routing.csv")
     route_cmd.set_defaults(func=cmd_route_data)
+
+    adjudicate_cmd = sub.add_parser("apply-review-adjudications")
+    adjudicate_cmd.add_argument("--routing", required=True)
+    adjudicate_cmd.add_argument("--adjudications", required=True)
+    adjudicate_cmd.add_argument("--output", default="outputs/data_routing_adjudicated.csv")
+    adjudicate_cmd.set_defaults(func=cmd_apply_review_adjudications)
 
     summarize = sub.add_parser("summarize")
     summarize.add_argument("--runs", required=True)
@@ -555,7 +578,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     run_a5 = sub.add_parser("run-a5-multiturn")
     run_a5.add_argument("--cases", default="data/eval_sets/legal_agent_multiturn_intake_pilot_v1.jsonl")
-    run_a5.add_argument("--config", default="config.qianfan_a5_multiturn_smoke.yaml")
+    run_a5.add_argument("--config", default="configs/pilots/qianfan_a5_multiturn_smoke.yaml")
     run_a5.add_argument("--mode", choices=["mock", "api"], default="mock")
     run_a5.add_argument("--output-dir", default="outputs/a5_multiturn_intake_smoke")
     run_a5.add_argument("--raw-output-dir", default="")

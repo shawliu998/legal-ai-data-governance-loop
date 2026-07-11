@@ -2,144 +2,76 @@
 
 ## One-Line Summary
 
-Built a legal AI product-boundary evaluation and data governance system that turns model-agent
-behavior into deployment policy, human-review policy, release gates, trace-level risk signals, and
-next-round data production actions.
+Built a pilot-scale legal AI product-boundary evaluation and data-governance workflow that connects scenario design, API reliability, rubric signals, human review, release controls, and next-round data-asset candidates.
 
 中文一句话：
 
-构建法律 AI agent 产品边界评测与数据闭环治理系统，用真实法律任务 slice 和 trace-level eval 评估模型是否应该回答、追问、引用依据、转人工或阻断发布，并把失败样本路由为
-eval、SFT、preference、badcase、regression 或 human_review 数据资产。
-
-## Why This Is Not a Leaderboard
-
-The project does not ask only which model scores highest. It asks:
-
-- Which model-agent architecture is safe enough to answer?
-- Which legal tasks require RAG grounding?
-- Which cases require clarification-first intake?
-- Which traces show unsafe premise-following, missing fact elicitation, or bad release decisions?
-- Which failures must enter human review or block release?
-- Which outputs should become badcases, SFT candidates, preference pairs, or eval holdout?
+构建法律 AI 产品边界评测与数据治理工作流，判断回答应直接放行、限定来源、先追问、转人工还是阻断，并在复核后规划 eval、SFT、preference、badcase 与 regression 数据资产候选。
 
 ## Current Scope
 
-- 50 product-boundary legal cases.
-- 6 slices: normal practice, hard legal reasoning, risk calibration, citation grounding, adversarial
-  trap, and counterfactual pair.
-- A0-A5 agent architecture taxonomy: closed-book baseline, structured legal counsel, grounded
-  retrieval counsel, verifier-router policy layer, clarification-first intake, and multi-turn legal
-  intake.
-- 5 mock model slots for full diagnostics, with a 5-model Qianfan API pilot config for ERNIE 5.0,
-  DeepSeek V4 Pro, Qwen3.5-27B, GLM-5.2, and Kimi K2.6.
-- 1250 mock model outputs for pipeline verification.
-- 12-case Qianfan API pilot completed for 300 real model outputs.
-- 8-case RAG V2 focused pilot completed for 72 real model outputs.
-- 8-case A5 multi-turn intake pilot completed for 24 real API traces and 72 turns across 3 models.
-- 3-case A5 smoke remains as the small reproducibility proof; the main A5 result is now the full
-  pilot.
-- 80 priority real-output human review rows completed.
+| Layer | Scope | Evidence boundary |
+| --- | ---: | --- |
+| Core diagnostic data | 85 samples、3 task categories、380 rubric items | 项目构造数据，不代表真实线上分布 |
+| Product-boundary bank | 50 cases、6 slices | 用于场景覆盖和产品诊断，不是统计 benchmark |
+| Mock/synthetic diagnostics | 546-run 默认管线；1,250-run product-boundary mock | 验证字段、路由、聚合和 Dashboard，不是模型能力证据 |
+| Product-boundary API pilot | 12 × 5 千帆托管模型槽位 × 5 workflows = 300 API runs | 271 条非空回答、29 条空响应；不是 300 条有效答案 |
+| RAG V2 API pilot | 8 × 3 千帆托管模型槽位 × 3 workflows = 72 API runs | controlled corpus 与自动 triage，不是最终法律正确性 |
+| A5 API pilot | 8 × 3 千帆托管模型槽位 = 24 traces / 72 turns | trace 框架已跑通，质量标签尚未逐条人工校准 |
+| Priority review | 80 条富集记录、2 名法律背景 reviewer | 非随机；公开证据不能复算 reviewer-level IAA |
 
 ## Implementation Highlights
 
-- Designed leakage-safe data separation: `Eval_Input` is visible to the agent, while `Gold_Labels`
-  and `Rubric_Items` are visible only to judge and human review.
-- Built controlled local RAG with a small legal corpus, retrieval logs, context injection, source-id
-  citation verification, and claim-level support triage.
-- Improved the controlled RAG corpus by correcting a conflicting employment-policy source and adding
-  precise consumer, labor, debt-collection, false-litigation, lease-deposit, and evidence snippets.
-- Added judge ensemble calibration and then revised the production scoring plan after API smoke
-  tests showed judge JSON instability on some Qianfan model endpoints.
-- Used Qwen3.5-27B as the full-run structured judge after it produced 300 / 300 parseable judge
-  outputs.
-- Implemented data routing into `eval`, `sft`, `preference`, `badcase`, and `human_review`.
-- Generated human calibration queues, including a 370-row stratified Chinese legal-review file
-  marked as completed human review.
-- Completed an 80-row priority human review sample for the real API pilot, with Chinese review
-  workbook and judge-human agreement summary.
-- Added release-gate outputs for blocked, limited-release, and candidate auto-answer policies.
-- Added A0-A5 architecture documentation and trace-level eval schema to connect answer quality,
-  retrieval quality, citation quality, risk routing, release gates, and data routes.
-- Added an A5 multi-turn legal intake pilot covering cooperative, dependent, withdrawn, and
-  adversarial user behavior.
+- Separated agent-visible `Eval_Input` from judge/reviewer-only `Gold_Labels` and `Rubric_Items`.
+- Built a normalized run log that preserves model slot, workflow, visible fields, output status, latency, and cost signals.
+- Added controlled RAG retrieval logs, source-boundary checks, citation verification, and claim-level triage.
+- Preserved empty API responses and parse failures as reliability evidence instead of silently dropping them.
+- Designed task-specific rubrics, error taxonomy, review sampling, release gates, case cards, and a lightweight evidence package.
+- Separated per-response `response_policy`, review `workflow_status`, group-level
+  `release_gate_decision`, and downstream `data_asset_routes`; legacy aliases are compatibility-only.
 
-## Real API Pilot Results
+## Human Review
 
-- 300 / 300 Qianfan model-agent outputs completed.
-- 300 / 300 Qwen judge outputs parsed successfully.
-- Human review completed on 80 priority outputs.
-- Judge-human agreement on the priority sample: 92.5%.
-- Priority sample outcomes: 4 pass, 27 partial pass, 49 fail.
-- Confirmed citation or evidence-support issues: 45.
-- Confirmed human route overrides: 47.
+Two legal-background reviewers independently reviewed 80 priority-enriched records and reconciled disagreements; one reviewer holds a doctorate in law and passed China’s national unified legal professional qualification examination.
 
-The API pilot showed that strong models do not remove product-boundary risk. The main failure
-patterns were insufficient human-review escalation and source-boundary problems in RAG-style
-workflows.
-
-## RAG V2 And Agentic Eval Additions
-
-- RAG V2 focused pilot: 72 / 72 real Qianfan outputs completed.
-- W4/A2 retrieval found all expected allowed sources, but average source-boundary precision was 0.50
-  because top-k retrieval included extra sources.
-- Claim-level triage found 555 citation-gate issues among 630 reviewable legal claims; this is a
-  strict release-risk gate, not an overall answer-accuracy rate.
-- A5 multi-turn intake cases now test material-fact elicitation, bad-premise challenge,
-  user-behavior adaptation, and escalation timing.
-- A5 smoke test completed on cooperative, dependent, and adversarial user behavior: 6 traces, 18
-  turns, 100% bad-premise challenge rate, 100% human-review recommendation rate, and 83.3% average
-  material-fact coverage under deterministic triage checks. This validates the trace loop, not
-  production readiness.
-- A5 full pilot completed across all 8 cases and 3 models: 24 traces, 72 turns, 75.0% deterministic
-  trace pass rate, 77.1% average material-fact coverage, and 6 overclaim-flagged traces routed to
-  human calibration.
-- Trace-level schema maps user turns, retrieval, citation checks, claim checks, risk checks, human
-  review, release gate, and data route into one product-evaluable object.
+The public repository does not preserve anonymous reviewer A/B labels, so this version does not report inter-reviewer agreement, judge-human agreement, Cohen's kappa, or a population accuracy estimate. See [Human Review Methodology](human_review_methodology.md).
 
 ## Product Findings
 
-- Best routine-answer candidate: Qwen3.5-27B or ERNIE/Kimi under A1 structured legal counsel,
-  limited to low-risk consultation and no citation defect.
-- Best intake/risk-control candidate: A4 clarification-first, especially for missing facts and
-  adversarial drafting.
-- Agentic eval candidate now completed as pilot: A5 multi-turn legal intake, especially for
-  dependent, withdrawn, or adversarial users.
-- RAG requirement: source-specific contract, rule, or citation tasks still need RAG, but RAG output
-  must be checked for source-boundary discipline.
-- Current RAG/verifier limitation: W3 and W4 over-produced human-review routes and surfaced
-  unsupported-source issues in the real pilot.
-- Release policy: no configuration should be fully auto-released yet; use limited release with human
-  review for high-risk and citation-bound cases.
+- A run-level success status does not guarantee a usable answer: the 300-run product-boundary pilot contains 29 empty responses.
+- A total judge score is not a deployment decision; source boundary, material-claim support,
+  critical failures, and human-review requirements need separate checks.
+- Retrieval success is not answer release readiness. RAG needs source filtering, citation coverage, and claim-to-source support validation.
+- Human review is a workflow, not a training-data category. Only reviewed and accepted records should become reusable assets.
+- A5 must be evaluated as a complete trace. Until the 24 traces receive reviewer-level calibration, deterministic flags remain queueing signals rather than quality metrics.
 
 ## Core Artifacts
 
-- Project entry point: [README.md](../README.md)
-- Results page: [results_product_boundary_eval.md](results_product_boundary_eval.md)
-- Agent architecture design:
-  [legal_agent_product_eval_v2_design.md](legal_agent_product_eval_v2_design.md)
-- Trace-level schema: [trace_level_eval_schema.md](trace_level_eval_schema.md)
-- A5 intake pilot: [multiturn_intake_pilot.md](multiturn_intake_pilot.md)
-- A5 smoke results: [a5_multiturn_smoke_results.md](a5_multiturn_smoke_results.md)
-- A5 full pilot results: [a5_multiturn_pilot_results.md](a5_multiturn_pilot_results.md)
-- A5 judge rubric: [a5_trace_judge_rubric.md](a5_trace_judge_rubric.md)
-- Methodology risk register: [methodology_risk_register.md](methodology_risk_register.md)
-- Model policy memo: [model_boundary_memo.md](model_boundary_memo.md)
-- RAG V2 improvement plan: [rag_v2_improvement_plan.md](rag_v2_improvement_plan.md)
-- Chinese interview pitch: [interview_pitch_zh.md](interview_pitch_zh.md)
-- Product PRD: [product_prd.md](product_prd.md)
-- Runbook: [runbook.md](runbook.md)
+- [README](../README.md)
+- [Case Study](case_study.md)
+- [Human Review Methodology](human_review_methodology.md)
+- [DeepSeek Product Note](deepseek_product_note.md)
+- [Product-Boundary Results](results_product_boundary_eval.md)
+- [RAG V2 Results](rag_v2_focused_results.md)
+- [A5 Pilot](a5_multiturn_pilot_results.md)
+- [Product PRD](product_prd.md)
+- [Data Card](data_card.md)
+- [Runbook](runbook.md)
 
 ## Interview Pitch
 
-I built a legal AI product-boundary evaluation and data governance system. The core is not ranking
-models by average score, but evaluating whether a legal AI product should answer, ask clarifying
-questions, use grounded sources, route to human review, or block release. I ran a real Qianfan API
-pilot across ERNIE 5.0, DeepSeek V4 Pro, Qwen3.5-27B, GLM-5.2, and Kimi K2.6, then added human
-review on 80 priority outputs, a RAG V2 focused pilot, and a 24-trace A5 multi-turn intake pilot.
-The result is a model-agent boundary memo and data loop: failures become eval holdout, SFT
-candidates, preference pairs, badcases, regression evals, or human review items.
+I built a pilot-scale legal AI product-boundary evaluation and data-governance workflow. The key
+output is not a model ranking: it is an auditable decision about whether a response should be
+released, grounded, clarified, reviewed, or blocked, followed by a reviewed data disposition.
 
-## Next Step
+I ran 300 Qianfan API records across 12 cases, five hosted model slots, and five workflows; 271
+responses were non-empty and 29 were empty. I then added an 8 × 3 × 3 RAG pilot, a 24-trace
+multi-turn intake pilot, and a priority human-review workflow. The evidence supports product
+diagnosis and next-round data design, not production legal advice or statistical model superiority.
 
-Use the A5-specific judge rubric to human-calibrate all 24 completed A5 pilot traces, starting with
-the 6 overclaim-flagged traces.
+## Next Steps
+
+1. Preserve reviewer A/B and adjudicated labels for reproducible IAA.
+2. Human-calibrate all 24 A5 traces before reporting trace quality metrics.
+3. Keep legacy aliases compatibility-only and enforce schema-contract tests when regenerating public artifacts.
+4. Add random review sampling, preregistered metrics, confidence intervals, and larger samples before any model comparison.

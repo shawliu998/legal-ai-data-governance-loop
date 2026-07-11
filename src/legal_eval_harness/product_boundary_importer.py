@@ -162,7 +162,7 @@ def prepare_product_boundary_dataset(
                     part
                     for part in [
                         f"slice={slice_name}",
-                        f"expected_data_route={_format_list(case.get('expected_data_route'))}",
+                        f"expected_data_asset_routes={_format_list(case.get('expected_data_asset_routes'))}",
                         f"pair_id={safe_text(case.get('pair_id'))}" if case.get("pair_id") else "",
                         f"pair_variant={safe_text(case.get('pair_variant'))}" if case.get("pair_variant") else "",
                     ]

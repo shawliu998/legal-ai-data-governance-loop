@@ -7,7 +7,7 @@ The trace schema converts a legal agent run into a product-evaluable object.
 Instead of scoring only the final answer, the evaluator can inspect what the user asked, what facts
 the agent elicited, what sources were retrieved, what claims were made, whether those claims were
 supported, whether risk was calibrated, whether human review was triggered, whether release was
-blocked, and what data asset the run should become.
+blocked, and which data assets the reviewed record may become.
 
 The schema applies to A0-A4 single-turn product-boundary runs and A5 multi-turn legal intake traces.
 
@@ -22,9 +22,10 @@ Trace-level evaluation can include these event groups:
 | `citation_checks`    | Source-ID citation validation and fabricated-citation checks        |
 | `claim_checks`       | Claim-level support, source scope, entailment label, product action |
 | `risk_checks`        | Unsafe action, overclaim, bad premise, missing fact, escalation     |
-| `human_review_route` | Whether and why the trace should go to human review                 |
-| `release_gate`       | Limited release, human review, or blocked release decision          |
-| `data_route`         | Eval, SFT, preference, badcase, regression, or human-review routing |
+| `review_workflow`    | Whether and why the trace should go to human review                 |
+| `response_control`   | Per-trace response policy and its required mitigations              |
+| `release_gate`       | Optional group-level deployment decision for an evaluated slice    |
+| `data_disposition`   | Reviewed eval, SFT, preference, badcase, or regression candidates   |
 
 For A5, the `turns` array carries the multi-turn intake conversation. The other event groups can be
 attached to the whole trace or to specific turns.
@@ -39,9 +40,9 @@ attached to the whole trace or to specific turns.
 | `agent_architecture` | A0-A5 architecture name                                                |
 | `legal_slice`        | Product-boundary slice, such as citation grounding or risk calibration |
 | `turns`              | Ordered user and agent messages                                        |
-| `human_review_route` | Whether and why the trace should go to review                          |
-| `release_gate`       | Candidate release, limited release, human review, or blocked           |
-| `data_route`         | Eval, SFT, preference, badcase, regression, or human review            |
+| `review_workflow`    | Whether and why the trace should go to review                          |
+| `response_control`   | `auto_answer`, `grounded_answer`, `clarify`, `human_review`, or `block` |
+| `data_disposition`   | Reviewed eval, SFT, preference, badcase, or regression candidates      |
 
 ## Optional Fields
 
@@ -54,6 +55,7 @@ attached to the whole trace or to specific turns.
 | `risk_checks`           | Unsafe action, overclaim, bad-premise, or missing-fact checks     |
 | `judge_scores`          | Rubric scores and error tags from automated judges                |
 | `human_labels`          | Human calibration labels when review has been completed           |
+| `release_gate`          | Group-level `candidate_auto_answer`, `limited_release`, or `blocked` |
 
 ## Example JSON Object
 
@@ -123,19 +125,20 @@ attached to the whole trace or to specific turns.
       "passed": true
     }
   ],
-  "human_review_route": {
+  "review_workflow": {
     "required": true,
+    "workflow_status": "pending_review",
     "reason": "source-limited task with claim-level citation checks"
   },
-  "release_gate": {
-    "release_decision": "human_review_required",
+  "response_control": {
+    "response_policy": "human_review",
     "blockers": [],
     "required_mitigations": ["human citation-support review"]
   },
-  "data_route": {
-    "data_route": "human_review",
+  "data_disposition": {
+    "data_asset_routes": ["eval"],
     "route_reason": "source-limited legal claim needs human support validation",
-    "data_asset": "citation_calibration_row",
+    "acceptance_status": "candidate_pending_review",
     "priority": "P1"
   }
 }
@@ -164,9 +167,10 @@ Trace components currently appear across separate artifacts:
 | `citation_checks`         | `citation_verification.csv`                       |
 | `claim_checks`            | `claim_entailment.csv`                            |
 | `risk_checks`             | `judge_scores.csv:error_tags`, `data_routing.csv` |
-| `human_review_route`      | `data_routing.csv`, `human_review_*`              |
-| `release_gate`            | `release_gate.csv`                                |
-| `data_route`              | `data_routing.csv`                                |
+| `review_workflow`         | `data_routing.csv`, `human_review_*`              |
+| `response_control`        | `data_routing.csv`                                |
+| `release_gate`            | `release_gate.csv:release_gate_decision`          |
+| `data_disposition`        | `data_routing.csv`                                |
 
 The existing A0-A4 pipeline produces most trace components as separate tables.
 

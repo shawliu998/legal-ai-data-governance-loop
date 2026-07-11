@@ -8,39 +8,39 @@
     <g transform="translate(54 175)">
       <rect width="282" height="128" rx="8" fill="#ffffff" stroke="#cbd5e1"/>
       <rect width="7" height="128" fill="#2563eb"/>
-      <text x="25" y="38" fill="#64748b" font-size="18" font-weight="700">Real API outputs</text>
+      <text x="25" y="38" fill="#64748b" font-size="18" font-weight="700">Qianfan API run records</text>
       <text x="25" y="86" fill="#1f2937" font-size="40" font-weight="700">300</text>
     </g>
     <g transform="translate(358 175)">
       <rect width="282" height="128" rx="8" fill="#ffffff" stroke="#cbd5e1"/>
-      <rect width="7" height="128" fill="#be123c"/>
-      <text x="25" y="38" fill="#64748b" font-size="18" font-weight="700">Priority human review</text>
-      <text x="25" y="86" fill="#1f2937" font-size="40" font-weight="700">80</text>
+      <rect width="7" height="128" fill="#16a34a"/>
+      <text x="25" y="38" fill="#64748b" font-size="18" font-weight="700">Non-empty answers</text>
+      <text x="25" y="86" fill="#1f2937" font-size="40" font-weight="700">271</text>
     </g>
     <g transform="translate(662 175)">
       <rect width="282" height="128" rx="8" fill="#ffffff" stroke="#cbd5e1"/>
-      <rect width="7" height="128" fill="#16a34a"/>
-      <text x="25" y="38" fill="#64748b" font-size="18" font-weight="700">RAG V2 outputs</text>
-      <text x="25" y="86" fill="#1f2937" font-size="40" font-weight="700">72</text>
+      <rect width="7" height="128" fill="#be123c"/>
+      <text x="25" y="38" fill="#64748b" font-size="18" font-weight="700">Priority review rows</text>
+      <text x="25" y="86" fill="#1f2937" font-size="40" font-weight="700">80</text>
     </g>
     <g transform="translate(966 175)">
+      <rect width="282" height="128" rx="8" fill="#ffffff" stroke="#cbd5e1"/>
+      <rect width="7" height="128" fill="#2563eb"/>
+      <text x="25" y="38" fill="#64748b" font-size="18" font-weight="700">RAG V2 run records</text>
+      <text x="25" y="86" fill="#1f2937" font-size="40" font-weight="700">72</text>
+    </g>
+    <g transform="translate(1270 175)">
       <rect width="282" height="128" rx="8" fill="#ffffff" stroke="#cbd5e1"/>
       <rect width="7" height="128" fill="#7c3aed"/>
       <text x="25" y="38" fill="#64748b" font-size="18" font-weight="700">A5 traces / turns</text>
       <text x="25" y="86" fill="#1f2937" font-size="40" font-weight="700">24 / 72</text>
-    </g>
-    <g transform="translate(1270 175)">
-      <rect width="282" height="128" rx="8" fill="#ffffff" stroke="#cbd5e1"/>
-      <rect width="7" height="128" fill="#d97706"/>
-      <text x="25" y="38" fill="#64748b" font-size="18" font-weight="700">A5 trace pass rate</text>
-      <text x="25" y="86" fill="#1f2937" font-size="40" font-weight="700">75.0%</text>
     </g>
   </g>
 
   <g transform="translate(54 335)" font-family="Arial, Helvetica, sans-serif">
     <rect width="706" height="355" rx="8" fill="#ffffff" stroke="#cbd5e1"/>
     <text x="26" y="43" fill="#1f2937" font-size="24" font-weight="700">Product Eval Loop</text>
-    <text x="26" y="73" fill="#64748b" font-size="17">Each output becomes a launch and data decision, not a leaderboard row.</text>
+    <text x="26" y="73" fill="#64748b" font-size="15">Each run: response_policy + workflow_status; assets require human acceptance.</text>
     <g transform="translate(28 111)">
       <circle cx="12" cy="12" r="12" fill="#2563eb"/><text x="8" y="18" fill="#ffffff" font-size="14" font-weight="700">1</text>
       <text x="40" y="10" fill="#1f2937" font-size="18" font-weight="700">Legal task slice</text>
@@ -61,40 +61,45 @@
     </g>
     <g transform="translate(28 240)">
       <circle cx="12" cy="12" r="12" fill="#2563eb"/><text x="8" y="18" fill="#ffffff" font-size="14" font-weight="700">4</text>
-      <text x="40" y="10" fill="#1f2937" font-size="18" font-weight="700">Product policy</text>
-      <text x="40" y="33" fill="#64748b" font-size="15">auto-answer / RAG / clarify / human review / block</text>
+      <text x="40" y="10" fill="#1f2937" font-size="18" font-weight="700">Response policy</text>
+      <text x="40" y="33" fill="#64748b" font-size="15">auto_answer / grounded_answer / clarify / human_review / block</text>
       <line x1="12" y1="29" x2="12" y2="42" stroke="#cbd5e1" stroke-width="2"/>
     </g>
     <g transform="translate(28 283)">
       <circle cx="12" cy="12" r="12" fill="#2563eb"/><text x="8" y="18" fill="#ffffff" font-size="14" font-weight="700">5</text>
-      <text x="40" y="10" fill="#1f2937" font-size="18" font-weight="700">Data route</text>
-      <text x="40" y="33" fill="#64748b" font-size="15">eval / SFT / preference / badcase / regression</text>
+      <text x="40" y="10" fill="#1f2937" font-size="18" font-weight="700">Review &amp; data asset routes</text>
+      <text x="40" y="33" fill="#64748b" font-size="15">workflow_status → eval / SFT / preference / badcase / regression</text>
     </g>
   </g>
 
   <g transform="translate(792 335)" font-family="Arial, Helvetica, sans-serif">
     <rect width="754" height="355" rx="8" fill="#ffffff" stroke="#cbd5e1"/>
-    <text x="26" y="43" fill="#1f2937" font-size="24" font-weight="700">Release &amp; Risk Signals</text>
-    <text x="26" y="73" fill="#64748b" font-size="17">Strict gates expose where legal AI should not auto-release.</text>
-    <g transform="translate(30 120)">
-      <text x="0" y="0" fill="#1f2937" font-size="17">Qwen judge parse success</text>
-      <rect x="300" y="-14" width="315" height="16" rx="8" fill="#e2e8f0"/><rect x="300" y="-14" width="315" height="16" rx="8" fill="#2563eb"/>
-      <text x="635" y="0" fill="#64748b" font-size="17">300 / 300</text>
+    <text x="26" y="43" fill="#1f2937" font-size="24" font-weight="700">Release Evidence Snapshot</text>
+    <text x="26" y="73" fill="#64748b" font-size="17">Counts are separated from uncalibrated model-quality claims.</text>
+    <g transform="translate(30 108)">
+      <text x="0" y="0" fill="#1f2937" font-size="16">Non-empty answer availability</text>
+      <rect x="300" y="-13" width="315" height="14" rx="7" fill="#e2e8f0"/><rect x="300" y="-13" width="285" height="14" rx="7" fill="#16a34a"/>
+      <text x="635" y="0" fill="#64748b" font-size="16">271 / 300</text>
     </g>
-    <g transform="translate(30 174)">
-      <text x="0" y="0" fill="#1f2937" font-size="17">Priority judge-human agreement</text>
-      <rect x="300" y="-14" width="315" height="16" rx="8" fill="#e2e8f0"/><rect x="300" y="-14" width="291" height="16" rx="8" fill="#16a34a"/>
-      <text x="635" y="0" fill="#64748b" font-size="17">92.5%</text>
+    <g transform="translate(30 158)">
+      <text x="0" y="0" fill="#1f2937" font-size="16">Release groups blocked</text>
+      <rect x="300" y="-13" width="315" height="14" rx="7" fill="#e2e8f0"/><rect x="300" y="-13" width="147" height="14" rx="7" fill="#be123c"/>
+      <text x="635" y="0" fill="#64748b" font-size="16">35 / 75</text>
     </g>
-    <g transform="translate(30 228)">
-      <text x="0" y="0" fill="#1f2937" font-size="17">RAG V2 citation-gate flagged rate</text>
-      <rect x="300" y="-14" width="315" height="16" rx="8" fill="#e2e8f0"/><rect x="300" y="-14" width="277" height="16" rx="8" fill="#d97706"/>
-      <text x="635" y="0" fill="#64748b" font-size="17">88.1%</text>
+    <g transform="translate(30 208)">
+      <text x="0" y="0" fill="#1f2937" font-size="16">Limited-release groups</text>
+      <rect x="300" y="-13" width="315" height="14" rx="7" fill="#e2e8f0"/><rect x="300" y="-13" width="168" height="14" rx="7" fill="#d97706"/>
+      <text x="635" y="0" fill="#64748b" font-size="16">40 / 75</text>
     </g>
-    <g transform="translate(30 282)">
-      <text x="0" y="0" fill="#1f2937" font-size="17">A5 overclaim-flagged traces</text>
-      <rect x="300" y="-14" width="315" height="16" rx="8" fill="#e2e8f0"/><rect x="300" y="-14" width="79" height="16" rx="8" fill="#be123c"/>
-      <text x="635" y="0" fill="#64748b" font-size="17">6 / 24</text>
+    <g transform="translate(30 258)">
+      <text x="0" y="0" fill="#1f2937" font-size="16">RAG strict citation-defect flags</text>
+      <rect x="300" y="-13" width="315" height="14" rx="7" fill="#e2e8f0"/><rect x="300" y="-13" width="278" height="14" rx="7" fill="#be123c"/>
+      <text x="635" y="0" fill="#64748b" font-size="16">555 / 630</text>
+    </g>
+    <g transform="translate(30 308)">
+      <text x="0" y="0" fill="#1f2937" font-size="16">RAG needs-review flags</text>
+      <rect x="300" y="-13" width="315" height="14" rx="7" fill="#e2e8f0"/><rect x="300" y="-13" width="296" height="14" rx="7" fill="#d97706"/>
+      <text x="635" y="0" fill="#64748b" font-size="16">591 / 630</text>
     </g>
   </g>
 
@@ -103,8 +108,8 @@
     <text x="26" y="44" fill="#1f2937" font-size="24" font-weight="700">What the project decides</text>
     <g transform="translate(28 80)">
       <rect width="320" height="78" rx="8" fill="#f8fafc" stroke="#e2e8f0"/><rect width="6" height="78" fill="#16a34a"/>
-      <text x="20" y="29" fill="#1f2937" font-size="18" font-weight="700">Auto-answer eligible</text>
-      <text x="20" y="55" fill="#64748b" font-size="14">low-risk routine consultation</text>
+      <text x="20" y="29" fill="#1f2937" font-size="18" font-weight="700">Candidate auto-answer</text>
+      <text x="20" y="55" fill="#64748b" font-size="14">policy hypothesis; 0 / 75 groups</text>
     </g>
     <g transform="translate(388 80)">
       <rect width="320" height="78" rx="8" fill="#f8fafc" stroke="#e2e8f0"/><rect width="6" height="78" fill="#2563eb"/>
@@ -123,5 +128,5 @@
     </g>
   </g>
 
-  <text x="56" y="946" fill="#64748b" font-family="Arial, Helvetica, sans-serif" font-size="15">Pilot-scale product diagnosis; not legal advice, production retrieval, or public model ranking.</text>
+  <text x="56" y="946" fill="#64748b" font-family="Arial, Helvetica, sans-serif" font-size="17">Pilot-scale product diagnosis; automated flags are review signals, not model error rates or legal conclusions.</text>
 </svg>

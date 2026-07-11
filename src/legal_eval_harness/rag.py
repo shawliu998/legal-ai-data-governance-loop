@@ -9,6 +9,11 @@ from typing import Any
 import pandas as pd
 
 from .io_excel import DatasetBundle, find_gold_row
+from .release_gate import (
+    CLAIM_ENTAILMENT_BLOCKER_LABELS,
+    CLAIM_ENTAILMENT_ISSUE_LABELS,
+    CLAIM_ENTAILMENT_STRICT_DEFECT_LABELS,
+)
 from .utils import json_dumps, json_loads_or_none, parse_bool, safe_text
 
 
@@ -439,7 +444,7 @@ def _entailment_product_action(label: str) -> str:
     if label == "partially_supported":
         return "human_review_or_revision"
     if label == "unsupported":
-        return "badcase_and_regression_eval"
+        return "badcase_and_regression"
     if label == "contradicted":
         return "release_blocker"
     if label == "no_citation":
@@ -584,27 +589,49 @@ def summarize_claim_entailment(rows: pd.DataFrame, output_path: str | Path) -> p
                 {
                     "total_claim_rows": 0,
                     "reviewable_claim_rows": 0,
-                    "citation_gate_issue_rows": 0,
-                    "release_blocker_rows": 0,
+                    "reviewable_claim_strict_citation_defect_rows": 0,
+                    "reviewable_claim_strict_citation_defect_rate": 0.0,
+                    "reviewable_claim_needs_review_rows": 0,
+                    "reviewable_claim_needs_review_rate": 0.0,
+                    "all_claim_source_boundary_blocker_rows": 0,
+                    "all_claim_source_boundary_blocker_rate": 0.0,
                 }
             ]
         )
     else:
-        issue_labels = {
-            "unsupported",
-            "contradicted",
-            "no_citation",
-            "out_of_scope_source",
-            "fabricated_citation",
-        }
-        release_blockers = {"contradicted", "fabricated_citation", "out_of_scope_source"}
+        reviewable = rows["reviewable_legal_claim"].map(parse_bool)
+        labels = rows["entailment_label"].fillna("")
+        reviewable_claim_rows = int(reviewable.sum())
+        strict_citation_defects = int(
+            (reviewable & labels.isin(CLAIM_ENTAILMENT_STRICT_DEFECT_LABELS)).sum()
+        )
+        reviewable_citation_issues = int(
+            (reviewable & labels.isin(CLAIM_ENTAILMENT_ISSUE_LABELS)).sum()
+        )
+        all_claim_blockers = int(labels.isin(CLAIM_ENTAILMENT_BLOCKER_LABELS).sum())
         result = pd.DataFrame(
             [
                 {
                     "total_claim_rows": len(rows),
-                    "reviewable_claim_rows": int(rows["reviewable_legal_claim"].map(parse_bool).sum()),
-                    "citation_gate_issue_rows": int(rows["entailment_label"].isin(issue_labels).sum()),
-                    "release_blocker_rows": int(rows["entailment_label"].isin(release_blockers).sum()),
+                    "reviewable_claim_rows": reviewable_claim_rows,
+                    "reviewable_claim_strict_citation_defect_rows": strict_citation_defects,
+                    "reviewable_claim_strict_citation_defect_rate": round(
+                        strict_citation_defects / reviewable_claim_rows, 4
+                    )
+                    if reviewable_claim_rows
+                    else 0.0,
+                    "reviewable_claim_needs_review_rows": reviewable_citation_issues,
+                    "reviewable_claim_needs_review_rate": round(
+                        reviewable_citation_issues / reviewable_claim_rows, 4
+                    )
+                    if reviewable_claim_rows
+                    else 0.0,
+                    # Release/source-boundary blockers remain an all-claim
+                    # safety count: a fabricated or out-of-scope citation must
+                    # not disappear merely because the fragment was classified
+                    # non-reviewable for legal-content scoring.
+                    "all_claim_source_boundary_blocker_rows": all_claim_blockers,
+                    "all_claim_source_boundary_blocker_rate": round(all_claim_blockers / len(rows), 4),
                     "supported_rows": int((rows["entailment_label"] == "supported").sum()),
                     "partially_supported_rows": int((rows["entailment_label"] == "partially_supported").sum()),
                     "unsupported_rows": int((rows["entailment_label"] == "unsupported").sum()),

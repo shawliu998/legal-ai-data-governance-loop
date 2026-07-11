@@ -1,471 +1,170 @@
-# Legal Agent Product Boundary Eval Results
+# Product-Boundary API Pilot Results
 
 ## Positioning
 
-This report is a product-boundary evaluation report, not a model leaderboard.
+This report documents pilot-scale product and data evidence. It is not a public model leaderboard, a legal-accuracy benchmark, or a production-release approval.
 
-Core question:
+## Evidence Layers
 
-> Which model-agent architecture should answer, ask clarifying questions, use grounded sources,
-> route to human review, block release, or generate a reusable data asset?
+| Layer | Shape | Purpose | Boundary |
+| --- | ---: | --- | --- |
+| Mock/synthetic diagnostic | 50 cases × 5 synthetic model slots × 5 workflows = 1,250 runs | Stress-test run planning, schemas, routing, review sampling, and Dashboard | Not real model-quality evidence |
+| Product-boundary API pilot | 12 cases × 5 Qianfan-hosted model slots × 5 workflows = 300 API runs | Observe API reliability, product-boundary signals, and release-risk patterns | 271 non-empty answers, 29 empty responses; not a powered benchmark |
+| RAG V2 API pilot | 8 cases × 3 Qianfan-hosted model slots × 3 workflows = 72 API runs | Isolate retrieval, source boundary, citation coverage, and claim support | Controlled corpus and automated triage; not full legal retrieval reliability |
+| A5 API pilot | 8 cases × 3 Qianfan-hosted model slots = 24 traces / 72 turns | Validate multi-turn logging and trace-level review design | Deterministic flags not yet human-calibrated |
+| Priority human review | 80 enriched product-boundary records | Calibrate high-risk, citation, blocker, and routing decisions | Non-random; public labels cannot reproduce reviewer-level agreement |
+| Focused V2 experiment | 50 × 3 × 3 = 450 planned runs | Proposed next formal experiment | Planned, not completed |
 
-The legacy V implementation aliases map to the product-level A0-A5 architecture taxonomy described
-in `docs/legal_agent_product_eval_v2_design.md`. The results below use A0-A5 as the product language
-and keep V/W labels only as implementation aliases.
+The model names are provider-hosted slots as exposed through Baidu AI Cloud Qianfan at run time. They should not be treated as identical to official model APIs or as clean foundation-model attribution.
 
-## Current Run Status
+## Product-Boundary API Run Integrity
 
-| Layer                               | Status                                          |
-| ----------------------------------- | ----------------------------------------------- |
-| 50-case product-boundary dataset    | Complete                                        |
-| Controlled RAG corpus and retrieval | Complete                                        |
-| Mock model-agent diagnostic run     | Complete                                        |
-| Judge ensemble design               | Complete                                        |
-| Human calibration file              | Complete for mock diagnostic outputs            |
-| 12-case Qianfan API pilot dataset   | Prepared                                        |
-| Real Qianfan API outputs            | Complete                                        |
-| Qwen single-judge full scoring      | Complete                                        |
-| API priority human review           | Complete                                        |
-| Multi-judge ensemble smoke          | Complete; not used as full-run scoring baseline |
-| RAG V2 focused pilot                | Complete                                        |
-| A0-A5 architecture taxonomy         | Complete as design layer                        |
-| Trace-level eval schema             | Complete as design layer                        |
-| A5 multi-turn intake pilot cases    | Complete as 8-case JSONL pilot                  |
-| A5 multi-turn intake API pilot      | Complete as 24-trace / 72-turn pilot            |
+| Check | Result |
+| --- | ---: |
+| Planned API run records | 300 |
+| Unique run IDs | 300 |
+| Non-empty model answers | 271 |
+| Empty responses | 29 |
+| Cases | 12 |
+| Hosted model slots | 5 |
+| Workflows | 5 |
+| Structured judge rows | 300 |
 
-## How To Read The Evidence Layers
+The 300 records aggregate into 75 model-workflow-task slices. Under the current deterministic gate
+policy, `release_gate_decision` contains 35 `blocked` and 40 `limited_release` slices, with no
+`candidate_auto_answer` slice. These are policy outputs from this pilot—not production approvals,
+human-confirmed error rates, or a model ranking.
 
-The project has several evidence layers. They should not be merged into one headline score.
+The API client recorded all 300 calls with run-level status, but answer text inspection shows that 29 responses were empty. Accordingly, this project uses “300 API run records,” not “300 valid model outputs.” Judge JSON parseability is an engineering property and does not establish judge correctness.
 
-| Layer                         | Size             | What it is                                                     | What it is not                                           |
-| ----------------------------- | ---------------- | -------------------------------------------------------------- | -------------------------------------------------------- |
-| Mock diagnostic run           | 1250 mock outputs | Pipeline stress test for workflow, routing, review, dashboard  | Real model-quality evidence                              |
-| Real Qianfan API pilot        | 300 real outputs  | Pilot evidence across 12 cases, 5 models, and 5 architectures  | Statistically powered benchmark or public leaderboard    |
-| RAG V2 focused pilot          | 72 real outputs   | Source-limited reliability test for retrieval and citation gate | Full legal knowledge-base benchmark                      |
-| A5 multi-turn intake pilot    | 24 traces         | Trace-level legal intake pilot across user behavior variants    | Autonomous legal-intake readiness claim                  |
-| Focused V2 planned experiment | 450 outputs       | Planned formal run across 50 cases, 3 models, 3 architectures  | Completed result; it remains a planned next experiment   |
+## Artifacts
 
-The mock run validates the pipeline. The real API pilot validates product-boundary behavior on a
-small case set. The RAG V2 pilot isolates grounded-source reliability. The A5 pilot tests multi-turn
-intake traces. The 450-output focused experiment is planned and should not be described as
-completed.
+Public lightweight evidence:
 
-## Mock Diagnostic Artifacts
+- `outputs/product_boundary_api_pilot_v1/README.md`
+- `artifact_manifest.yaml`
+- `metrics_summary.csv`
+- `release_gate_summary.csv`
+- `claim_entailment_summary.csv`
+- `human_calibration_summary_priority_80.csv`
+- `redacted_sample_outputs_20.csv`
 
-| Artifact               | Path                                                                              |
-| ---------------------- | --------------------------------------------------------------------------------- |
-| Model outputs          | `outputs/product_boundary_pilot_mock/model_run_log.csv`                           |
-| Retrieval log          | `outputs/product_boundary_pilot_mock/retrieval_log.csv`                           |
-| RAG contexts           | `outputs/product_boundary_pilot_mock/rag_contexts.csv`                            |
-| Citation verification  | `outputs/product_boundary_pilot_mock/citation_verification.csv`                   |
-| Judge scores           | `outputs/product_boundary_pilot_mock/judge_scores.csv`                            |
-| Judge disagreements    | `outputs/product_boundary_pilot_mock/judge_disagreements.csv`                     |
-| Judge ensemble summary | `outputs/product_boundary_pilot_mock/judge_ensemble_summary.csv`                  |
-| Data routing           | `outputs/product_boundary_pilot_mock/data_routing.csv`                            |
-| Release gate           | `outputs/product_boundary_pilot_mock/release_gate.csv`                            |
-| Human calibration      | `outputs/product_boundary_pilot_mock/human_review_calibration_stratified.csv`     |
-| Chinese review file    | `outputs/product_boundary_pilot_mock/human_review_calibration_stratified_zh.xlsx` |
+Full response text, detailed judge rows, retrieval logs, review workbooks, and raw traces remain local and are intentionally excluded from the public package.
 
-Mock diagnostics produced:
+## What The API Pilot Revealed
 
-- 50 cases.
-- 5 model slots.
-- 5 model-agent conditions.
-- 1250 normalized model outputs.
-- 500 RAG-enabled outputs.
-- 370 stratified human calibration rows.
+### 1. Reliability failures must remain in the denominator
 
-## API Pilot Plan
+An empty final answer can occur even when transport-level execution is recorded as successful. Product metrics should therefore distinguish attempted run, API success, non-empty answer, parseable structured answer, and releasable answer.
 
-The real API pilot is intentionally smaller than the mock diagnostic run:
+### 2. A judge score is not a release action
 
-| Field                  | Value                                                                         |
-| ---------------------- | ----------------------------------------------------------------------------- |
-| Dataset                | `data/product_boundary_api_pilot_v1/dataset_manifest.yaml`                    |
-| Source JSONL           | `data/eval_sets/legal_product_boundary_api_pilot_v1.jsonl`                    |
-| Config                 | `config.qianfan_product_boundary_api_pilot.yaml`                              |
-| Output directory       | `outputs/product_boundary_api_pilot_v1/`                                      |
-| Cases                  | 12                                                                            |
-| Slices                 | 2 per slice                                                                   |
-| Models                 | ERNIE 5.0, DeepSeek V4 Pro, Qwen3.5-27B, GLM-5.2, Kimi K2.6                   |
-| Agent architectures    | A0, A1, A2, A3, A4 with legacy W/V implementation aliases                     |
-| Expected model outputs | 300                                                                           |
-| Full scoring judge     | Qwen3.5-27B single judge, selected after smoke testing for JSON stability     |
-| Judge ensemble smoke   | ERNIE 5.0 + Qwen3.5-27B primary judges, Kimi K2.6 arbiter, self-eval excluded |
+The Qwen3.5-27B hosted slot provided a parseable structured-judge baseline for the run set. Those scores are used as triage inputs only. They are affected by judge choice, prompt, model self-evaluation risk, empty answers, and the small case set.
 
-The API pilot was run as split jobs rather than one monolithic `all` command, because Qianfan model
-latency varied significantly by model and agent architecture.
+Deployment decisions must separately consider critical failures, missing facts, source boundary,
+citation support, and human-review requirements.
 
-## Real API Pilot Results
+### 3. RAG retrieval is not release readiness
 
-### Completed Artifacts
+The first pilot and the focused RAG iteration both showed that retrieved context can coexist with uncited material claims, out-of-scope sources, unsupported claims, or contradicted claims. These automated labels are conservative queueing signals, not final legal entailment judgments.
 
-| Artifact                         | Path                                                                              | GitHub status                  |
-| -------------------------------- | --------------------------------------------------------------------------------- | ------------------------------ |
-| Lightweight evidence package     | `outputs/product_boundary_api_pilot_v1/`                                          | committed                      |
-| Metrics summary                  | `outputs/product_boundary_api_pilot_v1/metrics_summary.csv`                       | committed                      |
-| Release-gate summary             | `outputs/product_boundary_api_pilot_v1/release_gate_summary.csv`                  | committed                      |
-| Claim entailment summary         | `outputs/product_boundary_api_pilot_v1/claim_entailment_summary.csv`              | committed                      |
-| Human calibration summary        | `outputs/product_boundary_api_pilot_v1/human_calibration_summary_priority_80.csv` | committed                      |
-| Redacted sample outputs          | `outputs/product_boundary_api_pilot_v1/redacted_sample_outputs_20.csv`            | committed                      |
-| Full model outputs               | `outputs/product_boundary_api_pilot_v1/model_run_log.csv`                         | local / ignored                |
-| Retrieval log                    | `outputs/product_boundary_api_pilot_v1/retrieval_log.csv`                         | local / ignored                |
-| RAG contexts                     | `outputs/product_boundary_api_pilot_v1/rag_contexts.csv`                          | local / ignored                |
-| Citation verification            | `outputs/product_boundary_api_pilot_v1/citation_verification.csv`                 | local / ignored                |
-| Full claim entailment triage     | `outputs/product_boundary_api_pilot_v1/claim_entailment.csv`                      | local / ignored                |
-| Qwen judge scores                | `outputs/product_boundary_api_pilot_v1/judge_scores.csv`                          | local / ignored                |
-| Data routing                     | `outputs/product_boundary_api_pilot_v1/data_routing.csv`                          | local / ignored                |
-| Release gate                     | `outputs/product_boundary_api_pilot_v1/release_gate.csv`                          | local / ignored                |
-| Executive dashboard              | `outputs/product_boundary_api_pilot_v1/executive_dashboard.xlsx`                  | local / ignored                |
-| Human review queue and workbooks | `outputs/product_boundary_api_pilot_v1/human_review_*`                            | local / ignored except summary |
+For source-limited tasks, a response should not be released unless:
 
-### Run Integrity
+- every used source is allowed;
+- material claims carry citations where required;
+- cited text supports the associated claim;
+- no fabricated, contradicted, or out-of-scope critical claim remains;
+- unresolved cases are reviewed.
 
-| Check                      |       Result |
-| -------------------------- | -----------: |
-| Model outputs              | 300 / 300 OK |
-| Unique run IDs             |          300 |
-| Qwen judge parsed outputs  | 300 / 300 OK |
-| RAG retrieval rows         |          120 |
-| RAG context rows           |          480 |
-| Citation verification rows |          120 |
-| Claim entailment rows      |         3597 |
+### 4. Human review changes data disposition
 
-### Model-Level Signals
+Two legal-background reviewers independently reviewed 80 priority-enriched records and reconciled disagreements. One reviewer holds a doctorate in law and passed China’s national unified legal professional qualification examination.
 
-These are deployment signals from a Qwen3.5-27B judge baseline, not a public leaderboard.
+The public package does not preserve reviewer A/B labels. This version therefore does not report
+reviewer agreement, judge-human agreement, Cohen's kappa, or a population accuracy estimate. The
+sample is useful for process design and qualitative correction, not for extrapolating rates to all
+API runs.
 
-Methodology caveat: model-level scores are Qwen-judge baseline signals, not final model rankings.
-Qwen-scored Qwen outputs should be interpreted cautiously and validated through human review or
-non-Qwen judge sampling.
+### 5. Provider-hosted reasoning and JSON need fallbacks
 
-| Model           | Avg score | High-risk rate | Human-review rate | Avg latency |
-| --------------- | --------: | -------------: | ----------------: | ----------: |
-| Qwen3.5-27B     |     0.878 |          0.200 |             0.800 |       13.3s |
-| ERNIE 5.0       |     0.765 |          0.383 |             0.817 |       32.9s |
-| DeepSeek V4 Pro |     0.756 |          0.400 |             0.800 |       27.6s |
-| Kimi K2.6       |     0.730 |          0.350 |             0.783 |       87.8s |
-| GLM-5.2         |     0.462 |          0.650 |             0.833 |       28.2s |
-
-### Agent Architecture-Level Signals
-
-| Agent architecture              | Legacy alias | Avg score | High-risk rate | Human-review rate | Product interpretation                                            |
-| ------------------------------- | ------------ | --------: | -------------: | ----------------: | ----------------------------------------------------------------- |
-| A1 structured legal counsel     | V1           |     0.883 |          0.150 |             0.717 | Best baseline for routine structured answers.                     |
-| A4 clarification-first intake   | V5           |     0.851 |          0.300 |             0.683 | Strong for intake and risk calibration.                           |
-| A2 grounded retrieval counsel   | V4           |     0.706 |          0.350 |             0.950 | Useful for grounding, but citation discipline still needs review. |
-| A0 baseline closed-book         | V0           |     0.616 |          0.500 |             0.700 | Not suitable for high-risk autonomous release.                    |
-| A3 verifier-router policy layer | V3           |     0.533 |          0.683 |             0.983 | Conservative but over-routes to human review under Qwen judge.    |
-
-### Routing And Release Gate
-
-| Output                         | Count |
-| ------------------------------ | ----: |
-| Human review route             |   243 |
-| Eval route                     |    45 |
-| SFT route                      |     9 |
-| Badcase route                  |     3 |
-| Limited release / human review |    44 |
-| Blocked release gates          |    31 |
-
-Citation verification produced 92 `unsupported_claim`, 24 `missing_citation`, 3
-`citation_supported`, and 1 `fabricated_citation` labels. This is a triage signal, not a final legal
-entailment judgment.
-
-After adding claim-level citation entailment into the release gate, 12 blocked model-agent-task
-combinations contain claim-level or source-boundary blockers.
-
-### Claim-Level Citation Entailment
-
-After the first human calibration pass, the pipeline added a deterministic claim-level citation
-entailment triage layer.
-
-It extracts material claims from RAG-enabled outputs, maps each claim to cited source IDs, checks
-allowed-source boundaries from the product-boundary JSONL, and assigns a product action.
-
-This is a conservative review-queue signal, not a final legal conclusion.
-
-| Metric                      | Result |
-| --------------------------- | -----: |
-| Total extracted claim rows  |   3597 |
-| Reviewable legal claim rows |    716 |
-| Citation-gate issue rows    |    648 |
-| Release-blocker rows        |     60 |
-| Supported rows              |     56 |
-| Partially supported rows    |     41 |
-| Unsupported rows            |     46 |
-| No-citation rows            |    542 |
-| Out-of-scope source rows    |     56 |
-| Fabricated citation rows    |      3 |
-| Contradicted rows           |      1 |
-
-Product interpretation:
-
-- The high `no_citation` count confirms that RAG prompts need stricter material-claim citation
-  coverage.
-- `out_of_scope_source` rows identify source-boundary failures where answers used sources outside a
-  source-limited task.
-- `unsupported` rows fell after filtering intake fragments and scoring combined cited sources, but
-  remain good candidates for citation-grounding regression evals.
-- `out_of_scope_source`, `fabricated_citation`, and `contradicted` rows should stay release blockers
-  pending human review.
-
-### Human Calibration Results
-
-The priority legal-review sample focuses on high-risk outputs, citation or claim issues, and likely
-release blockers. It is intentionally not a random sample of all 300 outputs.
-
-| Metric                                        |                            Result |
-| --------------------------------------------- | --------------------------------: |
-| Reviewed priority outputs                     |                                80 |
-| Review completion rate                        |                              100% |
-| Human pass                                    |                                 4 |
-| Human partial pass                            |                                27 |
-| Human fail                                    |                                49 |
-| Judge-human agreement                         | 92.5% on priority-enriched sample |
-| Confirmed critical failures                   |                                76 |
-| Confirmed citation or evidence-support issues |                                45 |
-| Human route overrides                         |                                47 |
-
-The reviewed sample shows that the Qwen judge baseline was directionally useful for triage, but the
-human review added important product-level distinctions:
-
-- Some high-risk answers were legally usable but still needed human-review routing.
-- Passing high-risk answers should not be treated as `badcase`; they are better used as calibration,
-  preference, or positive regression examples.
-- RAG-enabled agent runs exposed citation-boundary failures when the output used retrieved sources
-  or external statutes beyond the source-limited task.
-- The most common product failure was not merely answer quality; it was insufficient escalation or
-  unsupported source use under constrained legal-product conditions.
-
-### Judge Reliability Finding
-
-The initial plan used DeepSeek V4 Pro and GLM-5.2 as primary judges with Kimi K2.6 as arbiter. Real
-smoke tests showed this was not stable enough on the Qianfan OpenAI-compatible endpoint:
-
-- DeepSeek V4 Pro often spent completion budget in `reasoning_content` and returned empty final
-  `content`.
-- GLM-5.2 and ERNIE 5.0 sometimes returned truncated JSON on longer judge prompts.
-- Qwen3.5-27B returned stable JSON in the full 300-output single-judge run.
-- Multi-judge ensemble remains useful for targeted calibration, but full-run release decisions
-  currently use the Qwen judge baseline plus human review.
+Targeted smoke tests surfaced empty final content and truncated structured responses on some hosted
+endpoints. This observation is limited to the tested Qianfan configurations. It motivates separate
+output budgets, schema retry/fallback, empty-response monitoring, and human escalation; it does not
+establish a general defect in any named foundation model.
 
 ## RAG V2 Focused Pilot
 
-After the main API pilot, a smaller RAG V2 focused pilot was run on 8 source-limited
-citation/document cases across ERNIE 5.0, DeepSeek V4 Pro, and Qwen3.5-27B.
-
-Evidence package:
-
-`outputs/rag_v2_focused_pilot_v1/`
-
-| Metric                                     |     Result |
-| ------------------------------------------ | ---------: |
-| Model outputs                              | 72 / 72 OK |
-| RAG retrieval rows                         |         24 |
-| Expected-source recall on A2/RAG retrieval |       100% |
-| Average source-boundary precision          |       0.50 |
-| Reviewable legal claims                    |        630 |
-| Citation-gate issue rows                   |        555 |
-| Citation-gate issue rate                   |      88.1% |
-| Claim-level release blocker rows           |         75 |
-
-Main finding:
-
-Retrieval found the expected sources, but generation still produced too many uncited material claims
-and out-of-scope source uses. A2/RAG improved citation coverage versus A1 and A4, but it also
-introduced source-boundary release blockers.
-
-The product policy should be: RAG is required for source-specific tasks, but RAG output is not
-releasable unless it passes claim-level citation and source-boundary gates.
-
-The 88.1% citation-gate issue rate is a strict material-claim release gate, not an overall
-answer-accuracy rate. Its purpose is to identify outputs that need citation repair, source-boundary
-filtering, human review, or data routing before release.
-
-Detailed results:
-
-`docs/rag_v2_focused_results.md`
-
-## A5 Multi-Turn Intake Smoke
-
-After adding the A0-A5 architecture layer, a small A5 smoke test was run to show that the
-trace-level legal intake loop can execute.
-
-Evidence package:
-
-`outputs/a5_multiturn_intake_smoke/`
-
-| Metric                           | Result |
-| -------------------------------- | -----: |
-| Cases                            |      3 |
-| Models                           |      2 |
-| Traces                           |      6 |
-| Turns                            |     18 |
-| Trace pass rate                  |   100% |
-| Average material-fact coverage   |  83.3% |
-| Bad-premise challenge rate       |   100% |
-| Human-review recommendation rate |   100% |
-| Safe redirection rate            |   100% |
-| Overclaim trace count            |      0 |
-
-Main finding:
-
-A5 can now be evaluated as a trace rather than a single final answer. The smoke set intentionally
-used cooperative, dependent, and adversarial users. All traces routed to `human_review_required`,
-which is the expected conservative product posture for labor coercion and adversarial
-debt-collection scenarios.
-
-The 100% trace pass rate is deterministic smoke-gate success on 6 traces. It validates the A5
-runner, parser, and first-pass product-risk checks; it is not a human-validated legal correctness
-score.
-
-Detailed results:
-
-`docs/a5_multiturn_smoke_results.md`
-
-A5 rubric:
-
-`docs/a5_trace_judge_rubric.md`
-
-## A5 Multi-Turn Intake Full Pilot
-
-The A5 smoke was expanded into a full 8-case real API pilot across ERNIE 5.0, DeepSeek V4 Pro, and
-Qwen3.5-27B.
-
-Evidence package:
-
-`outputs/a5_multiturn_intake_pilot_v1/`
-
-| Metric                           | Result |
-| -------------------------------- | -----: |
-| Cases                            |      8 |
-| Models                           |      3 |
-| Traces                           |     24 |
-| Turns                            |     72 |
-| Trace pass rate                  |  75.0% |
-| Average material-fact coverage   |  77.1% |
-| Bad-premise challenge rate       |   100% |
-| Human-review recommendation rate |   100% |
-| Safe redirection rate            |   100% |
-| Overclaim trace count            |      6 |
-
-Main finding:
-
-A5 is now evaluated as a real multi-turn pilot, not just a smoke test. The deterministic trace
-checks show that all three models maintained refusal/redirection and human-review posture.
-
-Material-fact elicitation and overclaim control still need human calibration. The 6
-overclaim-flagged traces are priority review rows, not confirmed legal errors.
-
-Detailed results:
-
-`docs/a5_multiturn_pilot_results.md`
-
-Human calibration template:
-
-`outputs/a5_multiturn_intake_pilot_v1/human_trace_calibration_template.csv`
-
-## Product Policy Conclusions
-
-These conclusions are the policy frame to validate with real API outputs.
-
-Auto-answer eligible:
-
-- Low-risk `normal_practice` tasks.
-- No critical failure.
-- No fabricated citation or unsupported claim.
-- No unresolved judge disagreement.
-- Prefer A1 structured counsel, with A3 verifier-router only as a policy layer.
-- Do not use A0 closed-book as a high-risk release candidate.
-
-Grounding required:
-
-- `citation_grounding` slice.
-- Contract, document, or source-specific interpretation.
-- Any answer that claims a rule, clause, or document basis.
-- Prefer A2 grounded retrieval counsel with citation verification and source-boundary gates.
-
-Clarification-first required:
-
-- Missing material facts.
-- Ambiguous labor, contract, family, or procedural posture.
-- Win-rate, lawsuit outcome, or probability questions.
-- Prefer A4 clarification-first when facts are insufficient.
-- Use A5 multi-turn intake for behavior-sensitive intake scenarios after human trace calibration.
-
-Human review required:
-
-- High-risk labor, marriage/family, accident, administrative penalty, or criminal-civil overlap.
-- Deceptive or coercive document drafting.
-- Unsupported legal claims or fabricated citations.
-- Judge disagreement on risk, route, or critical failure.
-
-Blocked from release:
-
-- Fabricated citations.
-- Invented evidence.
-- Overconfident win probability.
-- Missed human review on high-risk samples.
-- Unsafe or deceptive action suggestions.
-
-## Human Calibration Reporting Template
-
-After the API pilot, report:
-
-- Reviewed outputs:
-- Judge-human agreement:
-- Critical failure agreement:
-- Citation-support disagreement:
-- Most common judge error:
-- Examples corrected by human review:
-
-## Data Production Plan
-
-| Failure Pattern                             | Route                        | Data Action                                             |
-| ------------------------------------------- | ---------------------------- | ------------------------------------------------------- |
-| Fabricated citation                         | `badcase`, `regression_eval` | Add to source-grounding regression set.                 |
-| Invented fact or unsupported document claim | `badcase`, `human_review`    | Human cleanup before reuse.                             |
-| Overconfident win rate                      | `preference_candidate`       | Build preference pairs favoring calibrated uncertainty. |
-| Missed human review                         | `human_review`, `badcase`    | Tighten release gate and escalation prompt.             |
-| Ignored material fact change                | `eval_holdout`               | Preserve counterfactual pair as holdout.                |
-| Weak clarification                          | `sft_candidate`              | Add intake checklist examples.                          |
-
-## Further RAG Iteration
-
-The next RAG iteration should focus on reliability rather than broader model ranking:
-
-- Expand the controlled corpus with precise statute, contract, policy, case-rule, and evidence
-  snippets.
-- Add claim-level citation entailment labels: `supported`, `partially_supported`, `unsupported`,
-  `contradicted`, `no_citation`, and `out_of_scope_source`.
-- Separate retrieval metrics from answer metrics: context recall, context precision, source-boundary
-  precision, citation coverage, and citation entailment.
-- Extend the focused citation/document pilot before any full rerun.
-- Keep A1, A2, and A4 as the primary comparison set for source-boundary tasks.
-- Treat unsupported or contradicted material claims as release blockers.
-
-See [rag_v2_improvement_plan.md](rag_v2_improvement_plan.md) for the detailed plan.
-
-## Final Result Format
-
-The final API result should not be written as:
-
 ```text
-Model A: 86
-Model B: 83
+8 source-limited cases
+× 3 Qianfan-hosted model slots
+× 3 workflows
+= 72 API run records
 ```
 
-It should be written as:
+All 72 records contained non-empty answers. The pilot compared structured, grounded, and clarification-oriented workflows on a controlled corpus. Its primary contribution is the field and evidence design: retrieval metrics are separated from answer, source-boundary, citation, and claim-support signals.
+
+Detailed report: [RAG V2 Focused Results](rag_v2_focused_results.md).
+
+## A5 Multi-Turn Pilot
 
 ```text
-Auto-answer eligible:
-Clarification-first required:
-Grounding required:
-Human review required:
-Blocked from release:
-Next badcase set:
-Next SFT candidates:
-Next preference pairs:
-Regression eval additions:
+8 cases
+× 3 Qianfan-hosted model slots
+= 24 traces / 72 turns
 ```
+
+All 72 turn records show normal response status. The pilot validates trace collection, behavior
+metadata, deterministic queueing rules, redacted evidence, and a human-calibration template. The
+separate `trace_review_recommendation` field is `human_review_required` for all 24 traces by pilot
+rule; it is a queue recommendation, not a trace quality label or record-level `response_policy`.
+
+Because the 24 traces have not received reviewer-level calibration, this version does not report trace pass rate, model-level pass rate, or behavior-level quality percentages. Deterministic overclaim, fact-coverage, and redirection flags remain review-priority signals only.
+
+Detailed report: [A5 Multi-Turn Pilot](a5_multiturn_pilot_results.md).
+
+## Canonical Product Decisions
+
+The design separates three concepts:
+
+1. `response_policy`: what to do with the current answer—`auto_answer`, `grounded_answer`, `clarify`, `human_review`, or `block`.
+2. `workflow_status`: where the record is in review—such as `pending_review`, `reviewed`, `blocked`, or `released`.
+3. `data_asset_routes`: proposed downstream destinations—`eval`, `sft`, `preference`, `badcase`, or
+   `regression`; only reviewed and accepted records become reusable assets.
+
+The current router, Dashboard builder, release gate, and review-writeback path use this canonical
+model. `release_decision` and `data_route` are retained only as compatibility aliases and are not
+used for internal routing logic. Group-level deployment gating is stored separately as
+`release_gate_decision`. A candidate route never means that an uncorrected failed answer is approved
+as training gold.
+
+## Release Policy
+
+- Consider limited automatic answering only for low-risk, fact-sufficient records with no critical issue.
+- Ask clarifying questions when material facts are missing.
+- Require grounded retrieval and claim-support checks for source-specific tasks.
+- Route high-risk or unresolved cases to human review.
+- Block fabricated citations, invented evidence, unsafe action suggestions, contradicted critical claims, and material source-boundary violations.
+
+No model-agent configuration should be fully auto-released from this pilot alone.
+
+## Data Production Policy
+
+| Reviewed failure pattern | Candidate assets | Required handling |
+| --- | --- | --- |
+| Missing material facts | `sft`, `eval` | Reviewer writes or approves the target intake behavior |
+| Safer answer vs overconfident answer | `preference`, `regression` | Preserve both reviewed responses and pairing rationale |
+| Fabricated citation or invented fact | `badcase`, `regression` | Keep as P0 release-blocker test; never use raw failure as positive SFT |
+| Out-of-scope source use | `regression`, `eval` | Add source-boundary hard negative and allowed-source metadata |
+| Unsupported material claim | `badcase`, `regression` | Human-label support span before reuse |
+| Judge uncertainty | `eval` | Preserve for evaluator calibration after adjudication |
+
+## What Not To Claim
+
+- Do not call 300 API run records “300 valid answers.”
+- Do not rank the hosted model slots from this small, judge-dependent pilot.
+- Do not equate Qianfan-hosted slots with official model API performance.
+- Do not treat automated claim labels as final legal correctness.
+- Do not infer population rates from the 80-row priority review.
+- Do not report reviewer agreement without reproducible reviewer A/B labels.
+- Do not report A5 quality metrics before trace-level human calibration.
+- Do not describe the planned 450-run experiment as completed.

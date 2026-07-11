@@ -13,7 +13,7 @@ from .judge import _api_judge_payload, _mock_judge_payload, normalize_judge_payl
 from .prompt_builder import PromptBuilder
 from .router import route_one
 from .schemas import COARSE_ERROR_TAGS, SCORE_DIMENSIONS
-from .utils import json_dumps, json_loads_or_none, safe_text
+from .utils import json_dumps, json_loads_or_none, parse_bool, safe_text
 
 
 CRITICAL_COARSE_TAGS = {
@@ -55,16 +55,23 @@ def _matches_answer_model(judge_config: dict[str, Any], run_row: dict[str, Any])
     return bool(judge_values.intersection(answer_values))
 
 
-def _failed_judge_payload() -> dict[str, Any]:
+def _failed_judge_payload(run_status: str = "failed") -> dict[str, Any]:
+    empty_output = run_status == "empty_output"
+    subtype = "empty_model_output" if empty_output else "model_run_failed"
+    reason = (
+        "API call completed but returned empty answer content"
+        if empty_output
+        else "model run failed before ensemble judging"
+    )
     return {
         "dimension_scores": {dim: 0 for dim in SCORE_DIMENSIONS},
         "atomic_scores": [],
         "total_score": 0,
         "max_score": len(SCORE_DIMENSIONS) * 2,
         "score_rate": 0.0,
-        "error_tags": [{"coarse_error_tag": "needs_human_review", "error_subtype": "model_run_failed"}],
+        "error_tags": [{"coarse_error_tag": "needs_human_review", "error_subtype": subtype}],
         "risk_level": "high",
-        "judge_reason": "model run failed before ensemble judging",
+        "judge_reason": reason,
         "judge_confidence": "low",
         "needs_human_review": True,
     }
@@ -123,7 +130,7 @@ def _judge_payload_for_run(
     }.get(task_category, "JUDGE_CONSULTATION")
 
     if run_row.get("run_status") != "ok":
-        return _failed_judge_payload(), parsed_ok, raw_judge_output, judge_prompt_id
+        return _failed_judge_payload(safe_text(run_row.get("run_status"))), parsed_ok, raw_judge_output, judge_prompt_id
     if mode == "mock":
         return _mock_judge_payload(run_row, gold_row), parsed_ok, raw_judge_output, judge_prompt_id
 
@@ -195,6 +202,12 @@ def _score_row(
         "answer_model_alias": safe_text(run_row.get("model_alias")),
         "answer_model_vendor": safe_text(run_row.get("model_vendor")),
         "answer_model_family": safe_text(run_row.get("model_family")),
+        "run_status": safe_text(run_row.get("run_status")),
+        "retrieval_required": parse_bool(run_row.get("retrieval_required")),
+        "citation_required": parse_bool(run_row.get("citation_required")),
+        "rag_enabled": parse_bool(run_row.get("rag_enabled")),
+        "rag_source_ids": run_row.get("rag_source_ids", ""),
+        "retrieval_status": safe_text(run_row.get("retrieval_status")),
         "judge_model_alias": judge_alias,
         "judge_vendor": safe_text(judge_config.get("vendor")),
         "judge_family": safe_text(judge_config.get("family")),
@@ -204,11 +217,8 @@ def _score_row(
     }
 
 
-def _routes_for_scores(score_rows: list[dict[str, Any]]) -> list[str]:
-    routes: list[str] = []
-    for row in score_rows:
-        routes.append(route_one(row)["data_route"])
-    return routes
+def _routing_decisions(score_rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    return [route_one(row) for row in score_rows]
 
 
 def _build_disagreement(
@@ -219,7 +229,8 @@ def _build_disagreement(
     rates = [float(row.get("score_rate") or 0.0) for row in primary_rows]
     score_gap = round(max(rates) - min(rates), 3) if len(rates) >= 2 else 0.0
     critical_sets = [_critical_tag_set(row) for row in primary_rows]
-    routes = _routes_for_scores(primary_rows)
+    decisions = _routing_decisions(primary_rows)
+    response_policies = [decision["response_policy"] for decision in decisions]
     reasons: list[str] = []
     if len(primary_rows) < 2:
         reasons.append("single_primary_after_self_eval_exclusion")
@@ -227,8 +238,8 @@ def _build_disagreement(
         reasons.append("score_gap")
     if len({tuple(sorted(tags)) for tags in critical_sets}) > 1:
         reasons.append("critical_failure_mismatch")
-    if len(set(routes)) > 1:
-        reasons.append("route_mismatch")
+    if len(set(response_policies)) > 1:
+        reasons.append("response_policy_mismatch")
     return {
         "run_id": run_row["run_id"],
         "sample_id": safe_text(run_row["sample_id"]),
@@ -243,8 +254,18 @@ def _build_disagreement(
         "critical_tag_sets": json_dumps(
             {row["judge_model_alias"]: sorted(_critical_tag_set(row)) for row in primary_rows}
         ),
+        "primary_response_policies": json_dumps(
+            {
+                row["judge_model_alias"]: response_policy
+                for row, response_policy in zip(primary_rows, response_policies)
+            }
+        ),
+        # Backward-compatible diagnostic field.
         "primary_routes": json_dumps(
-            {row["judge_model_alias"]: route for row, route in zip(primary_rows, routes)}
+            {
+                row["judge_model_alias"]: decision["data_route"]
+                for row, decision in zip(primary_rows, decisions)
+            }
         ),
         "requires_arbitration": bool(reasons),
         "disagreement_reasons": "|".join(reasons),
@@ -255,12 +276,31 @@ def _build_summary(disagreement: dict[str, Any], score_rows: list[dict[str, Any]
     arbiter_rows = [row for row in score_rows if row["judge_role"] == "arbiter"]
     selected_rows = arbiter_rows or [row for row in score_rows if row["judge_role"] == "primary"]
     score_rates = [float(row["score_rate"]) for row in selected_rows]
-    routes = _routes_for_scores(selected_rows)
+    decisions = _routing_decisions(selected_rows)
+    response_policies = [decision["response_policy"] for decision in decisions]
+    routes = [decision["data_route"] for decision in decisions]
     risks = [safe_text(row.get("risk_level")) for row in selected_rows]
     requires_arbitration = bool(disagreement["requires_arbitration"])
+    if "block" in response_policies:
+        final_response_policy = "block"
+    elif requires_arbitration and not arbiter_rows:
+        final_response_policy = "human_review"
+    else:
+        final_response_policy = _most_common(response_policies, "human_review")
     final_route = (
-        "human_review" if requires_arbitration and not arbiter_rows else _most_common(routes, "human_review")
+        "human_review"
+        if final_response_policy in {"human_review", "block"}
+        else _most_common(routes, "eval")
     )
+    final_workflow_status = {
+        "block": "blocked",
+        "human_review": "pending_review",
+    }.get(final_response_policy, "released")
+    final_asset_routes = [
+        route
+        for route in ["eval", "sft", "preference", "badcase", "regression"]
+        if any(route in decision["data_asset_routes"] for decision in decisions)
+    ]
     return {
         "run_id": disagreement["run_id"],
         "sample_id": disagreement["sample_id"],
@@ -272,9 +312,16 @@ def _build_summary(disagreement: dict[str, Any], score_rows: list[dict[str, Any]
         "selected_judges": json_dumps([row["judge_model_alias"] for row in selected_rows]),
         "final_score_rate": round(mean(score_rates), 3) if score_rates else 0.0,
         "final_risk_level": _max_risk(risks),
+        "final_workflow_status": final_workflow_status,
+        "final_response_policy": final_response_policy,
+        "final_data_asset_routes": json_dumps(final_asset_routes),
+        # Backward-compatible primary-route projection.
         "final_data_route": final_route,
         "requires_arbitration": requires_arbitration,
-        "requires_human_calibration": bool(final_route == "human_review" or (requires_arbitration and not arbiter_rows)),
+        "requires_human_calibration": bool(
+            final_response_policy in {"human_review", "block"}
+            or (requires_arbitration and not arbiter_rows)
+        ),
         "disagreement_reasons": disagreement["disagreement_reasons"],
     }
 

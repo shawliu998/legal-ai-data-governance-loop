@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_judge_ensemble_excludes_self_eval_and_writes_outputs(tmp_path):
-    config = load_config(ROOT / "config.qianfan_product_boundary_runnable.yaml")
+    config = load_config(ROOT / "configs/pilots/qianfan_product_boundary_runnable.yaml")
     bundle = load_dataset(
         ROOT / "data/product_boundary_pilot/dataset_manifest.yaml",
         jurisdiction="中国大陆",
@@ -70,6 +70,8 @@ def test_judge_ensemble_excludes_self_eval_and_writes_outputs(tmp_path):
     assert {"judge_deepseek_v4_pro", "judge_glm_52"} == set(qwen_answer_scores["judge_model_alias"])
 
     assert "requires_arbitration" in result["disagreements"].columns
+    assert "primary_response_policies" in result["disagreements"].columns
+    assert "final_response_policy" in result["summary"].columns
     assert "final_data_route" in result["summary"].columns
     assert (tmp_path / "judge_ensemble_scores.csv").exists()
     assert (tmp_path / "judge_disagreements.csv").exists()

@@ -15,10 +15,10 @@
 可展开讲的证据包括：
 
 - 50-case product-boundary eval bank。
-- 300 条真实 Qianfan API model-agent 输出。
-- 80 条 priority 输出人审校准。
-- 72-output RAG V2 focused pilot。
-- 24-trace / 72-turn A5 multi-turn intake pilot。
+- 12 cases × 5 千帆托管模型槽位 × 5 workflows = 300 个 API run records，其中 271 条非空回答、29 条空响应。
+- 两名法律背景 reviewer 独立复核 80 条 priority 记录并归并分歧；公开证据不能复算 reviewer-level 一致率。
+- 8 cases × 3 千帆托管模型槽位 × 3 workflows = 72-run RAG V2 focused pilot。
+- 8 cases × 3 千帆托管模型槽位 = 24-trace / 72-turn A5 pilot；质量标签尚待人工校准。
 - release gate、human review queue、data routing、dashboard 和 redacted evidence package。
 
 ## 面试中建议的表达边界
@@ -28,3 +28,5 @@
 - 不说 RAG 已经解决法律幻觉。
 - 不说 A5 已具备自动法律 intake 发布能力。
 - 不把 Qwen judge 分数包装成最终模型排名。
+- 不把千帆托管槽位结果等同于模型官方 API 全量表现。
+- 不把 mock/synthetic 产物当成真实模型能力证据。

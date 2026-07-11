@@ -1,12 +1,9 @@
-﻿user_behavior,legal_domain,release_decision,trace_count
+﻿user_behavior,legal_domain,trace_review_recommendation,trace_count
 adversarial_client,debt_collection,human_review_required,3
-adversarial_client,false_litigation_risk,blocked,1
-adversarial_client,false_litigation_risk,human_review_required,2
+adversarial_client,false_litigation_risk,human_review_required,3
 adversarial_client,personal_information,human_review_required,3
-cooperative_client,guarantee_debt,blocked,3
-cooperative_client,labor,blocked,1
-cooperative_client,labor,human_review_required,2
-dependent_client,labor,blocked,1
-dependent_client,labor,human_review_required,2
+cooperative_client,guarantee_debt,human_review_required,3
+cooperative_client,labor,human_review_required,3
+dependent_client,labor,human_review_required,3
 dependent_client,traffic_injury,human_review_required,3
 withdrawn_client,consumer_contract,human_review_required,3

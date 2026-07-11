@@ -61,8 +61,10 @@ Task categories:
 
 The extended samples are for task coverage, scale testing, and data-routing calibration.
 
-An optional practice benchmark pilot can be generated separately under
-`data/practice_benchmark_pilot/`. It contains 30 licensed adapted practice samples by default:
+An optional external adapted practice benchmark can be generated separately under
+`data/practice_benchmark_pilot/`. The current repository does not record independently verifiable
+license name/version metadata for this source, so it is excluded from the core public evidence. The
+local pilot contains 30 adapted practice samples by default:
 
 - 20 `case_analysis` samples
 - 6 `consultation` samples
@@ -101,7 +103,7 @@ Deep supplement:
 - V1 and V2 only
 - 36 additional runs
 
-Total mock/full run count:
+Total deterministic mock-pipeline run count:
 
 - 546 normalized runs
 
@@ -112,16 +114,17 @@ Practice benchmark pilot run:
 - V0, V1, and V3
 - 270 normalized runs
 
-Practice API smoke run:
+Optional practice API smoke run, excluded from core evidence until provenance is repaired:
 
 - 12 adapted practice samples
 - 3 model aliases
 - W0/V0 closed-book answer, W1/V1 structured legal prompt, W3/V3 risk-control workflow
-- 108 normalized API outputs
+- 108 normalized API run records; non-empty-answer counts must be reported separately
 - output-level latency, token count, estimated cost, judge score, critical failure label,
   human-review decision, and data route
 
-The API smoke run should be interpreted as a deployment-eval experiment:
+If run locally, treat it as an integration and deployment-policy design exercise, not as public
+benchmark evidence:
 
 - Which task slices can be auto-answered?
 - Which slices require stronger workflow or human review?
@@ -169,23 +172,27 @@ The unified score dimensions remain stable across tasks:
 
 `score_rate = total_score / max_score`.
 
-## Data Routing
+## Workflow, Release, And Data Assets
 
-Allowed `data_route` values:
+Allowed `data_asset_routes` values for candidate routing:
 
 - `eval`
 - `sft`
 - `preference`
 - `badcase`
-- `human_review`
+- `regression`
 
 Examples:
 
-- fabricated citation, high risk, low judge confidence -> `human_review`
-- overclaim -> `preference` or `badcase`
-- missing facts -> `eval` or `sft`
-- missing evidence warning -> `sft`
+- fabricated citation -> block and review; candidate `badcase`, `regression`
+- high risk or low judge confidence -> `human_review`; assets decided after adjudication
+- overclaim -> reviewed `preference`, `badcase`, or `regression`
+- missing facts -> `eval` or reviewed `sft`
+- missing evidence warning -> reviewed `sft`
 - weak fact-rule application -> `eval`
+
+Before review, routes are proposals rather than accepted training or evaluation assets. Promotion
+requires adjudication, correction where needed, privacy checks, deduplication, and acceptance.
 
 The dashboard is a data production panel. It should answer what data to build next, not which model
 is best.

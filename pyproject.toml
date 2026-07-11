@@ -8,18 +8,18 @@ version = "0.3.0"
 description = "Legal AI data governance loop for product-boundary evaluation, release gates, and next-round data production."
 requires-python = ">=3.11"
 dependencies = [
-  "pandas",
-  "openpyxl",
-  "pydantic",
-  "python-dotenv",
-  "pyyaml",
-  "tqdm",
-  "tenacity",
-  "openai",
+  "pandas>=2.2,<4",
+  "openpyxl>=3.1,<4",
+  "pydantic>=2.8,<3",
+  "python-dotenv>=1.0,<2",
+  "pyyaml>=6.0,<7",
+  "tqdm>=4.66,<5",
+  "tenacity>=8.2,<10",
+  "openai>=1.40,<3",
 ]
 
 [project.optional-dependencies]
-test = ["pytest"]
+test = ["pytest>=8,<10"]
 
 [project.scripts]
 legal-ai-data-loop = "legal_eval_harness.cli:main"

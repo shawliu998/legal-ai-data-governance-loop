@@ -97,26 +97,31 @@ Route to human review when any condition is true:
 - parse failure or structurally unusable output
 - explicit `needs_human_review = true`
 
-## Data Route Rules
+## Workflow And Data Asset Rules
 
-Allowed values:
+Allowed `data_asset_routes` values for candidate routing:
 
 - `eval`
 - `sft`
 - `preference`
 - `badcase`
-- `human_review`
+- `regression`
 
-Route examples:
+Product-handling examples:
 
-- fabricated citation or high risk -> `human_review`
-- overclaim with a contrasting safer output -> `preference`
-- repeated severe overclaim -> `badcase`
-- missing facts with a clear corrected answer -> `sft`
+- fabricated citation -> block and review; candidate `badcase`, `regression`
+- high risk -> `human_review`; assets decided after adjudication
+- overclaim with a reviewed safer output -> `preference`, `regression`
+- repeated severe overclaim -> `badcase`, `regression`
+- missing facts with a reviewed corrected answer -> `sft`
 - weak fact-rule application -> `eval`
-- missing evidence warning -> `sft`
+- missing evidence warning -> reviewed `sft`
 
-Use `route_reason` and `route_subtype` for detail. Do not create custom route names.
+Before review, these values are proposed destinations only. Promotion into an accepted asset
+requires adjudication, correction where needed, privacy checks, deduplication, and acceptance.
+
+Use `route_reason` and `route_subtype` for detail. Do not merge workflow state, release action, and
+candidate data assets into a custom route name.
 
 ## SFT Sample Standard
 

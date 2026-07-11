@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import hashlib
+import subprocess
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -8,7 +10,11 @@ import pandas as pd
 import yaml
 
 from .product_boundary_dataset import load_product_boundary_cases
-from .release_gate import CLAIM_ENTAILMENT_BLOCKER_LABELS, CLAIM_ENTAILMENT_ISSUE_LABELS
+from .release_gate import (
+    CLAIM_ENTAILMENT_BLOCKER_LABELS,
+    CLAIM_ENTAILMENT_ISSUE_LABELS,
+    CLAIM_ENTAILMENT_STRICT_DEFECT_LABELS,
+)
 from .utils import json_loads_or_none, parse_bool, safe_text
 
 
@@ -45,6 +51,47 @@ def _rate(numerator: int | float, denominator: int | float) -> float:
 
 def _sha12(text: Any) -> str:
     return hashlib.sha256(safe_text(text).encode("utf-8")).hexdigest()[:12]
+
+
+def _file_sha256(path: str | Path | None) -> str:
+    if not path:
+        return ""
+    source = Path(path)
+    if not source.exists():
+        return ""
+    digest = hashlib.sha256()
+    with source.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _git_value(*args: str) -> str:
+    try:
+        result = subprocess.run(
+            ["git", *args],
+            cwd=Path(__file__).resolve().parents[2],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+    except (OSError, subprocess.CalledProcessError):
+        return "unknown"
+    return result.stdout.strip() or "unknown"
+
+
+def _working_tree_state() -> str:
+    value = _git_value(
+        "status",
+        "--porcelain",
+        "--untracked-files=all",
+        "--",
+        ".",
+        ":(exclude)outputs/**",
+    )
+    if value == "unknown":
+        return "unknown"
+    return "dirty" if value else "clean"
 
 
 def _case_rows(cases_jsonl: str | Path, focus_cases: list[str]) -> pd.DataFrame:
@@ -108,8 +155,13 @@ def _claim_metrics(claims: pd.DataFrame) -> pd.DataFrame:
         "reviewable_claim_count",
         "cited_reviewable_claim_count",
         "citation_coverage_rate",
+        "reviewable_strict_citation_defect_count",
+        "reviewable_claim_needs_review_count",
+        "reviewable_citation_issue_count",
         "citation_gate_issue_count",
         "citation_gate_issue_rate",
+        "all_claim_source_boundary_blocker_count",
+        "all_claim_source_boundary_blocker_rate",
         "claim_release_blocker_count",
         "claim_supported_count",
         "claim_partially_supported_count",
@@ -130,6 +182,11 @@ def _claim_metrics(claims: pd.DataFrame) -> pd.DataFrame:
         labels = group["entailment_label"].fillna("")
         reviewable = group[group["reviewable_legal_claim"]]
         reviewable_labels = reviewable["entailment_label"].fillna("")
+        strict_defect_count = int(
+            reviewable_labels.isin(CLAIM_ENTAILMENT_STRICT_DEFECT_LABELS).sum()
+        )
+        reviewable_issue_count = int(reviewable_labels.isin(CLAIM_ENTAILMENT_ISSUE_LABELS).sum())
+        all_claim_blockers = int(labels.isin(CLAIM_ENTAILMENT_BLOCKER_LABELS).sum())
         rows.append(
             {
                 "run_id": safe_text(run_id),
@@ -137,11 +194,17 @@ def _claim_metrics(claims: pd.DataFrame) -> pd.DataFrame:
                 "reviewable_claim_count": int(len(reviewable)),
                 "cited_reviewable_claim_count": int(reviewable["has_citation"].sum()),
                 "citation_coverage_rate": _rate(int(reviewable["has_citation"].sum()), len(reviewable)),
-                "citation_gate_issue_count": int(reviewable_labels.isin(CLAIM_ENTAILMENT_ISSUE_LABELS).sum()),
-                "citation_gate_issue_rate": _rate(
-                    int(reviewable_labels.isin(CLAIM_ENTAILMENT_ISSUE_LABELS).sum()), len(reviewable)
-                ),
-                "claim_release_blocker_count": int(labels.isin(CLAIM_ENTAILMENT_BLOCKER_LABELS).sum()),
+                "reviewable_strict_citation_defect_count": strict_defect_count,
+                "reviewable_claim_needs_review_count": reviewable_issue_count,
+                "reviewable_citation_issue_count": reviewable_issue_count,
+                # Backward-compatible name; numerator is reviewable-only.
+                "citation_gate_issue_count": reviewable_issue_count,
+                "citation_gate_issue_rate": _rate(reviewable_issue_count, len(reviewable)),
+                "all_claim_source_boundary_blocker_count": all_claim_blockers,
+                "all_claim_source_boundary_blocker_rate": _rate(all_claim_blockers, len(group)),
+                # Deprecated compatibility alias.  This remains an all-claim
+                # count and must never be divided by reviewable_claim_count.
+                "claim_release_blocker_count": all_claim_blockers,
                 "claim_supported_count": int((labels == "supported").sum()),
                 "claim_partially_supported_count": int((labels == "partially_supported").sum()),
                 "claim_unsupported_count": int((labels == "unsupported").sum()),
@@ -174,11 +237,13 @@ def _write_readme(output_dir: Path, metrics: dict[str, Any], focus_cases: list[s
         "## Scope",
         "",
         f"- Focus cases: {len(focus_cases)}",
-        f"- Model-workflow outputs analyzed: {metrics.get('model_outputs', 0)}",
+        f"- Model-workflow API run records analyzed: {metrics.get('api_run_records', 0)}",
         f"- RAG retrieval rows: {metrics.get('retrieval_rows', 0)}",
         f"- Claim rows analyzed: {metrics.get('claim_rows', 0)}",
-        f"- Citation-gate issue rate: {metrics.get('citation_gate_issue_rate', 0)}",
-        f"- Claim-level release blocker rate: {metrics.get('claim_release_blocker_rate', 0)}",
+        f"- Strict citation-defect flag rate: {metrics.get('reviewable_claim_strict_citation_defect_rate', 0)}",
+        f"- Claim-support needs-review rate: {metrics.get('reviewable_claim_needs_review_rate', 0)}",
+        f"- All-claim source-boundary blocker count: {metrics.get('all_claim_source_boundary_blocker_rows', 0)}",
+        f"- All-claim source-boundary blocker rate: {metrics.get('all_claim_source_boundary_blocker_rate', 0)}",
         "",
         "## Included",
         "",
@@ -252,9 +317,15 @@ def build_rag_v2_report(
         "valid_citation_count",
         "fabricated_citation_count",
         "unsupported_claim_count",
+        "claim_rows",
         "reviewable_claim_count",
         "cited_reviewable_claim_count",
+        "reviewable_strict_citation_defect_count",
+        "reviewable_claim_needs_review_count",
+        "reviewable_citation_issue_count",
         "citation_gate_issue_count",
+        "all_claim_source_boundary_blocker_count",
+        "all_claim_source_boundary_blocker_rate",
         "claim_release_blocker_count",
         "claim_no_citation_count",
         "claim_out_of_scope_source_count",
@@ -272,30 +343,38 @@ def build_rag_v2_report(
     else:
         merged["needs_human_review"] = False
 
-    model_outputs = len(merged)
+    api_run_records = len(merged)
     claim_rows = len(claims)
     reviewable_claims = int(claims["reviewable_legal_claim"].map(_as_bool).sum()) if not claims.empty else 0
     if not claims.empty:
         reviewable_claim_rows = claims[claims["reviewable_legal_claim"].map(_as_bool)]
+        strict_defect_claims = int(
+            reviewable_claim_rows["entailment_label"].isin(
+                CLAIM_ENTAILMENT_STRICT_DEFECT_LABELS
+            ).sum()
+        )
         issue_claims = int(reviewable_claim_rows["entailment_label"].isin(CLAIM_ENTAILMENT_ISSUE_LABELS).sum())
     else:
+        strict_defect_claims = 0
         issue_claims = 0
     blocker_claims = int(claims["entailment_label"].isin(CLAIM_ENTAILMENT_BLOCKER_LABELS).sum()) if not claims.empty else 0
     metrics = {
         "focus_cases": len(focus_cases),
-        "model_outputs": model_outputs,
-        "models": merged["model_alias"].nunique() if model_outputs else 0,
-        "workflow_versions": merged["version"].nunique() if model_outputs else 0,
+        "api_run_records": api_run_records,
+        "models": merged["model_alias"].nunique() if api_run_records else 0,
+        "workflow_versions": merged["version"].nunique() if api_run_records else 0,
         "retrieval_rows": len(retrieval),
         "claim_rows": claim_rows,
         "reviewable_claim_rows": reviewable_claims,
-        "citation_gate_issue_rows": issue_claims,
-        "citation_gate_issue_rate": _rate(issue_claims, reviewable_claims),
-        "claim_release_blocker_rows": blocker_claims,
-        "claim_release_blocker_rate": _rate(blocker_claims, reviewable_claims),
+        "reviewable_claim_strict_citation_defect_rows": strict_defect_claims,
+        "reviewable_claim_strict_citation_defect_rate": _rate(strict_defect_claims, reviewable_claims),
+        "reviewable_claim_needs_review_rows": issue_claims,
+        "reviewable_claim_needs_review_rate": _rate(issue_claims, reviewable_claims),
+        "all_claim_source_boundary_blocker_rows": blocker_claims,
+        "all_claim_source_boundary_blocker_rate": _rate(blocker_claims, claim_rows),
         "judge_rows": len(scores),
         "avg_score_rate": round(float(merged["score_rate"].mean()), 4) if "score_rate" in merged else 0.0,
-        "human_review_rate": round(float(merged["needs_human_review"].mean()), 4) if model_outputs else 0.0,
+        "human_review_rate": round(float(merged["needs_human_review"].mean()), 4) if api_run_records else 0.0,
         "raw_outputs_committed": False,
     }
     metrics_df = pd.DataFrame([{"metric": key, "value": value} for key, value in metrics.items()])
@@ -313,8 +392,26 @@ def build_rag_v2_report(
                 "human_review_rate": round(float(group["needs_human_review"].mean()), 4),
                 "avg_latency_ms": round(float(group["latency_ms"].mean()), 2),
                 "citation_coverage_rate": _rate(group["cited_reviewable_claim_count"].sum(), group["reviewable_claim_count"].sum()),
-                "citation_gate_issue_rate": _rate(group["citation_gate_issue_count"].sum(), group["reviewable_claim_count"].sum()),
-                "claim_release_blocker_rate": _rate(group["claim_release_blocker_count"].sum(), group["reviewable_claim_count"].sum()),
+                "reviewable_strict_citation_defect_count": int(
+                    group["reviewable_strict_citation_defect_count"].sum()
+                ),
+                "reviewable_strict_citation_defect_rate": _rate(
+                    group["reviewable_strict_citation_defect_count"].sum(),
+                    group["reviewable_claim_count"].sum(),
+                ),
+                "reviewable_claim_needs_review_count": int(
+                    group["reviewable_claim_needs_review_count"].sum()
+                ),
+                "reviewable_claim_needs_review_rate": _rate(
+                    group["reviewable_claim_needs_review_count"].sum(),
+                    group["reviewable_claim_count"].sum(),
+                ),
+                "all_claim_source_boundary_blocker_count": int(
+                    group["all_claim_source_boundary_blocker_count"].sum()
+                ),
+                "all_claim_source_boundary_blocker_rate": _rate(
+                    group["all_claim_source_boundary_blocker_count"].sum(), group["claim_rows"].sum()
+                ),
                 "no_citation_claims": int(group["claim_no_citation_count"].sum()),
                 "out_of_scope_source_claims": int(group["claim_out_of_scope_source_count"].sum()),
                 "fabricated_claim_citations": int(group["claim_fabricated_citation_count"].sum()),
@@ -336,9 +433,28 @@ def build_rag_v2_report(
                 "avg_score_rate": round(float(group["score_rate"].mean()), 4),
                 "human_review_rate": round(float(group["needs_human_review"].mean()), 4),
                 "citation_coverage_rate": _rate(group["cited_reviewable_claim_count"].sum(), group["reviewable_claim_count"].sum()),
-                "citation_gate_issue_rate": _rate(group["citation_gate_issue_count"].sum(), group["reviewable_claim_count"].sum()),
-                "claim_release_blocker_count": int(group["claim_release_blocker_count"].sum()),
-                "recommended_policy": _policy_from_group(group),
+                "reviewable_strict_citation_defect_count": int(
+                    group["reviewable_strict_citation_defect_count"].sum()
+                ),
+                "reviewable_strict_citation_defect_rate": _rate(
+                    group["reviewable_strict_citation_defect_count"].sum(),
+                    group["reviewable_claim_count"].sum(),
+                ),
+                "reviewable_claim_needs_review_count": int(
+                    group["reviewable_claim_needs_review_count"].sum()
+                ),
+                "reviewable_claim_needs_review_rate": _rate(
+                    group["reviewable_claim_needs_review_count"].sum(),
+                    group["reviewable_claim_count"].sum(),
+                ),
+                "all_claim_source_boundary_blocker_count": int(
+                    group["all_claim_source_boundary_blocker_count"].sum()
+                ),
+                "all_claim_source_boundary_blocker_rate": _rate(
+                    group["all_claim_source_boundary_blocker_count"].sum(), group["claim_rows"].sum()
+                ),
+                "release_gate_decision": _release_gate_decision_from_group(group),
+                "release_gate_reason": _release_gate_reason_from_group(group),
             }
         )
     model_workflow_summary = pd.DataFrame(model_workflow_rows)
@@ -363,7 +479,12 @@ def build_rag_v2_report(
     )
     source_boundary_summary.to_csv(output / "source_boundary_summary.csv", index=False, encoding="utf-8-sig")
 
-    sample_sort_cols = ["claim_release_blocker_count", "citation_gate_issue_count", "needs_human_review", "score_rate"]
+    sample_sort_cols = [
+        "all_claim_source_boundary_blocker_count",
+        "reviewable_claim_needs_review_count",
+        "needs_human_review",
+        "score_rate",
+    ]
     samples = merged.sort_values(sample_sort_cols, ascending=[False, False, False, True]).head(20).copy()
     redacted_cols = [
         "run_id",
@@ -374,9 +495,12 @@ def build_rag_v2_report(
         "score_rate",
         "needs_human_review",
         "citation_fidelity_label",
+        "claim_rows",
         "reviewable_claim_count",
-        "citation_gate_issue_count",
-        "claim_release_blocker_count",
+        "reviewable_strict_citation_defect_count",
+        "reviewable_claim_needs_review_count",
+        "all_claim_source_boundary_blocker_count",
+        "all_claim_source_boundary_blocker_rate",
         "claim_no_citation_count",
         "claim_out_of_scope_source_count",
         "claim_fabricated_citation_count",
@@ -392,21 +516,52 @@ def build_rag_v2_report(
     ).to_csv(output / "redacted_sample_outputs_20.csv", index=False, encoding="utf-8-sig")
 
     manifest = {
+        "schema_version": "2.0",
         "package": "rag_v2_focused_pilot_lightweight_evidence",
+        "generated_at_utc": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
+        "base_git_commit": _git_value("rev-parse", "HEAD"),
+        "working_tree_state": _working_tree_state(),
+        "working_tree_scope": "source_and_configuration_excluding_outputs",
         "purpose": "Focused RAG V2 evidence package for citation grounding, source-boundary precision, and claim-level release gates.",
         "source_run": {
             "focus_cases": focus_cases,
             "workflow_versions": focus_versions,
-            "model_outputs": model_outputs,
+            "api_run_records": api_run_records,
             "retrieval_rows": len(retrieval),
             "claim_rows": claim_rows,
+            "model_aliases": sorted(merged["model_alias"].dropna().astype(str).unique().tolist()),
+        },
+        "source_artifact_sha256": {
+            "runs": _file_sha256(runs_path),
+            "retrieval": _file_sha256(retrieval_path),
+            "citation_verification": _file_sha256(citation_path),
+            "claim_entailment": _file_sha256(claim_entailment_path),
+            "cases_jsonl": _file_sha256(cases_jsonl),
+            "judge_scores": _file_sha256(judge_scores_path),
+            "routing": _file_sha256(routing_path),
+            "release_gate": _file_sha256(release_gate_path),
+        },
+        "reproducibility_inputs_sha256": {
+            "pilot_config": _file_sha256(
+                Path(__file__).resolve().parents[2]
+                / "configs/pilots/qianfan_rag_v2_focused.yaml"
+            ),
+            "evaluation_implementation": _file_sha256(Path(__file__)),
         },
         "methodology_caveats": [
             "Focused citation/document slice, not a full legal knowledge-base benchmark.",
             "Claim entailment labels are deterministic triage signals, not final legal conclusions.",
+            "Strict citation-defect flags exclude partially supported claims and use reviewable legal claims only.",
+            "Needs-review counts include partially supported claims and are used by the release gate.",
+            "Source-boundary blocker counts scan all claim rows; blocker rates use all claim rows as denominator.",
             "Qwen judge scores are baseline signals and should not be treated as final model rankings.",
             "Raw full model outputs remain local/ignored; this package commits summaries and redacted samples only.",
         ],
+        "metric_definitions": {
+            "reviewable_claim_strict_citation_defect_rows": "reviewable claims labeled unsupported, contradicted, no_citation, out_of_scope_source, or fabricated_citation",
+            "reviewable_claim_needs_review_rows": "strict citation defects plus partially_supported reviewable claims",
+            "all_claim_source_boundary_blocker_rows": "all claim rows labeled out_of_scope_source, fabricated_citation, or contradicted",
+        },
         "included_artifacts": [
             "README.md",
             "artifact_manifest.yaml",
@@ -436,18 +591,35 @@ def build_rag_v2_report(
     }
 
 
-def _policy_from_group(group: pd.DataFrame) -> str:
+def _release_gate_decision_from_group(group: pd.DataFrame) -> str:
     reviewable = float(group["reviewable_claim_count"].sum())
     issue_rate = _rate(float(group["citation_gate_issue_count"].sum()), reviewable)
     blocker_count = int(group["claim_release_blocker_count"].sum())
     human_review_rate = float(group["needs_human_review"].mean()) if len(group) else 1.0
     avg_score = float(group["score_rate"].mean()) if len(group) else 0.0
     if blocker_count:
-        return "blocked_until_citation_failures_reviewed"
+        return "blocked"
     if issue_rate > 0.25:
-        return "human_review_required_for_grounded_answers"
+        return "limited_release"
     if human_review_rate > 0.5:
-        return "limited_release_with_human_review"
+        return "limited_release"
     if avg_score >= 0.8 and issue_rate <= 0.1:
-        return "candidate_limited_auto_answer"
-    return "limited_release_or_more_data_needed"
+        return "candidate_auto_answer"
+    return "limited_release"
+
+
+def _release_gate_reason_from_group(group: pd.DataFrame) -> str:
+    reviewable = float(group["reviewable_claim_count"].sum())
+    issue_rate = _rate(float(group["citation_gate_issue_count"].sum()), reviewable)
+    blocker_count = int(group["claim_release_blocker_count"].sum())
+    human_review_rate = float(group["needs_human_review"].mean()) if len(group) else 1.0
+    avg_score = float(group["score_rate"].mean()) if len(group) else 0.0
+    if blocker_count:
+        return "source_boundary_or_claim_support_blocker"
+    if issue_rate > 0.25:
+        return "claim_support_needs_review_rate_above_threshold"
+    if human_review_rate > 0.5:
+        return "majority_of_runs_require_human_review"
+    if avg_score >= 0.8 and issue_rate <= 0.1:
+        return "score_and_claim_support_thresholds_met"
+    return "insufficient_evidence_for_auto_answer"

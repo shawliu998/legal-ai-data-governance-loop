@@ -4,5 +4,5 @@ no_citation,human_review_and_prompt_fix,489
 out_of_scope_source,source_boundary_regression,74
 supported,pass_citation_gate,39
 partially_supported,human_review_or_revision,36
-unsupported,badcase_and_regression_eval,18
+unsupported,badcase_and_regression,18
 contradicted,release_blocker,1

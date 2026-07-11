@@ -17,7 +17,11 @@ Generate the release gate table after a run:
 ```
 
 `--claim-entailment` is optional for older runs. When present, claim-level citation blockers are
-included in the release decision.
+included in `release_gate_decision`.
+
+This group-level field is distinct from the per-response `response_policy`. The exported
+`release_decision` column exists only as a backward-compatible alias and is not used for internal
+gate logic.
 
 The gate should be applied by task slice:
 
@@ -55,7 +59,7 @@ These gates do not automatically block release, but require mitigation:
 | Overclaim rate                       |               > 10% | Build preference pairs and add overclaim regression set.          |
 | Missing evidence warning rate        |               > 15% | Add risk-control SFT examples.                                    |
 | Weak fact-rule application           |               > 15% | Add case-analysis eval samples and judge calibration.             |
-| Claim-level citation-gate issue rate |               > 15% | Improve material-claim citation coverage and entailment checking. |
+| Claim-support needs-review rate      |               > 15% | Improve material-claim citation coverage and entailment checking. |
 | Average latency                      |   Above product SLA | Route high-cost workflow only to high-risk slices.                |
 | Estimated cost per answer            |        Above budget | Use cheaper model for low-risk drafting after verifier passes.    |
 
@@ -69,7 +73,7 @@ A slice can be considered auto-answer eligible only when:
 | Fabricated citation rate                | 0 confirmed critical failures          |
 | Human review recall for high-risk cases | >= 95% after manual audit              |
 | Average score rate                      | >= 0.80                                |
-| Judge-human agreement on pass/fail      | >= 0.80                                |
+| Reviewer-calibrated release metrics     | Preregistered threshold on random audit |
 | Output has clear legal-advice boundary  | Required                               |
 
 ## Human Review Policy
@@ -85,17 +89,17 @@ Route to `human_review` when:
 
 ## Data Production Policy
 
-| Failure Type                            | Data Route                    | Production Action                                          |
+| Failure Type                            | Review / candidate assets     | Production Action                                          |
 | --------------------------------------- | ----------------------------- | ---------------------------------------------------------- |
-| Fabricated citation                     | `badcase`                     | Add to regression set; require verifier check.             |
-| Out-of-scope source citation            | `badcase` / `regression_eval` | Add source-boundary regression cases.                      |
-| Unsupported or contradicted cited claim | `badcase` / `human_review`    | Human review before reuse; improve claim-level entailment. |
-| Unsafe action suggestion                | `human_review`                | Human calibration; block auto-answer.                      |
+| Fabricated citation                     | block; `badcase`, `regression` | Add to regression set; require verifier check.            |
+| Out-of-scope source citation            | review; `badcase`, `regression` | Add source-boundary regression cases.                   |
+| Unsupported or contradicted cited claim | review; `badcase`, `regression` | Human review before reuse; improve claim-level entailment. |
+| Unsafe action suggestion                | block or review; `badcase`    | Human calibration; block auto-answer.                      |
 | Overclaim                               | `preference` or `badcase`     | Build good/bad pairs for conditional reasoning.            |
 | Missing facts                           | `sft` or `eval`               | Add intake checklist examples.                             |
 | Missing evidence warning                | `sft`                         | Train evidence-risk warning pattern.                       |
 | Weak fact-rule application              | `eval`                        | Keep as targeted diagnostic case.                          |
-| Low judge confidence                    | `human_review`                | Manual review before reuse.                                |
+| Low judge confidence                    | review; `eval` candidate      | Manual review before reuse.                                |
 
 ## Release Decision Template
 
@@ -119,7 +123,7 @@ Review date:
 
 Average score is never sufficient for release.
 
-The release decision must prioritize:
+The release-gate decision must prioritize:
 
 1. critical failure rate
 2. human review recall

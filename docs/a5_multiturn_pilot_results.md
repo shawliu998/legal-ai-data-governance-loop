@@ -1,116 +1,82 @@
-# A5 Multi-Turn Intake Pilot Results
+# A5 Multi-Turn Intake Pilot
 
-## Positioning
+## 定位
 
-This is the full A5 pilot for trace-level legal intake evaluation.
+A5 pilot 用于验证法律 intake 的多轮日志和 trace-level 评测框架，不用于声称模型已经能够自主完成法律 intake。
 
-It upgrades the earlier 3-case smoke into an 8-case, 3-model, 72-turn real API pilot.
+## 实验规模
 
-The goal is not to claim that A5 is ready for autonomous legal intake. The goal is to evaluate
-whether multi-turn agents can maintain product boundaries across user behavior variants.
+```text
+8 cases × 3 千帆托管模型槽位 = 24 traces
+24 traces × 3 turns = 72 turns
+```
 
-## Run Shape
+覆盖 ERNIE 5.0、DeepSeek V4 Pro 和 Qwen3.5-27B 三个千帆托管槽位，以及 cooperative、dependent、withdrawn、adversarial 四类用户行为。
 
-| Field               |                                          Value |
-| ------------------- | ---------------------------------------------: |
-| Cases               |                                              8 |
-| Models              |                                              3 |
-| Traces              |                                             24 |
-| Turns               |                                             72 |
-| User behavior types | cooperative, dependent, withdrawn, adversarial |
-| Output package      |        `outputs/a5_multiturn_intake_pilot_v1/` |
+72 个 turn records 均记录了正常返回状态；完整对话保存在本地 raw artifacts，仓库只提交长度、hash、状态和脱敏 trace 示例。
 
-Models:
+## 当前完成的工作
 
-- ERNIE 5.0
-- DeepSeek V4 Pro
-- Qwen3.5-27B
+- 保留每轮 user message、预期 agent move、模型响应状态、长度、延迟和 token 信号。
+- 在 trace 层检查关键事实追问、错误前提挑战、结论强度、safe redirection 和转人工时机。
+- 生成 deterministic triage flags，用于确定优先人审队列；修复词法与否定作用域后，离线
+  重算的 24 traces 当前为 0 lexical flags，但这不等于人审确认的 0 overclaim。
+- A5 产物把队列动作单独记录为 `trace_review_recommendation`；本轮 24 traces 均为
+  `human_review_required`。这是高风险 intake pilot 的规则性复核建议，不是 pass/fail、
+  `response_policy` 或人审确认结论。
+- 生成 24 行 human trace calibration template，供后续逐条复核。
 
-## Main Results
+## 为什么不报告 pass rate 或模型比较
 
-| Metric                           | Result |
-| -------------------------------- | -----: |
-| Trace pass rate                  |  75.0% |
-| Average material fact coverage   |  77.1% |
-| Bad-premise challenge rate       |   100% |
-| Human-review recommendation rate |   100% |
-| Safe redirection rate            |   100% |
-| Overclaim trace count            |      6 |
+当前 pass/fail、fact coverage 和 overclaim 标记来自关键词与启发式规则，尚未由 reviewer 对 24 条完整 traces 逐条校准。有限样本上的模型百分比容易把规则偏差包装成模型能力差异。
 
-Model-level deterministic trace signals:
+因此，本版本撤下：
 
-| Model           | Traces | Trace pass rate | Avg material fact coverage | Overclaim traces |
-| --------------- | -----: | --------------: | -------------------------: | ---------------: |
-| DeepSeek V4 Pro |      8 |           87.5% |                      77.1% |                1 |
-| ERNIE 5.0       |      8 |           50.0% |                      72.9% |                4 |
-| Qwen3.5-27B     |      8 |           87.5% |                      81.3% |                1 |
+- A5 总体 pass rate；
+- DeepSeek、ERNIE、Qwen 的模型级 pass rate；
+- 未经人审确认的 behavior-level 百分比；
+- 任何自动法律 intake 发布结论。
 
-Behavior-level deterministic trace signals:
+deterministic flags 仍保留在原始证据中，定位是“待复核信号”，不是质量指标。
 
-| User behavior      | Traces | Trace pass rate | Avg material fact coverage | Overclaim traces |
-| ------------------ | -----: | --------------: | -------------------------: | ---------------: |
-| Adversarial client |      9 |           88.9% |                      74.1% |                1 |
-| Cooperative client |      6 |           33.3% |                      83.3% |                4 |
-| Dependent client   |      6 |           83.3% |                      72.2% |                1 |
-| Withdrawn client   |      3 |          100.0% |                      83.3% |                0 |
+## 产品意义
 
-## Product Interpretation
+单轮回答评测无法覆盖以下问题：
 
-A5 is no longer only a runnable smoke test. The project now has a full 8-case, multi-model trace
-pilot with redacted evidence and a human calibration template.
+- Agent 是否先问最高影响事实，而不是机械列问题清单；
+- 用户依赖模型替其决策时，Agent 是否保持边界；
+- 用户要求威胁、曝光、伪造或规避责任时，Agent 是否挑战前提；
+- 获得更多事实后，Agent 是否反而给出过强结论；
+- 何时应停止继续问答并转人工。
 
-The result shows that the trace-level eval pipeline can run on real multi-turn legal intake traffic.
-It does not support any A5 product-release claim.
+A5 的价值是把这些行为保存为完整 trace，并为后续 reviewer-level 标注、preference pair 和 regression case 提供结构。
 
-The product finding is also more realistic than the smoke result:
+## 证据包
 
-- Multi-turn agents consistently challenged unsafe premises and routed high-risk matters to human
-  review.
-- Material-fact elicitation remained uneven, especially where the agent needed to balance empathy,
-  issue spotting, and legal boundary control.
-- The overclaim detector flagged 6 traces. These are not automatically confirmed legal errors; they
-  are priority human-review candidates.
-- Cooperative users were not necessarily easier. Some traces became overconfident when the user
-  supplied more facts, which is a useful product-risk signal.
+公开轻量产物：
 
-## Evidence Package
+- `trace_metrics_summary.csv`：deterministic triage 汇总，不能视为人审质量指标；
+- `turn_level_summary.csv`：72 个 turns 的脱敏运行元数据；
+- `risk_route_summary.csv`：规则信号分组；
+- `redacted_trace_samples.csv` 与 `redacted_trace_example.md`；
+- `human_trace_calibration_template.csv`；
+- `artifact_manifest.yaml`。
 
-Committed lightweight artifacts:
-
-- `trace_metrics_summary.csv`
-- `turn_level_summary.csv`
-- `risk_route_summary.csv`
-- `redacted_trace_samples.csv`
-- `redacted_trace_example.md`
-- `human_trace_calibration_template.csv`
-- `artifact_manifest.yaml`
-
-Local-only artifacts:
+本地 raw artifacts：
 
 - `trace_log.jsonl`
 - `turn_log.csv`
 
-The raw trace logs contain full model outputs and remain ignored by Git.
+## 下一步
 
-## Remaining Calibration Work
+1. 两名 reviewer 独立复核全部 24 条 traces。
+2. 保存 reviewer A/B、adjudicated labels 和 guideline version。
+3. 对 deterministic flag 计算 precision、recall 和 false-positive slice。
+4. 只有校准后再报告 trace-level 指标；样本扩大后再讨论模型差异。
 
-The next step is not more model calls. It is human calibration.
+## 边界
 
-Review all 24 traces using `docs/a5_trace_judge_rubric.md`, with priority on:
-
-- the 6 overclaim-flagged traces,
-- guarantee/debt and false-litigation traces,
-- traces where deterministic pass/fail may be a false positive or false negative,
-- model differences between ERNIE 5.0 and the other two models.
-
-The human review output should fill:
-
-`outputs/a5_multiturn_intake_pilot_v1/human_trace_calibration_template.csv`
-
-## Caveats
-
-- Deterministic trace checks are triage signals, not final legal review.
-- The pilot has 24 traces, enough for product diagnosis but not statistical model superiority
-  claims.
-- Overclaim detection is intentionally conservative and can produce false positives.
-- Any A5 product-release claim requires human-calibrated trace labels first.
+- 24 traces 只支持流程验证和定性诊断。
+- 千帆托管槽位结果不等同于模型官方 API 全量表现。
+- deterministic checks 不是法律正确性判断。
+- 当前没有 A5 产品发布或自动法律 intake 结论。

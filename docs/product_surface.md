@@ -4,7 +4,9 @@ This repository focuses on the data and evaluation layer behind legal AI product
 
 ## Legal Consultation Assistant
 
-The harness helps judge whether a consultation-style answer can respond directly, needs more facts, should cite grounded sources, or should route to human review. Failures can become eval, preference, badcase, regression, or human review data.
+The harness helps judge whether a consultation-style answer can respond directly, needs more facts,
+should cite grounded sources, or should route to human review. After review and acceptance, failures
+may become eval, preference, badcase, or regression assets; human review itself is a workflow.
 
 ## Legal Document Drafting Assistant
 
@@ -12,11 +14,15 @@ For drafting tasks, the harness checks whether the model respects the requested 
 
 ## Enterprise Legal Knowledge Assistant
 
-For internal legal knowledge QA, the harness focuses on source-boundary and citation behavior: whether the answer stays within the allowed corpus, whether material claims are supported, and whether unsupported rows should enter review or regression data.
+For internal legal knowledge QA, the harness focuses on source-boundary and citation behavior:
+whether the answer stays within the allowed corpus, whether material claims are supported, and
+whether unsupported rows should enter review and later become confirmed regression candidates.
 
 ## Legal Intake Assistant
 
-For intake flows, the harness checks whether the system asks the right follow-up questions before answering, recognizes escalation signals, and routes incomplete or high-risk traces to human review or blocker-level data assets.
+For intake flows, the harness checks whether the system asks the right follow-up questions before
+answering, recognizes escalation signals, and routes incomplete or high-risk traces to human review
+or a blocked response policy. Confirmed failures may later become badcase or regression assets.
 
 ## What Is Not Built
 

@@ -59,7 +59,22 @@ COARSE_ERROR_TAGS = [
     "needs_human_review",
 ]
 
-DATA_ROUTES = ["eval", "sft", "preference", "badcase", "human_review"]
+DATA_ASSET_ROUTES = ["eval", "sft", "preference", "badcase", "regression"]
+# Backward-compatible primary route values used by existing dashboards and artifacts.
+# New code should use workflow_status, response_policy, and data_asset_routes.
+DATA_ROUTES = [*DATA_ASSET_ROUTES, "human_review"]
+WORKFLOW_STATUSES = ["pending_review", "reviewed", "blocked", "released"]
+WORKFLOW_TRANSITIONS = {
+    "pending_review": {"reviewed", "blocked", "released"},
+    "reviewed": {"reviewed", "blocked", "released"},
+    "blocked": {"blocked"},
+    "released": {"released"},
+}
+RESPONSE_POLICIES = ["auto_answer", "grounded_answer", "clarify", "human_review", "block"]
+# Deprecated alias retained for old routing artifacts. Group-level release gates use
+# RELEASE_GATE_DECISIONS instead of overloading the same field name.
+RELEASE_DECISIONS = RESPONSE_POLICIES
+RELEASE_GATE_DECISIONS = ["candidate_auto_answer", "limited_release", "blocked"]
 TASK_CATEGORIES = ["consultation", "case_analysis", "document_drafting"]
 
 
@@ -144,8 +159,17 @@ class RoutingDecision(BaseModel):
     main_error_type: str
     error_tags: list[ErrorTag]
     risk_level: Literal["low", "medium", "high"]
-    data_route: Literal["eval", "sft", "preference", "badcase", "human_review"]
+    workflow_status: Literal["pending_review", "reviewed", "blocked", "released"]
+    response_policy: Literal["auto_answer", "grounded_answer", "clarify", "human_review", "block"]
+    # Deprecated compatibility alias for response_policy.
+    release_decision: Literal["auto_answer", "grounded_answer", "clarify", "human_review", "block"]
+    data_asset_routes: list[Literal["eval", "sft", "preference", "badcase", "regression"]]
+    data_route: Literal["eval", "sft", "preference", "badcase", "regression", "human_review"]
     route_reason: str
     route_subtype: str = ""
     priority: Literal["P0", "P1", "P2"]
+    candidate_for_reuse: bool
+    requires_correction: bool
+    gold_approved: bool
+    # Deprecated compatibility alias for gold_approved.
     reusable_as_gold_sample: bool

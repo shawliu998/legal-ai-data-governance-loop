@@ -126,9 +126,10 @@ This prevents a high average score from hiding rare but severe legal product fai
 
 The product-boundary run supports both a single judge and an ensemble judge layer.
 
-The ensemble design is:
+The planned Qianfan-hosted ensemble design is:
 
-- DeepSeek V4 Pro and GLM-5.2 act as primary judges.
+- DeepSeek V4 Pro and GLM-5.2 hosted slots act as primary judges in the design; this was exercised as
+  a targeted smoke, not used as the full-run final authority.
 - Judge self-evaluation is excluded, so a DeepSeek output is not scored by the DeepSeek judge and a
   GLM output is not scored by the GLM judge.
 - Kimi K2.6 acts as an arbiter when the primary judges disagree on score, critical failures, or data
@@ -142,18 +143,20 @@ are stable enough to drive data routing.
 
 ## Data Governance Loop
 
-Every failed output should become a data asset:
+Every failed output should receive a product disposition; only reviewed records should become data
+assets:
 
 | Failure Pattern                                | Data Asset                                          |
 | ---------------------------------------------- | --------------------------------------------------- |
-| Fabricated citation or unsupported legal basis | `badcase`, `regression_eval`                        |
-| Overclaim or excessive certainty               | `preference_pair`                                   |
-| Missing evidence warnings                      | `sft_candidate`                                     |
-| Missed material fact change                    | `regression_eval`, counterfactual holdout           |
-| Unsafe or deceptive assistance                 | `human_review`, `badcase`                           |
-| Weak routine answer                            | `eval_holdout` or SFT candidate after human cleanup |
+| Fabricated citation or unsupported legal basis | `badcase`, `regression`                         |
+| Overclaim or excessive certainty               | `preference`                                    |
+| Missing evidence warnings                      | `sft`                                           |
+| Missed material fact change                    | `regression`, counterfactual eval               |
+| Unsafe or deceptive assistance                 | block/review; `badcase`, `regression`            |
+| Weak routine answer                            | `eval` or `sft` after human cleanup             |
 
-The point is not only to score the model. The point is to decide the next data production action.
+The point is not only to score the model. The point is to decide the review action first and the next
+data-production action after adjudication.
 
 ## Release Gates
 

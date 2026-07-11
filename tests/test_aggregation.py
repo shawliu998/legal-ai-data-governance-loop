@@ -100,3 +100,6 @@ def test_aggregation_computes_v0_v3_delta(tmp_path):
 
     assert dashboard["avg_score_delta"] == 0.3
     assert dashboard["human_review_queue_size"] == 1
+    assert dashboard["total_api_run_rows"] == 2
+    assert dashboard["nonempty_answer_count"] == 2
+    assert dashboard["empty_answer_count"] == 0

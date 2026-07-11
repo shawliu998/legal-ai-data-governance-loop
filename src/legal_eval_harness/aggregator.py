@@ -8,7 +8,7 @@ import pandas as pd
 from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
 
-from .schemas import COARSE_ERROR_TAGS, DATA_ROUTES
+from .schemas import COARSE_ERROR_TAGS, DATA_ASSET_ROUTES, DATA_ROUTES, RESPONSE_POLICIES
 from .utils import json_loads_or_none, parse_bool
 
 
@@ -49,6 +49,9 @@ BADCASE_CARD_COLUMNS = [
     "main_error_type",
     "risk_level",
     "judge_confidence",
+    "workflow_status",
+    "response_policy",
+    "data_asset_routes",
     "data_route",
     "priority",
     "route_reason",
@@ -62,15 +65,18 @@ BADCASE_CARD_COLUMNS = [
 def _build_badcase_cards(badcase_base: pd.DataFrame, *, limit: int = 80) -> pd.DataFrame:
     """Create review cards with route and task diversity."""
     cards = badcase_base.copy()
+    for column in BADCASE_CARD_COLUMNS:
+        if column not in cards.columns:
+            cards[column] = ""
     cards["output_preview"] = cards["output_text"].astype(str).str.slice(0, 220)
     cards["_priority_rank"] = cards["priority"].map({"P0": 0, "P1": 1, "P2": 2}).fillna(9)
-    cards["_route_rank"] = cards["data_route"].map(
+    cards["_route_rank"] = cards["response_policy"].map(
         {
-            "human_review": 0,
-            "badcase": 1,
-            "preference": 2,
-            "sft": 3,
-            "eval": 4,
+            "block": 0,
+            "human_review": 1,
+            "clarify": 2,
+            "grounded_answer": 3,
+            "auto_answer": 4,
         }
     ).fillna(9)
     cards["_score_rate"] = pd.to_numeric(cards["score_rate"], errors="coerce").fillna(1.0)
@@ -90,7 +96,7 @@ def _build_badcase_cards(badcase_base: pd.DataFrame, *, limit: int = 80) -> pd.D
     selected_card_keys: set[tuple[str, str, str]] = set()
 
     def card_key(row: pd.Series) -> tuple[str, str, str]:
-        return (str(row["sample_id"]), str(row["version"]), str(row["data_route"]))
+        return (str(row["sample_id"]), str(row["version"]), str(row["response_policy"]))
 
     def add_first(group: pd.DataFrame, *, allow_duplicate_key: bool = False) -> None:
         for idx, row in group.iterrows():
@@ -105,12 +111,12 @@ def _build_badcase_cards(badcase_base: pd.DataFrame, *, limit: int = 80) -> pd.D
                 break
 
     task_order = ["consultation", "case_analysis", "document_drafting"]
-    for route in ["human_review", "badcase", "preference", "sft", "eval"]:
-        route_group = cards[cards["data_route"] == route]
+    for response_policy in ["block", "human_review", "clarify", "grounded_answer", "auto_answer"]:
+        route_group = cards[cards["response_policy"] == response_policy]
         for task_category in task_order:
             add_first(route_group[route_group["task_category"] == task_category])
 
-    for _, group in cards.groupby(["data_route", "main_error_type"], sort=False):
+    for _, group in cards.groupby(["response_policy", "main_error_type"], sort=False):
         add_first(group)
 
     for idx, row in cards.iterrows():
@@ -141,6 +147,30 @@ def _numeric_column(frame: pd.DataFrame, column: str) -> pd.Series:
     return pd.to_numeric(frame[column], errors="coerce").fillna(0)
 
 
+def _canonical_routing(routing: pd.DataFrame) -> pd.DataFrame:
+    """Add canonical routing fields while accepting legacy CSV artifacts."""
+    result = routing.copy()
+    if "data_route" not in result.columns:
+        result["data_route"] = "eval"
+    if "response_policy" not in result.columns:
+        legacy_decision = result.get("release_decision", pd.Series("", index=result.index)).fillna("")
+        result["response_policy"] = legacy_decision.where(
+            legacy_decision.isin(RESPONSE_POLICIES),
+            result["data_route"].map(lambda value: "human_review" if value == "human_review" else "auto_answer"),
+        )
+    if "release_decision" not in result.columns:
+        result["release_decision"] = result["response_policy"]
+    if "workflow_status" not in result.columns:
+        result["workflow_status"] = result["response_policy"].map(
+            {"block": "blocked", "human_review": "pending_review"}
+        ).fillna("released")
+    if "data_asset_routes" not in result.columns:
+        result["data_asset_routes"] = result["data_route"].map(
+            lambda route: [route] if route in DATA_ASSET_ROUTES else []
+        )
+    return result
+
+
 def build_executive_dashboard(
     *,
     runs: pd.DataFrame,
@@ -153,7 +183,7 @@ def build_executive_dashboard(
     if "needs_human_review" in scores.columns:
         scores["needs_human_review"] = scores["needs_human_review"].map(parse_bool)
     runs = runs.copy()
-    routing = routing.copy()
+    routing = _canonical_routing(routing)
     for frame in [scores, runs, routing]:
         if "source_dataset" not in frame.columns:
             frame["source_dataset"] = "unknown"
@@ -175,16 +205,27 @@ def build_executive_dashboard(
     all_tags = _iter_coarse_tags(scores["error_tags"])
     tag_counts = Counter(all_tags)
     top_3 = [tag for tag, _ in tag_counts.most_common(3)]
+    if "has_nonempty_output" in runs.columns:
+        has_nonempty_output = runs["has_nonempty_output"].map(parse_bool)
+    else:
+        has_nonempty_output = runs.get("output_text", pd.Series("", index=runs.index)).map(
+            lambda value: bool(str(value).strip()) if not pd.isna(value) else False
+        )
     dashboard = {
         "total_samples": int(scores["sample_id"].nunique()),
+        "total_api_run_rows": int(len(runs)),
+        # Backward-compatible metric name. This counts API run rows, not non-empty answers.
         "total_runs": int(len(runs)),
+        "nonempty_answer_count": int(has_nonempty_output.sum()),
+        "empty_answer_count": int((~has_nonempty_output).sum()),
         "total_task_categories": int(scores["task_category"].nunique()) if "task_category" in scores.columns else 0,
         "total_source_datasets": int(scores["source_dataset"].nunique()) if "source_dataset" in scores.columns else 0,
         "avg_v0_score": round(float(scores.loc[scores["version"] == "V0", "score_rate"].mean()), 3),
         "avg_v3_score": round(float(scores.loc[scores["version"] == "V3", "score_rate"].mean()), 3),
         "avg_score_delta": avg_delta,
         "high_risk_rate": round(float((scores["risk_level"] == "high").mean()), 3),
-        "human_review_queue_size": int((routing["data_route"] == "human_review").sum()),
+        "human_review_queue_size": int((routing["response_policy"] == "human_review").sum()),
+        "blocked_response_count": int((routing["response_policy"] == "block").sum()),
         "avg_latency_ms": round(float(_numeric_column(runs, "latency_ms").mean()), 1),
         "total_estimated_cost": round(float(_numeric_column(runs, "estimated_cost").sum()), 6),
         "top_3_error_tags": ", ".join(top_3),
@@ -211,7 +252,10 @@ def build_executive_dashboard(
     task_tag_rows = []
     for task_category, grp in scores.groupby("task_category"):
         tags = Counter(_iter_coarse_tags(grp["error_tags"]))
-        routes = routing[routing["task_category"] == task_category]["data_route"].value_counts().to_dict()
+        routes = routing[routing["task_category"] == task_category]["response_policy"].value_counts().to_dict()
+        response_policy_mix = "; ".join(
+            f"{response_policy}:{count}" for response_policy, count in sorted(routes.items())
+        )
         task_tag_rows.append(
             {
                 "task_category": task_category,
@@ -221,7 +265,9 @@ def build_executive_dashboard(
                 "high_risk_rate": round(float((grp["risk_level"] == "high").mean()), 3),
                 "human_review_rate": round(float(grp["needs_human_review"].mean()), 3),
                 "top_error_tags": ", ".join([tag for tag, _ in tags.most_common(3)]),
-                "route_mix": "; ".join(f"{route}:{count}" for route, count in sorted(routes.items())),
+                "response_policy_mix": response_policy_mix,
+                # Backward-compatible column name.
+                "route_mix": response_policy_mix,
                 "data_action": _recommended_actions([tag for tag, _ in tags.most_common(3)]),
             }
         )
@@ -263,7 +309,7 @@ def build_executive_dashboard(
     )
 
     policy_base = scores.merge(
-        routing[["run_id", "data_route", "priority"]],
+        routing[["run_id", "workflow_status", "response_policy", "data_asset_routes", "data_route", "priority"]],
         on="run_id",
         how="left",
     )
@@ -284,7 +330,8 @@ def build_executive_dashboard(
             runs=("run_id", "count"),
             avg_score_rate=("score_rate", "mean"),
             high_risk_rate=("risk_level", lambda x: (x == "high").mean()),
-            human_review_rate=("data_route", lambda x: (x == "human_review").mean()),
+            human_review_rate=("response_policy", lambda x: (x == "human_review").mean()),
+            blocked_response_rate=("response_policy", lambda x: (x == "block").mean()),
             avg_latency_ms=("latency_ms", "mean"),
             total_estimated_cost=("estimated_cost", "sum"),
         )
@@ -305,6 +352,33 @@ def build_executive_dashboard(
         routing.groupby(["data_route", "task_category"], as_index=False)
         .agg(count=("run_id", "count"), example_sample_ids=("sample_id", lambda x: ", ".join(sorted(set(x))[:5])))
         .sort_values("count", ascending=False)
+    )
+
+    workflow_release_summary = (
+        routing.groupby(["workflow_status", "response_policy"], as_index=False)
+        .agg(count=("run_id", "count"))
+        .sort_values("count", ascending=False)
+    )
+
+    asset_rows: list[dict[str, str]] = []
+    if "data_asset_routes" in routing.columns:
+        for _, route_row in routing.iterrows():
+            assets = json_loads_or_none(route_row.get("data_asset_routes")) or []
+            for asset in assets:
+                asset_rows.append(
+                    {
+                        "run_id": str(route_row.get("run_id", "")),
+                        "task_category": str(route_row.get("task_category", "")),
+                        "data_asset_route": str(asset),
+                    }
+                )
+    asset_route_summary = (
+        pd.DataFrame(asset_rows)
+        .groupby(["data_asset_route", "task_category"], as_index=False)
+        .agg(count=("run_id", "count"))
+        .sort_values("count", ascending=False)
+        if asset_rows
+        else pd.DataFrame(columns=["data_asset_route", "task_category", "count"])
     )
 
     model_patterns = []
@@ -371,7 +445,20 @@ def build_executive_dashboard(
                 "supervised fine-tuning candidate",
                 "preference pair candidate",
                 "regression badcase set",
+                "repeat-check regression asset",
                 "human calibration queue",
+            ],
+        }
+    )
+    response_policy_taxonomy_df = pd.DataFrame(
+        {
+            "response_policy": RESPONSE_POLICIES,
+            "meaning": [
+                "answer without retrieval after release checks pass",
+                "answer only with retrieval/citation grounding",
+                "ask for missing material facts before analysis",
+                "send to human review before release",
+                "do not release the response",
             ],
         }
     )
@@ -387,9 +474,12 @@ def build_executive_dashboard(
         cost_latency_summary.to_excel(writer, sheet_name="Cost_Latency", index=False)
         deployment_policy.to_excel(writer, sheet_name="Deployment_Policy", index=False)
         route_summary.to_excel(writer, sheet_name="Data_Routing_Summary", index=False)
+        workflow_release_summary.to_excel(writer, sheet_name="Workflow_Release", index=False)
+        asset_route_summary.to_excel(writer, sheet_name="Data_Asset_Routes", index=False)
         model_patterns_df.to_excel(writer, sheet_name="Model_Error_Patterns", index=False)
         taxonomy_df.to_excel(writer, sheet_name="Error_Taxonomy", index=False)
         route_taxonomy_df.to_excel(writer, sheet_name="Data_Route_Taxonomy", index=False)
+        response_policy_taxonomy_df.to_excel(writer, sheet_name="Response_Policy", index=False)
         workbook = writer.book
         header_fill = PatternFill("solid", fgColor="1F4E79")
         header_font = Font(color="FFFFFF", bold=True)

@@ -263,15 +263,25 @@ def run_judge(
         parsed_ok = True
         raw_judge_output = ""
         if run_row.get("run_status") != "ok":
+            empty_output = run_row.get("run_status") == "empty_output"
             payload = {
                 "dimension_scores": {dim: 0 for dim in SCORE_DIMENSIONS},
                 "atomic_scores": [],
                 "total_score": 0,
                 "max_score": len(SCORE_DIMENSIONS) * 2,
                 "score_rate": 0.0,
-                "error_tags": [{"coarse_error_tag": "needs_human_review", "error_subtype": "model_run_failed"}],
+                "error_tags": [
+                    {
+                        "coarse_error_tag": "needs_human_review",
+                        "error_subtype": "empty_model_output" if empty_output else "model_run_failed",
+                    }
+                ],
                 "risk_level": "high",
-                "judge_reason": "model run failed before judging",
+                "judge_reason": (
+                    "API call completed but returned empty answer content"
+                    if empty_output
+                    else "model run failed before judging"
+                ),
                 "judge_confidence": "low",
                 "needs_human_review": True,
             }

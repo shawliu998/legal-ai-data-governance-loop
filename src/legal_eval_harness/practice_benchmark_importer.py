@@ -27,7 +27,7 @@ SOURCE_FILENAMES = {
     "plaintiff_statement": "Plantiffs_Statement.json",
 }
 
-SOURCE_DATASET = "licensed_practice_benchmark_adapted"
+SOURCE_DATASET = "external_practice_benchmark_adapted"
 
 
 def _download_sources(source_dir: Path) -> None:
@@ -419,7 +419,9 @@ def prepare_practice_benchmark_dataset(
             {
                 "source_dataset": SOURCE_DATASET,
                 "expected_samples": len(eval_records),
-                "role": "licensed adapted legal-practice pilot cases",
+                "role": "externally sourced adapted legal-practice pilot cases",
+                "license_status": "not recorded in the local dataset manifest; verify upstream before redistribution",
+                "upstream_urls": SOURCE_URLS,
             }
         ],
         "task_categories": ["consultation", "case_analysis", "document_drafting"],

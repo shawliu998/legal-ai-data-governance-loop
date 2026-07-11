@@ -6,10 +6,11 @@ from typing import Any
 
 import pandas as pd
 
-from .utils import json_loads_or_none, parse_bool, safe_text
+from .utils import json_dumps, json_loads_or_none, parse_bool, safe_text
 
 
 CRITICAL_TAGS = {"fabricated_citation", "unsafe_action_suggestion", "needs_human_review"}
+RESPONSE_POLICIES = {"auto_answer", "grounded_answer", "clarify", "human_review", "block"}
 
 
 def _coarse_tags(value: Any) -> list[str]:
@@ -33,6 +34,30 @@ def _is_critical(row: pd.Series) -> bool:
         or parse_bool(row.get("needs_human_review"))
         or bool(tags.intersection(CRITICAL_TAGS))
     )
+
+
+def _canonical_routing(routing: pd.DataFrame) -> pd.DataFrame:
+    """Accept legacy routing CSVs while exposing the canonical dimensions."""
+    result = routing.copy()
+    if "data_route" not in result.columns:
+        result["data_route"] = "eval"
+    if "response_policy" not in result.columns:
+        legacy = result.get("release_decision", pd.Series("", index=result.index)).fillna("")
+        result["response_policy"] = legacy.where(
+            legacy.isin(RESPONSE_POLICIES),
+            result["data_route"].map(lambda value: "human_review" if value == "human_review" else "auto_answer"),
+        )
+    if "workflow_status" not in result.columns:
+        result["workflow_status"] = result["response_policy"].map(
+            {"block": "blocked", "human_review": "pending_review"}
+        ).fillna("released")
+    if "data_asset_routes" not in result.columns:
+        result["data_asset_routes"] = result["data_route"].map(
+            lambda value: [value]
+            if value in {"eval", "sft", "preference", "badcase", "regression"}
+            else []
+        )
+    return result
 
 
 def _stratified_sample(
@@ -86,10 +111,14 @@ def build_human_review_sample(
     for col in ["model_vendor", "model_family", "latency_ms", "estimated_cost"]:
         if col not in run_subset.columns:
             run_subset[col] = 0 if col in {"latency_ms", "estimated_cost"} else ""
+    routing = _canonical_routing(routing)
     merged = scores.merge(
         routing[
             [
                 "run_id",
+                "workflow_status",
+                "response_policy",
+                "data_asset_routes",
                 "data_route",
                 "main_error_type",
                 "route_reason",
@@ -134,6 +163,7 @@ def build_human_review_sample(
             for col in [
                 "run_id",
                 "ensemble_status",
+                "final_response_policy",
                 "final_data_route",
                 "requires_arbitration",
                 "requires_human_calibration",
@@ -216,6 +246,15 @@ def build_human_review_sample(
         ),
         axis=1,
     )
+    selected["auto_triage_label"] = selected["response_policy"]
+    selected["reviewer_a_id"] = ""
+    selected["reviewer_a_triage_label"] = ""
+    selected["reviewer_b_id"] = ""
+    selected["reviewer_b_triage_label"] = ""
+    selected["adjudicated_triage_label"] = ""
+    selected["adjudication_mode"] = ""
+    selected["agreement_type"] = ""
+    # Legacy single-reviewer fields remain for old calibration sheets.
     selected["legal_reviewer_id"] = ""
     selected["human_pass_fail"] = ""
     selected["human_corrected_score_rate"] = ""
@@ -242,6 +281,9 @@ def build_human_review_sample(
         "risk_level",
         "judge_confidence",
         "needs_human_review",
+        "workflow_status",
+        "response_policy",
+        "data_asset_routes",
         "data_route",
         "main_error_type",
         "priority",
@@ -256,12 +298,21 @@ def build_human_review_sample(
         "claim_count",
         "claim_checks",
         "ensemble_status",
+        "final_response_policy",
         "requires_human_calibration",
         "disagreement_reasons",
         "latency_ms",
         "estimated_cost",
         "judge_reason",
         "output_text",
+        "auto_triage_label",
+        "reviewer_a_id",
+        "reviewer_a_triage_label",
+        "reviewer_b_id",
+        "reviewer_b_triage_label",
+        "adjudicated_triage_label",
+        "adjudication_mode",
+        "agreement_type",
         "legal_reviewer_id",
         "human_pass_fail",
         "human_corrected_score_rate",
@@ -278,7 +329,12 @@ def build_human_review_sample(
             selected[col] = ""
     result = selected[columns].reset_index(drop=True)
     Path(output_path).parent.mkdir(parents=True, exist_ok=True)
-    result.to_csv(output_path, index=False, encoding="utf-8-sig")
+    serialized = result.copy()
+    if "data_asset_routes" in serialized.columns:
+        serialized["data_asset_routes"] = serialized["data_asset_routes"].map(
+            lambda value: json_dumps(json_loads_or_none(value) or [])
+        )
+    serialized.to_csv(output_path, index=False, encoding="utf-8-sig")
     return result
 
 
@@ -324,6 +380,42 @@ def summarize_human_calibration(*, reviewed: pd.DataFrame, output_path: str | Pa
     route_override_count = route_override_values.map(lambda value: safe_text(value).lower()).map(
         lambda value: bool(value) and value not in {"no_override", "none", "keep", "不调整"}
     )
+
+    reviewer_a = reviewed.get(
+        "reviewer_a_triage_label", pd.Series("", index=reviewed.index)
+    ).fillna("").map(safe_text)
+    reviewer_b = reviewed.get(
+        "reviewer_b_triage_label", pd.Series("", index=reviewed.index)
+    ).fillna("").map(safe_text)
+    reviewer_pair_mask = reviewer_a.ne("") & reviewer_b.ne("")
+    pair_a = reviewer_a[reviewer_pair_mask]
+    pair_b = reviewer_b[reviewer_pair_mask]
+    observed_agreement = float((pair_a == pair_b).mean()) if len(pair_a) else None
+    if len(pair_a):
+        labels = sorted(set(pair_a).union(pair_b))
+        expected_agreement = sum(
+            float((pair_a == label).mean() * (pair_b == label).mean()) for label in labels
+        )
+        reviewer_kappa = (
+            (observed_agreement - expected_agreement) / (1 - expected_agreement)
+            if expected_agreement < 1
+            else 1.0
+        )
+    else:
+        reviewer_kappa = None
+
+    auto_triage = reviewed.get(
+        "auto_triage_label", pd.Series("", index=reviewed.index)
+    ).fillna("").map(safe_text)
+    adjudicated = reviewed.get(
+        "adjudicated_triage_label", pd.Series("", index=reviewed.index)
+    ).fillna("").map(safe_text)
+    adjudicated_mask = auto_triage.ne("") & adjudicated.ne("")
+    judge_adjudicated_agreement = (
+        float((auto_triage[adjudicated_mask] == adjudicated[adjudicated_mask]).mean())
+        if int(adjudicated_mask.sum())
+        else None
+    )
     result = pd.DataFrame(
         [
             {
@@ -331,7 +423,22 @@ def summarize_human_calibration(*, reviewed: pd.DataFrame, output_path: str | Pa
                 "completed_review_rows": int(reviewed_mask.sum()),
                 "review_completion_rate": round(float(reviewed_mask.mean()), 3) if len(reviewed) else 0.0,
                 "agreement_labeled_rows": int(len(agreement_reviewed)),
+                "agreement_basis": "legacy manually supplied judge_human_agreement labels; not reviewer IAA",
+                "judge_human_overall_triage_agreement_rate": (
+                    round(float(agreed.mean()), 3) if len(agreement_reviewed) else ""
+                ),
                 "judge_human_agreement_rate": round(float(agreed.mean()), 3) if len(agreement_reviewed) else "",
+                "reviewer_pair_labeled_rows": int(reviewer_pair_mask.sum()),
+                "reviewer_observed_agreement_rate": (
+                    round(observed_agreement, 3) if observed_agreement is not None else ""
+                ),
+                "reviewer_cohen_kappa": round(reviewer_kappa, 3) if reviewer_kappa is not None else "",
+                "judge_adjudicated_labeled_rows": int(adjudicated_mask.sum()),
+                "judge_adjudicated_agreement_rate": (
+                    round(judge_adjudicated_agreement, 3)
+                    if judge_adjudicated_agreement is not None
+                    else ""
+                ),
                 "confirmed_critical_failure_count": int(critical_confirmed.sum()),
                 "confirmed_citation_issue_count": int(citation_issue.sum()),
                 "human_route_override_count": int(route_override_count.sum()),
