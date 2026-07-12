@@ -52,6 +52,39 @@
 一致率、judge-human 一致率或总体准确率。详见
 [人审方法与证据边界](docs/human_review_methodology.md)。
 
+## 法律数据飞轮 v0.1.0
+
+第一阶段已发布 `legal_flywheel_v0.1.0`：从 10 个现有源案例形成 15 个经法律博士逐条终审的
+accepted 资产，包括 5 SFT、5 preference 和 5 regression。资产状态、修订、双路 AI
+审核、冲突归并建议、QA、专家 override、版本 membership 和 regression 结果均保存在
+JSONL/CSV/YAML 事件与发布文件中，没有引入数据库或 Streamlit。
+
+历史 legacy-v1 A/B 预审发生在法律博士终审之前，但输入携带了先前 `human_*` 信号；该缺陷
+已公开保留且不再用于修正后指标。最终文本冻结后，15 条资产另行完成 label-isolated
+blind-v2 A/B 复审和冲突归并，并绑定 correction、source snapshot 与答案 hash。法律博士的
+原始逐条 accepted 决定则通过提交文件 hash 绑定到其实际审阅文本。
+
+修正标签泄漏后，blind-v2 AI-A/AI-B 严格 exact agreement 为 `26.67%`，conflict rate 为
+`73.33%`；法律博士最终 accepted 与 blind-v2 AI 建议的分歧率为 `13.33%`。历史终审表中的
+`60.00%` override 口径受到旧 AI 审核输入中 `human_*` 标签污染，只作为 legacy 审计字段保留，
+不再作为主结论。first-pass acceptance rate 为 `40.00%`，自动 QA 共记录 `2` 次失败并在修订后
+重新走完整审核。上述指标描述本 pilot 的工作流，不是模型能力排名。
+
+5 条 regression 已通过千帆托管 `qianfan_deepseek_v4_pro` 槽位真实重跑。正式 attempt 4
+复用仓库 `PromptBuilder(V5)` / W4 路径，并在运行前注册 assertion synonym revision 2。结果为
+`0 passed / 5 failed`：4 条遗漏至少一个预注册 required topic，1 条在条款充分时直接回答，
+未满足预注册的 `clarify | human_review` 策略；forbidden-claim 和 citation-required gate 均通过。
+因此 `0/5` 是严格产品断言结果，不能解释为法律正确率。前三次真实尝试及其工程缺陷均保留
+在审计历史中，没有删除或改写失败结果。
+
+详见 [v0.1.0 公开指标报告](release/legal_flywheel_v0.1.0/metrics_report.md)、
+[公开 manifest](release/legal_flywheel_v0.1.0/public_manifest.yaml) 和
+[复现手册](docs/flywheel_v0.1_runbook.md)。
+
+Git 仓库只发布 `release/legal_flywheel_v0.1.0/` 中的脱敏证据。完整 accepted assets、法律博士
+逐条提交、source snapshot 历史、blind-review 原始输出和 regression 原始运行日志保留在本地
+restricted 包，并由 `.gitignore` 排除。
+
 ## 三个产品决策
 
 ### 1. 自动回答只适用于低风险、事实充分的常规咨询

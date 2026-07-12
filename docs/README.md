@@ -1,5 +1,7 @@
 # 文档导航
 
+- [Legal flywheel v0.1 复现手册](flywheel_v0.1_runbook.md)：15 个资产、双路 AI 预审、法律博士终审、数据版本与真实 regression rerun。
+
 ## 求职评审优先阅读
 
 1. [完整案例说明](case_study.md)

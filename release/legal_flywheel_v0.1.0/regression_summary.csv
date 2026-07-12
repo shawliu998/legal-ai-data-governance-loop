@@ -1,0 +1,6 @@
+﻿asset_id,model_alias,prompt_version,rerun_attempt_number,scoring_revision,regression_status,failure_reason,assertion_results,required_topics_matched,required_topics_total
+ASSET-REGRESSION-001,qianfan_deepseek_v4_pro,V5,4,scoring-v2,failed,required_topics,"{'expected_response_policy': True, 'forbidden_claims': True, 'required_topics': False, 'citation_required': True}",2,4
+ASSET-REGRESSION-002,qianfan_deepseek_v4_pro,V5,4,scoring-v2,failed,required_topics,"{'expected_response_policy': True, 'forbidden_claims': True, 'required_topics': False, 'citation_required': True}",1,4
+ASSET-REGRESSION-003,qianfan_deepseek_v4_pro,V5,4,scoring-v2,failed,required_topics,"{'expected_response_policy': True, 'forbidden_claims': True, 'required_topics': False, 'citation_required': True}",3,4
+ASSET-REGRESSION-004,qianfan_deepseek_v4_pro,V5,4,scoring-v2,failed,required_topics,"{'expected_response_policy': True, 'forbidden_claims': True, 'required_topics': False, 'citation_required': True}",2,4
+ASSET-REGRESSION-005,qianfan_deepseek_v4_pro,V5,4,scoring-v2,failed,expected_response_policy,"{'expected_response_policy': False, 'forbidden_claims': True, 'required_topics': True, 'citation_required': True}",3,3

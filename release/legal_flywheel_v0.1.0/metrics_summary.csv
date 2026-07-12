@@ -1,0 +1,12 @@
+﻿metric,value
+accepted_sft,5
+accepted_preference,5
+accepted_regression,5
+ai_exact_agreement_rate,0.2667
+ai_conflict_rate,0.7333
+recorded_expert_override_rate_legacy,0.6
+expert_vs_blind_v2_divergence_rate,0.1333
+first_pass_acceptance_rate,0.4
+qa_failure_count,2
+regression_pass_rate,0.0
+median_expert_review_elapsed_seconds,7.0
