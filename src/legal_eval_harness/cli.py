@@ -13,7 +13,11 @@ from .asset_audit import (
     backfill_lineage_and_expert_bindings,
     run_blind_review_v2,
 )
-from .asset_candidate_builder import build_asset_candidates, build_replacement_candidate
+from .asset_candidate_builder import (
+    build_asset_candidates,
+    build_independent_regression_candidates,
+    build_replacement_candidate,
+)
 from .asset_quality import run_asset_qa
 from .asset_service import AssetService
 from .aggregator import build_executive_dashboard
@@ -26,6 +30,7 @@ from .dataset_release import (
     build_expert_review_bundle,
     finalize_asset,
     validate_dataset_release,
+    validate_v02_review_batch,
 )
 from .io_excel import find_eval_row, load_dataset
 from .judge import run_judge
@@ -131,6 +136,21 @@ def cmd_build_replacement_candidate(args: argparse.Namespace) -> None:
     print(f"Prepared replacement {row.asset_id} from {row.source_case_id}")
 
 
+def cmd_build_independent_regressions(args: argparse.Namespace) -> None:
+    rows = build_independent_regression_candidates(
+        data_dir=args.data_dir,
+        eval_input_path=args.eval_input,
+        gold_labels_path=args.gold_labels,
+        metadata_path=args.metadata,
+        runs_path=args.runs,
+        routing_path=args.routing,
+    )
+    print(
+        "Prepared independent regression candidates: "
+        + ", ".join(f"{row.asset_id}={row.source_case_id}" for row in rows)
+    )
+
+
 def cmd_backfill_asset_lineage(args: argparse.Namespace) -> None:
     snapshots, bindings = backfill_lineage_and_expert_bindings(
         AssetService(args.data_dir), review_round_dir=args.review_round_dir
@@ -147,13 +167,17 @@ def cmd_run_blind_reviews_v2(args: argparse.Namespace) -> None:
     reviewer_a_model = _model_by_alias(config, args.reviewer_a_model)
     reviewer_b_model = _model_by_alias(config, args.reviewer_b_model)
     adjudicator_model = _model_by_alias(config, args.adjudicator_model)
-    accepted = sorted(
-        [row for row in service.candidates.all() if row.asset_status.value == "accepted"],
-        key=lambda row: row.asset_id,
+    selected = (
+        [service.candidates.get(asset_id) for asset_id in args.asset_ids]
+        if args.asset_ids
+        else [row for row in service.candidates.all() if row.asset_status.value == "accepted"]
     )
-    if len(accepted) != 15:
-        raise SystemExit(f"blind-v2 requires 15 accepted assets; found {len(accepted)}")
-    for candidate in accepted:
+    if any(row is None for row in selected):
+        raise SystemExit("blind-v2 asset list contains an unknown asset id")
+    selected = sorted(selected, key=lambda row: row.asset_id)
+    if not selected:
+        raise SystemExit("blind-v2 requires at least one asset")
+    for candidate in selected:
         run_blind_review_v2(
             service,
             candidate.asset_id,
@@ -235,6 +259,10 @@ def cmd_prepare_flywheel_review(args: argparse.Namespace) -> None:
     reviewer_b_model = _model_by_alias(config, args.reviewer_b_model)
     adjudicator_model = _model_by_alias(config, args.adjudicator_model)
     for candidate in service.candidates.all():
+        current = service.candidates.get(candidate.asset_id)
+        if current and current.asset_status.value in {"accepted", "rejected"}:
+            print(f"Skipped terminal {candidate.asset_id}: {current.asset_status.value}")
+            continue
         if candidate.asset_status.value in {"proposed", "rework_required"}:
             draft_correction(service, candidate.asset_id, client=client, model_config=correction_model)
         current = service.candidates.get(candidate.asset_id)
@@ -308,6 +336,15 @@ def cmd_validate_dataset_release(args: argparse.Namespace) -> None:
             print(f"ERROR: {error}")
         raise SystemExit(1)
     print("Dataset release validation OK")
+
+
+def cmd_validate_v02_review_batch(args: argparse.Namespace) -> None:
+    errors = validate_v02_review_batch(AssetService(args.data_dir), args.input)
+    if errors:
+        for error in errors:
+            print(f"ERROR: {error}")
+        raise SystemExit(1)
+    print("v0.2 independent regression review batch validation OK")
 
 
 def cmd_run_asset_regression(args: argparse.Namespace) -> None:
@@ -725,6 +762,15 @@ def build_parser() -> argparse.ArgumentParser:
     )
     replacement_cmd.set_defaults(func=cmd_build_replacement_candidate)
 
+    independent_regression_cmd = sub.add_parser("build-independent-regression-candidates")
+    independent_regression_cmd.add_argument("--data-dir", default="data/flywheel")
+    independent_regression_cmd.add_argument("--eval-input", default="data/eval_input.csv")
+    independent_regression_cmd.add_argument("--gold-labels", default="data/gold_labels.csv")
+    independent_regression_cmd.add_argument("--metadata", default="data/sample_metadata.csv")
+    independent_regression_cmd.add_argument("--runs", default="outputs/model_run_log.csv")
+    independent_regression_cmd.add_argument("--routing", default="outputs/data_routing.csv")
+    independent_regression_cmd.set_defaults(func=cmd_build_independent_regressions)
+
     lineage_cmd = sub.add_parser("backfill-asset-lineage")
     lineage_cmd.add_argument("--data-dir", default="data/flywheel")
     lineage_cmd.add_argument("--review-round-dir", default="outputs/flywheel/review_rounds")
@@ -738,6 +784,7 @@ def build_parser() -> argparse.ArgumentParser:
     blind_v2_cmd.add_argument("--reviewer-b-model", default="qianfan_ernie_50")
     blind_v2_cmd.add_argument("--adjudicator-model", default="qianfan_deepseek_v4_pro")
     blind_v2_cmd.add_argument("--raw-output-dir", default="outputs/flywheel/blind_reviews_v2")
+    blind_v2_cmd.add_argument("--asset-ids", nargs="*", default=[])
     blind_v2_cmd.set_defaults(func=cmd_run_blind_reviews_v2)
 
     correction_cmd = sub.add_parser("draft-correction")
@@ -812,6 +859,13 @@ def build_parser() -> argparse.ArgumentParser:
     validate_release_cmd = sub.add_parser("validate-dataset-release")
     validate_release_cmd.add_argument("--release", required=True)
     validate_release_cmd.set_defaults(func=cmd_validate_dataset_release)
+
+    validate_v02_cmd = sub.add_parser("validate-v02-review-batch")
+    validate_v02_cmd.add_argument("--data-dir", default="data/flywheel")
+    validate_v02_cmd.add_argument(
+        "--input", default="outputs/flywheel/v0.2_independent_regression_final_review.csv"
+    )
+    validate_v02_cmd.set_defaults(func=cmd_validate_v02_review_batch)
 
     regression_cmd = sub.add_parser("run-asset-regression")
     regression_cmd.add_argument("--data-dir", default="data/flywheel")

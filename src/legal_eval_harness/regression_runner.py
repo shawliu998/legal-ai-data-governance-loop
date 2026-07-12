@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 import pandas as pd
+import yaml
 
 from .asset_schemas import AssetStatus, AssetType, RegressionResult
 from .asset_service import AssetService
@@ -352,12 +353,26 @@ def run_asset_regressions(
             refresh_release_after_regression(root)
             return sorted(reconciled, key=lambda row: row.asset_id)
     existing = service.regression_results.all()
+    release_manifest_path = root / "release_manifest.yaml"
+    if not release_manifest_path.exists():
+        raise ValueError("regression execution requires a built dataset release manifest")
+    release_manifest = yaml.safe_load(release_manifest_path.read_text(encoding="utf-8")) or {}
+    release_id = str(release_manifest.get("dataset_release_id", ""))
+    release_asset_ids = set(release_manifest.get("asset_ids") or [])
+    active_regression_members = {
+        row.asset_id
+        for row in service.memberships.all()
+        if row.dataset_release_id == release_id
+        and row.status.value == "included"
+        and row.split in {"test", "bug_reproduction"}
+    }
     candidates = [
         row
         for row in service.candidates.all()
         if row.asset_type == AssetType.REGRESSION
         and row.asset_status == AssetStatus.ACCEPTED
-        and row.dataset_membership_status.value == "included"
+        and row.asset_id in release_asset_ids
+        and row.asset_id in active_regression_members
     ]
     if len(candidates) != 5:
         raise ValueError(f"expected five included accepted regression assets; found {len(candidates)}")

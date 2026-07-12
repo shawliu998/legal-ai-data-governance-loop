@@ -23,12 +23,16 @@ from legal_eval_harness.asset_schemas import (
 )
 from legal_eval_harness.asset_service import AssetService
 from legal_eval_harness.asset_audit import _blind_payload
-from legal_eval_harness.asset_candidate_builder import build_asset_candidates
+from legal_eval_harness.asset_candidate_builder import (
+    build_asset_candidates,
+    build_independent_regression_candidates,
+)
 from legal_eval_harness.asset_contamination import cross_split_contamination
 from legal_eval_harness.asset_quality import run_asset_qa
 from legal_eval_harness.dataset_release import (
     build_dataset_release,
     refresh_release_after_regression,
+    select_release_assets,
     validate_dataset_release,
 )
 from legal_eval_harness.regression_runner import (
@@ -699,3 +703,117 @@ def test_regression_attempt_directory_cannot_be_overwritten(tmp_path: Path):
             [{"asset_id": "A", "rerun_id": "RERUN-A", "output_text": "changed"}],
             service,
         )
+
+
+def test_v02_independent_regression_builder_is_disjoint_and_idempotent(tmp_path: Path):
+    case_ids = tuple(f"CORE-{index:03d}" for index in range(1, 6))
+    eval_rows = []
+    gold_rows = []
+    metadata_rows = []
+    run_rows = []
+    routing_rows = []
+    for index, case_id in enumerate(case_ids, start=1):
+        run_id = f"RUN-{case_id}-Model_A-V0"
+        eval_rows.append(
+            {
+                "sample_id": case_id,
+                "source_dataset": "self_authored_core_40",
+                "task_category": "consultation",
+                "user_question": f"独立问题 {index}",
+                "known_facts": f"独立事实 {index}",
+                "jurisdiction": "中国大陆",
+                "law_snapshot_date": "2026-07-07",
+            }
+        )
+        gold_rows.append(
+            {
+                "sample_id": case_id,
+                "key_missing_facts": "合同；通知；证据；时间",
+                "expected_behavior": "条件化回答并转人工",
+                "expected_answer_points": "识别事实缺口",
+                "risk_points": "避免过度结论",
+            }
+        )
+        metadata_rows.append(
+            {
+                "sample_id": case_id,
+                "risk_level": "high",
+                "human_review_required": "yes",
+            }
+        )
+        run_rows.append(
+            {
+                "run_id": run_id,
+                "sample_id": case_id,
+                "model_alias": "Model_A",
+                "version": "V0",
+                "run_status": "ok",
+                "output_text": "synthetic baseline",
+            }
+        )
+        routing_rows.append(
+            {"run_id": run_id, "main_error_type": "needs_human_review"}
+        )
+    import pandas as pd
+
+    paths = {}
+    for name, rows in {
+        "eval": eval_rows,
+        "gold": gold_rows,
+        "metadata": metadata_rows,
+        "runs": run_rows,
+        "routing": routing_rows,
+    }.items():
+        paths[name] = tmp_path / f"{name}.csv"
+        pd.DataFrame(rows).to_csv(paths[name], index=False)
+    kwargs = {
+        "data_dir": tmp_path / "flywheel",
+        "eval_input_path": paths["eval"],
+        "gold_labels_path": paths["gold"],
+        "metadata_path": paths["metadata"],
+        "runs_path": paths["runs"],
+        "routing_path": paths["routing"],
+        "selected_case_ids": case_ids,
+    }
+    first = build_independent_regression_candidates(**kwargs)
+    second = build_independent_regression_candidates(**kwargs)
+    assert [row.asset_id for row in first] == [f"ASSET-REGRESSION-{i:03d}" for i in range(6, 11)]
+    assert [row.asset_id for row in second] == [row.asset_id for row in first]
+    assert {row.source_case_id for row in first} == set(case_ids)
+    assert {row.source_snapshot["evaluation_role"] for row in first} == {"independent"}
+    assert {row.source_snapshot["source_license_status"] for row in first} == {"self_authored_internal"}
+    service = AssetService(tmp_path / "flywheel")
+    assert len(service.candidates.all()) == 5
+    assert len(service.assertions.all()) == 5
+    assert {row.revision_number for row in service.assertions.all()} == {2}
+
+
+def test_v01_and_v02_select_different_regression_cohorts():
+    training = [
+        candidate("ASSET-SFT-001", AssetType.SFT).model_copy(
+            update={"asset_status": AssetStatus.ACCEPTED}
+        )
+    ]
+    legacy = candidate("ASSET-REGRESSION-001", AssetType.REGRESSION).model_copy(
+        update={"asset_status": AssetStatus.ACCEPTED}
+    )
+    independent = candidate("ASSET-REGRESSION-006", AssetType.REGRESSION).model_copy(
+        update={
+            "asset_status": AssetStatus.ACCEPTED,
+            "source_case_id": "CORE-001",
+            "source_snapshot_id": "SNAP-CORE-001",
+            "source_snapshot": {
+                "law_snapshot_date": "2026-07-07",
+                "evaluation_role": "independent",
+            },
+        }
+    )
+    rows = training + [legacy, independent]
+    assert {row.asset_id for row in select_release_assets(rows, "legal_flywheel_v0.1.0")} == {
+        "ASSET-SFT-001",
+        "ASSET-REGRESSION-001",
+    }
+    assert {row.asset_id for row in select_release_assets(rows, "legal_flywheel_v0.2.0")} == {
+        "ASSET-SFT-001",
+        "ASSET-REGRESSION-006",
+    }
