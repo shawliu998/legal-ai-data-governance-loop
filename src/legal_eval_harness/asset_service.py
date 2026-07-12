@@ -38,7 +38,9 @@ class AssetService:
             root / "regression_results.jsonl", RegressionResult, "regression_id"
         )
         self.transitions = JsonlRepository(root / "state_transitions.jsonl", StateTransitionEvent, "event_id")
-        self.memberships = JsonlRepository(root / "dataset_memberships.jsonl", DatasetMembership, "asset_id")
+        self.memberships = JsonlRepository(
+            root / "dataset_memberships.jsonl", DatasetMembership, "dataset_membership_id"
+        )
         self.source_snapshot_versions = JsonlRepository(
             root / "source_snapshot_versions.jsonl", SourceSnapshotVersion, "snapshot_version_id"
         )
@@ -123,12 +125,57 @@ class AssetService:
     def reviews_for(self, asset_id: str) -> list[ReviewEvent]:
         return [row for row in self.reviews.all() if row.asset_id == asset_id]
 
+    @staticmethod
+    def _matches_lineage(record: object, candidate: AssetCandidate, correction: Correction) -> bool:
+        answer_hash = hashlib.sha256(correction.corrected_answer.encode("utf-8")).hexdigest()
+        return (
+            getattr(record, "correction_id", "") == correction.correction_id
+            and getattr(record, "correction_revision", 0) == correction.revision_number
+            and getattr(record, "source_snapshot_id", "") == candidate.source_snapshot_id
+            and getattr(record, "corrected_answer_hash", "") == answer_hash
+        )
+
+    def current_reviews_for(self, asset_id: str) -> list[ReviewEvent]:
+        candidate = self._require_candidate(asset_id)
+        correction = self.latest_correction(asset_id)
+        if correction is None:
+            return []
+        return [
+            row
+            for row in self.reviews_for(asset_id)
+            if self._matches_lineage(row, candidate, correction)
+        ]
+
     def adjudication_for(self, asset_id: str) -> Adjudication | None:
         rows = [row for row in self.adjudications.all() if row.asset_id == asset_id]
         return rows[-1] if rows else None
 
+    def current_adjudication_for(self, asset_id: str) -> Adjudication | None:
+        candidate = self._require_candidate(asset_id)
+        correction = self.latest_correction(asset_id)
+        if correction is None:
+            return None
+        rows = [
+            row
+            for row in self.adjudications.all()
+            if row.asset_id == asset_id and self._matches_lineage(row, candidate, correction)
+        ]
+        return rows[-1] if rows else None
+
     def quality_check_for(self, asset_id: str) -> QualityCheck | None:
         rows = [row for row in self.quality_checks.all() if row.asset_id == asset_id]
+        return rows[-1] if rows else None
+
+    def current_quality_check_for(self, asset_id: str) -> QualityCheck | None:
+        candidate = self._require_candidate(asset_id)
+        correction = self.latest_correction(asset_id)
+        if correction is None:
+            return None
+        rows = [
+            row
+            for row in self.quality_checks.all()
+            if row.asset_id == asset_id and self._matches_lineage(row, candidate, correction)
+        ]
         return rows[-1] if rows else None
 
     def assertion_for(self, asset_id: str) -> RegressionAssertion | None:
@@ -212,7 +259,7 @@ class AssetService:
 
     def _validate_target(self, candidate: AssetCandidate, target: AssetStatus) -> None:
         correction = self.latest_correction(candidate.asset_id)
-        reviews = self.reviews_for(candidate.asset_id)
+        reviews = self.current_reviews_for(candidate.asset_id) if correction else []
         roles = {review.review_role for review in reviews}
         if target == AssetStatus.AI_REVIEW_PENDING and not correction:
             raise ValueError("correction is required before AI review")
@@ -222,10 +269,10 @@ class AssetService:
         if target == AssetStatus.QA_PENDING:
             decisions = {review.review_role: review.decision for review in reviews}
             conflict = decisions.get("reviewer_a") != decisions.get("reviewer_b")
-            if conflict and not self.adjudication_for(candidate.asset_id):
+            if conflict and not self.current_adjudication_for(candidate.asset_id):
                 raise ValueError("conflicting AI reviews require proposed adjudication")
         if target == AssetStatus.EXPERT_REVIEW_PENDING:
-            check = self.quality_check_for(candidate.asset_id)
+            check = self.current_quality_check_for(candidate.asset_id)
             if not check or not check.passed:
                 raise ValueError("all QA checks must pass before expert review")
         if target == AssetStatus.ACCEPTED:
@@ -234,13 +281,13 @@ class AssetService:
             if not {"reviewer_a", "reviewer_b"}.issubset(roles):
                 raise ValueError("accepted requires independent AI-A and AI-B reviews")
             decisions = {review.review_role: review.decision for review in reviews}
-            if decisions.get("reviewer_a") != decisions.get("reviewer_b") and not self.adjudication_for(
+            if decisions.get("reviewer_a") != decisions.get("reviewer_b") and not self.current_adjudication_for(
                 candidate.asset_id
             ):
                 raise ValueError("accepted requires adjudication evidence for AI review conflict")
             final = [review for review in reviews if review.review_role == "final_expert"]
             if not final or final[-1].review_actor_type != "legal_expert" or final[-1].decision != "approve":
                 raise ValueError("accepted requires explicit final legal expert approval")
-            check = self.quality_check_for(candidate.asset_id)
+            check = self.current_quality_check_for(candidate.asset_id)
             if not check or not check.passed:
                 raise ValueError("accepted requires passed QA")

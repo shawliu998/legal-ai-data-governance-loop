@@ -27,8 +27,9 @@ def build_asset_candidates(
     cases_path: str | Path = DEFAULT_CASES_PATH,
     runs_path: str | Path = DEFAULT_RUNS_PATH,
     reviewed_path: str | Path = DEFAULT_REVIEW_PATH,
+    allow_same_source_bug_reproduction: bool = False,
 ) -> list[AssetCandidate]:
-    """Build 15 deterministic candidates from ten existing, evidenced cases."""
+    """Build 15 candidates, with disjoint train/test sources unless bug reproduction is explicit."""
 
     cases = {str(row["case_id"]): row for row in _load_cases(cases_path)}
     runs = pd.read_csv(runs_path).fillna("")
@@ -41,14 +42,19 @@ def build_asset_candidates(
         case_id = str(row["sample_id"])
         if case_id in cases and case_id not in source_by_case:
             source_by_case[case_id] = row
-    if len(source_by_case) < 10:
-        raise ValueError("fewer than ten evidenced source cases are available")
-    selected_ids = list(source_by_case)[:10]
+    minimum = 10 if allow_same_source_bug_reproduction else 15
+    if len(source_by_case) < minimum:
+        raise ValueError(
+            f"fewer than {minimum} evidenced source cases are available; "
+            "pass allow_same_source_bug_reproduction=True only for a non-independent bug-reproduction set"
+        )
+    selected_ids = list(source_by_case)[:minimum]
     run_by_id = {str(row["run_id"]): row for row in runs.to_dict(orient="records")}
+    regression_ids = selected_ids[:5] if allow_same_source_bug_reproduction else selected_ids[10:15]
     specs = (
         [(AssetType.SFT, case_id) for case_id in selected_ids[:5]]
         + [(AssetType.PREFERENCE, case_id) for case_id in selected_ids[5:10]]
-        + [(AssetType.REGRESSION, case_id) for case_id in selected_ids[:5]]
+        + [(AssetType.REGRESSION, case_id) for case_id in regression_ids]
     )
     service = AssetService(data_dir)
     candidates: list[AssetCandidate] = []
@@ -80,7 +86,16 @@ def build_asset_candidates(
             "critical_facts": case.get("critical_facts", []),
             "missing_facts": case.get("missing_facts", []),
             "allowed_sources": case.get("allowed_sources", []),
+            "provided_context": case.get("provided_context", []),
             "forbidden_claims": case.get("forbidden_claims", []),
+            "counterfactual_family_id": case.get("counterfactual_family_id")
+            or case.get("pair_id")
+            or "",
+            "evaluation_role": (
+                "same_source_bug_reproduction"
+                if asset_type == AssetType.REGRESSION and allow_same_source_bug_reproduction
+                else "independent"
+            ),
             "expected_human_review": bool(case.get("expected_human_review", False)),
             "source_output": safe_text(source_run.get("output_text") or source_review.get("output_text")),
             "human_pass_fail": safe_text(source_review.get("human_pass_fail")),
@@ -175,6 +190,10 @@ def build_replacement_candidate(
         "human_pass_fail": safe_text(source_review.get("human_pass_fail")),
         "human_notes": safe_text(source_review.get("human_notes")),
         "replacement_for": "ASSET-PREFERENCE-003",
+        "evaluation_role": "independent",
+        "counterfactual_family_id": case.get("counterfactual_family_id")
+        or case.get("pair_id")
+        or "",
     }
     canonical = json.dumps(snapshot, ensure_ascii=False, sort_keys=True)
     candidate = AssetCandidate(

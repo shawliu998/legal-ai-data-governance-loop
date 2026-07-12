@@ -171,9 +171,13 @@ class QualityCheck(BaseModel):
     pii_check: Literal["passed", "failed"]
     duplicate_check: Literal["passed", "failed"]
     source_traceability: Literal["passed", "failed"]
-    contamination_check: Literal["passed", "failed"]
+    contamination_check: Literal["passed", "failed", "not_applicable"]
     law_effective_date_check: Literal["passed", "failed"]
     type_specific_check: Literal["passed", "failed"]
+    correction_id: str = ""
+    correction_revision: int = 0
+    source_snapshot_id: str = ""
+    corrected_answer_hash: str = ""
     findings: list[str] = Field(default_factory=list)
     created_at: str
 
@@ -185,11 +189,10 @@ class QualityCheck(BaseModel):
                 self.pii_check,
                 self.duplicate_check,
                 self.source_traceability,
-                self.contamination_check,
                 self.law_effective_date_check,
                 self.type_specific_check,
             )
-        )
+        ) and self.contamination_check != "failed"
 
 
 class RegressionAssertion(BaseModel):
@@ -213,11 +216,20 @@ class RegressionAssertion(BaseModel):
 
 
 class DatasetMembership(BaseModel):
+    dataset_membership_id: str = ""
     asset_id: str
     dataset_release_id: str
-    split: Literal["train", "validation", "test"]
+    split: Literal["train", "validation", "test", "bug_reproduction"]
     status: DatasetMembershipStatus = DatasetMembershipStatus.INCLUDED
     created_at: str
+
+    @model_validator(mode="after")
+    def populate_membership_id(self) -> "DatasetMembership":
+        if not self.dataset_membership_id:
+            self.dataset_membership_id = (
+                f"MEM-{self.dataset_release_id}-{self.asset_id}-{self.split}"
+            )
+        return self
 
 
 class DatasetRelease(BaseModel):

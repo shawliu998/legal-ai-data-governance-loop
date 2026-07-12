@@ -184,6 +184,10 @@ def review_asset(
         input_hash=_hash(prompt),
         output_hash=_hash(output),
         review_elapsed_seconds=round(elapsed, 3),
+        correction_id=correction.correction_id,
+        correction_revision=correction.revision_number,
+        source_snapshot_id=candidate.source_snapshot_id,
+        corrected_answer_hash=_hash(correction.corrected_answer),
         created_at=utc_now_iso(),
     )
     service.reviews.append(event)
@@ -197,7 +201,11 @@ def adjudicate_asset(
     client: LLMClient,
     model_config: dict[str, Any],
 ) -> Adjudication:
-    reviews = {row.review_role: row for row in service.reviews_for(asset_id)}
+    candidate = service.candidates.get(asset_id)
+    correction = service.latest_correction(asset_id)
+    if candidate is None or correction is None:
+        raise ValueError("candidate and correction are required")
+    reviews = {row.review_role: row for row in service.current_reviews_for(asset_id)}
     if not {"reviewer_a", "reviewer_b"}.issubset(reviews):
         raise ValueError("both independent reviews are required")
     a, b = reviews["reviewer_a"], reviews["reviewer_b"]
@@ -218,6 +226,10 @@ def adjudicate_asset(
             prompt_version="asset-adjudication-v1",
             input_hash=_hash(a.model_dump_json() + b.model_dump_json()),
             output_hash=_hash(a.decision),
+            correction_id=correction.correction_id,
+            correction_revision=correction.revision_number,
+            source_snapshot_id=candidate.source_snapshot_id,
+            corrected_answer_hash=_hash(correction.corrected_answer),
             created_at=utc_now_iso(),
         )
         service.adjudications.append(result)
@@ -249,6 +261,10 @@ Reviewer B：{b.model_dump_json()}
         prompt_version="asset-adjudication-v1",
         input_hash=_hash(prompt),
         output_hash=_hash(output),
+        correction_id=correction.correction_id,
+        correction_revision=correction.revision_number,
+        source_snapshot_id=candidate.source_snapshot_id,
+        corrected_answer_hash=_hash(correction.corrected_answer),
         created_at=utc_now_iso(),
     )
     service.adjudications.append(result)

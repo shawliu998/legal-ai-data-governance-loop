@@ -84,19 +84,19 @@ def build_public_release(restricted: Path, output: Path) -> None:
     readme = """# legal_flywheel_v0.1.0 — public evidence package
 
 This package is the intentionally limited public view of a 15-asset legal-AI data flywheel pilot.
-The full restricted release contains 5 SFT, 5 preference, and 5 regression assets, item-level legal-
+The full restricted release contains 5 SFT, 5 preference, and 5 regression bug-reproduction assets, item-level legal-
 expert submissions, source snapshots, blind-review raw outputs, and restricted model run logs.
 
 The public package contains only:
 
 - three redacted example assets (one per asset type);
 - aggregate workflow metrics and the evidence-boundary report;
-- five regression gate outcomes without raw prompts, answers, hashes, or internal rerun identifiers;
+- five same-source bug-reproduction gate outcomes without raw prompts, answers, hashes, or internal rerun identifiers;
 - a hash manifest describing included and deliberately excluded evidence.
 
-The official V5/W4 regression attempt produced 0 passed / 5 failed under preregistered deterministic
-gates. This is not a legal-accuracy estimate or model leaderboard. See `metrics_report.md` for the
-interpretation and attempt history.
+The official V5/W4 attempt produced 0 passed / 5 failed under preregistered deterministic gates.
+These assets reuse SFT source cases and are not an independent test split, legal-accuracy estimate,
+or model leaderboard. See `metrics_report.md` for the interpretation and attempt history.
 
 This material is diagnostic evaluation evidence, not legal advice or a production legal service.
 Repository code is distributed under the project MIT License; source legal materials remain subject to
@@ -113,7 +113,15 @@ their original authority and are not republished in this public package.
         "source_release_id": restricted_manifest.get("dataset_release_id"),
         "source_release_manifest_sha256": sha256(restricted / "release_manifest.yaml"),
         "counts": {"restricted_accepted_assets": 15, "public_redacted_samples": len(samples)},
-        "official_regression": {"reruns": 5, "passed": 0, "failed": 5, "workflow": "V5/W4"},
+        "official_regression": {
+            "attempt": int(results["rerun_attempt_number"].iloc[0]),
+            "reruns": 5,
+            "passed": int((results["regression_status"] == "passed").sum()),
+            "failed": int((results["regression_status"] == "failed").sum()),
+            "workflow": "V5/W4",
+            "evaluation_role": "same_source_bug_reproduction",
+        },
+        "split_policy": restricted_manifest.get("split_policy", {}),
         "included": sorted(public_files),
         "excluded_restricted_categories": [
             "accepted_assets_full_text",

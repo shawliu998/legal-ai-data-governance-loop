@@ -12,11 +12,14 @@ import pandas as pd
 import yaml
 
 from .asset_schemas import (
+    AssetCandidate,
     AssetStatus,
     DatasetMembership,
+    DatasetMembershipStatus,
     DatasetRelease,
     ReviewEvent,
 )
+from .asset_contamination import cross_split_contamination, overlapping_signals
 from .asset_service import AssetService
 from .utils import utc_now_iso
 
@@ -78,12 +81,12 @@ def build_expert_review_bundle(
             key=lambda row: row.revision_number,
         )
         prior_correction = correction_history[-2] if len(correction_history) > 1 else None
-        reviews = {row.review_role: row for row in service.reviews_for(candidate.asset_id)}
+        reviews = {row.review_role: row for row in service.current_reviews_for(candidate.asset_id)}
         final_expert_history = [
             row for row in service.reviews_for(candidate.asset_id) if row.review_role == "final_expert"
         ]
-        adjudication = service.adjudication_for(candidate.asset_id)
-        qa = service.quality_check_for(candidate.asset_id)
+        adjudication = service.current_adjudication_for(candidate.asset_id)
+        qa = service.current_quality_check_for(candidate.asset_id)
         rows.append(
             {
                 "asset_id": candidate.asset_id,
@@ -126,7 +129,7 @@ def build_expert_review_bundle(
                 "expert_decision": "",
                 "expert_override": "",
                 "expert_override_reason": "",
-                "review_elapsed_seconds": "",
+                "self_reported_review_entry_seconds": "",
                 "reviewer_role": "legal_phd",
             }
         )
@@ -150,8 +153,11 @@ def finalize_asset(
     if decision not in {"accepted", "rework_required", "rejected"}:
         raise ValueError("expert decision must be accepted, rework_required, or rejected")
     candidate = service.candidates.get(asset_id)
+    correction = service.latest_correction(asset_id)
     if candidate is None or candidate.asset_status != AssetStatus.EXPERT_REVIEW_PENDING:
         raise ValueError("asset must be expert_review_pending")
+    if correction is None:
+        raise ValueError("asset must have a current correction")
     review_decision = {"accepted": "approve", "rework_required": "rework", "rejected": "reject"}[decision]
     payload = f"{asset_id}|{decision}|{reason}|{reviewer_identifier}"
     digest = hashlib.sha256(payload.encode()).hexdigest()
@@ -172,6 +178,10 @@ def finalize_asset(
         review_elapsed_seconds=review_elapsed_seconds,
         expert_override=expert_override,
         expert_override_reason=reason if expert_override else "",
+        correction_id=correction.correction_id,
+        correction_revision=correction.revision_number,
+        source_snapshot_id=candidate.source_snapshot_id,
+        corrected_answer_hash=hashlib.sha256(correction.corrected_answer.encode("utf-8")).hexdigest(),
         created_at=utc_now_iso(),
     )
     service.reviews.append(event)
@@ -204,7 +214,10 @@ def apply_expert_review_bundle(service: AssetService, input_path: str | Path) ->
         reason = str(row.get("expert_override_reason", "")).strip()
         override = str(row.get("expert_override", "")).strip().lower()
         try:
-            elapsed = float(row.get("review_elapsed_seconds", 0))
+            elapsed = float(
+                row.get("self_reported_review_entry_seconds")
+                or row.get("review_elapsed_seconds", 0)
+            )
         except (TypeError, ValueError):
             elapsed = 0
         if decision not in allowed:
@@ -214,7 +227,7 @@ def apply_expert_review_bundle(service: AssetService, input_path: str | Path) ->
         if override not in {"yes", "no"}:
             errors.append(f"{asset_id}: expert_override must be yes or no")
         if elapsed <= 0:
-            errors.append(f"{asset_id}: review_elapsed_seconds must be positive")
+            errors.append(f"{asset_id}: self_reported_review_entry_seconds must be positive")
         if str(row.get("reviewer_role", "")).strip() != "legal_phd":
             errors.append(f"{asset_id}: reviewer_role must be legal_phd")
     if errors:
@@ -225,7 +238,10 @@ def apply_expert_review_bundle(service: AssetService, input_path: str | Path) ->
             str(row["asset_id"]),
             decision=str(row["expert_decision"]).strip(),
             reason=str(row["expert_override_reason"]).strip(),
-            review_elapsed_seconds=float(row["review_elapsed_seconds"]),
+            review_elapsed_seconds=float(
+                row.get("self_reported_review_entry_seconds")
+                or row.get("review_elapsed_seconds", 0)
+            ),
             reviewer_identifier="legal_phd",
             expert_override=str(row["expert_override"]).strip().lower() == "yes",
         )
@@ -259,29 +275,63 @@ def build_dataset_release(
         ],
     )
     memberships: list[dict[str, Any]] = []
+    membership_models: list[DatasetMembership] = []
     accepted_rows: list[dict[str, Any]] = []
     public_rows: list[dict[str, Any]] = []
+    training_assets = [row for row in accepted if row.asset_type.value != "regression"]
     for candidate in sorted(accepted, key=lambda row: row.asset_id):
-        split = "test" if candidate.asset_type.value == "regression" else "train"
-        membership = service.memberships.get(candidate.asset_id)
+        split = "train"
+        if candidate.asset_type.value == "regression":
+            overlaps = [row for row in training_assets if overlapping_signals(row, candidate)]
+            if overlaps:
+                explicitly_disclosed = (
+                    candidate.source_snapshot.get("evaluation_role")
+                    == "same_source_bug_reproduction"
+                )
+                if not explicitly_disclosed and version != "legal_flywheel_v0.1.0":
+                    raise ValueError(
+                        f"regression source overlaps training data without explicit bug-reproduction status: {candidate.asset_id}"
+                    )
+                split = "bug_reproduction"
+            else:
+                split = "test"
+        existing_memberships = [
+            row
+            for row in service.memberships.all()
+            if row.asset_id == candidate.asset_id
+            and row.dataset_release_id == version
+            and row.status == DatasetMembershipStatus.INCLUDED
+        ]
+        membership = next((row for row in existing_memberships if row.split == split), None)
         if membership is None:
+            if existing_memberships:
+                stale_ids = {row.dataset_membership_id for row in existing_memberships}
+                service.memberships.replace_all(
+                    [
+                        row.model_copy(update={"status": DatasetMembershipStatus.DEPRECATED})
+                        if row.dataset_membership_id in stale_ids
+                        else row
+                        for row in service.memberships.all()
+                    ]
+                )
             membership = DatasetMembership(
                 asset_id=candidate.asset_id,
                 dataset_release_id=version,
                 split=split,
                 created_at=created,
             )
-        elif membership.dataset_release_id != version or membership.split != split:
-            raise ValueError(f"conflicting existing dataset membership for {candidate.asset_id}")
         included_candidate = service.include(membership)
         memberships.append(membership.model_dump(mode="json"))
+        membership_models.append(membership)
         correction = service.latest_correction(candidate.asset_id)
-        qa = service.quality_check_for(candidate.asset_id)
-        adjudication = service.adjudication_for(candidate.asset_id)
+        qa = service.current_quality_check_for(candidate.asset_id)
+        adjudication = service.current_adjudication_for(candidate.asset_id)
         record = {
             **included_candidate.model_dump(mode="json"),
             "correction": correction.model_dump(mode="json") if correction else {},
-            "review_events": [row.model_dump(mode="json") for row in service.reviews_for(candidate.asset_id)],
+            "review_events": [
+                row.model_dump(mode="json") for row in service.current_reviews_for(candidate.asset_id)
+            ],
             "adjudication": adjudication.model_dump(mode="json") if adjudication else {},
             "quality_check": qa.model_dump(mode="json") if qa else {},
             "regression_assertion": (
@@ -328,7 +378,32 @@ def build_dataset_release(
         "".join(json.dumps(row, ensure_ascii=False, sort_keys=True) + "\n" for row in public_rows),
         encoding="utf-8",
     )
-    reviews = service.reviews.all()
+    contamination_findings = cross_split_contamination(accepted, membership_models)
+    if contamination_findings:
+        raise ValueError(f"train/test contamination detected: {contamination_findings}")
+    has_test_split = any(row.split == "test" for row in membership_models)
+    bug_members = [row for row in membership_models if row.split == "bug_reproduction"]
+    contamination_rows = [
+        {
+            "scope": "train_vs_test",
+            "status": "passed" if has_test_split else "not_applicable",
+            "signals_checked": (
+                "source_case_id,source_snapshot_id,normalized_user_prompt_hash,counterfactual_family_id"
+            ),
+            "note": (
+                "no overlaps detected"
+                if has_test_split
+                else "no independent test split; same-source regressions are bug_reproduction"
+            ),
+        }
+    ]
+    contamination_path = root / "contamination_audit.csv"
+    pd.DataFrame(contamination_rows).to_csv(contamination_path, index=False, encoding="utf-8-sig")
+    reviews = [
+        row
+        for asset_id in release.asset_ids
+        for row in service.current_reviews_for(asset_id)
+    ]
     ai_a = {
         row.asset_id: row
         for row in reviews
@@ -404,7 +479,7 @@ def build_dataset_release(
             {"metric": "qa_failure_count", "value": qa_failures},
             {"metric": "regression_pass_rate", "value": "pending"},
             {
-                "metric": "median_expert_review_elapsed_seconds",
+                "metric": "median_self_reported_review_entry_seconds",
                 "value": float(pd.Series([row.review_elapsed_seconds for row in experts]).median()),
             },
         ]
@@ -431,6 +506,20 @@ def build_dataset_release(
             "first_pass_acceptance_rate": "share accepted without any rework_required transition",
             "qa_failure_count": "number of failed QA events, including superseded revisions",
             "regression_pass_rate": "passed real reruns divided by five; populated after regression execution",
+            "median_self_reported_review_entry_seconds": "median reviewer-entered duration; not instrumented active review time",
+        },
+        "split_policy": {
+            "independent_test_assets": sum(row.split == "test" for row in membership_models),
+            "same_source_bug_reproductions": len(bug_members),
+            "cross_split_contamination_check": (
+                "passed" if has_test_split else "not_applicable_no_independent_test_split"
+            ),
+            "signals_checked": [
+                "source_case_id",
+                "source_snapshot_id",
+                "normalized_user_prompt_hash",
+                "counterfactual_family_id",
+            ],
         },
         "code_snapshot": {
             "path": code_snapshot_path.name,
@@ -439,7 +528,14 @@ def build_dataset_release(
         },
         "files": {},
     }
-    for path in (accepted_path, memberships_path, metrics_path, public_path, code_snapshot_path):
+    for path in (
+        accepted_path,
+        memberships_path,
+        contamination_path,
+        metrics_path,
+        public_path,
+        code_snapshot_path,
+    ):
         manifest["files"][path.name] = {"sha256": file_sha256(path), "bytes": path.stat().st_size}
     (root / "release_manifest.yaml").write_text(
         yaml.safe_dump(manifest, allow_unicode=True, sort_keys=False), encoding="utf-8"
@@ -459,8 +555,68 @@ def refresh_release_after_regression(root: str | Path) -> None:
         raise ValueError("exactly five regression rows with rerun_id are required")
     metrics = pd.read_csv(metrics_path, dtype={"value": "object"})
     pass_rate = round(float((results["regression_status"] == "passed").mean()), 4)
+    attempts = set(results["rerun_attempt_number"])
+    if len(attempts) != 1:
+        raise ValueError("official regression view must contain one attempt number")
+    official_attempt = int(next(iter(attempts)))
+    attempt_dir = release_root / "regression_attempts" / f"attempt_{official_attempt:02d}"
+    run_log_path = attempt_dir / "regression_run_log.jsonl"
+    if not run_log_path.exists():
+        raise ValueError(f"immutable run log missing for attempt {official_attempt}")
+    ledger_path = release_root / "regression_attempt_events.jsonl"
+    if not ledger_path.exists():
+        raise ValueError("regression_attempt_events.jsonl is required")
     metrics.loc[metrics["metric"] == "regression_pass_rate", "value"] = str(pass_rate)
     metrics.to_csv(metrics_path, index=False, encoding="utf-8-sig")
+    metric_map = dict(zip(metrics["metric"], metrics["value"], strict=False))
+    report_lines = [
+        "# legal_flywheel_v0.1.0 metrics report",
+        "",
+        "## Release result and split boundary",
+        "",
+        "The release contains 15 accepted assets: 5 SFT, 5 preference, and 5 regression bug reproductions.",
+        "The SFT and preference assets are train members. Because the five regression assets reuse SFT source",
+        "cases, they are classified as `bug_reproduction`, not an independent test split. Consequently the",
+        "cross-split contamination result is `not_applicable_no_independent_test_split`; no claim of an",
+        "independent regression-set estimate is made.",
+        "",
+        "Future standard candidate builds require disjoint train/test sources and compare `source_case_id`,",
+        "`source_snapshot_id`, normalized user-prompt hash, and counterfactual family ID.",
+        "",
+        "## Observed workflow metrics",
+        "",
+        "| Metric | Value | Interpretation |",
+        "| --- | ---: | --- |",
+        f"| Blind-v2 AI exact agreement rate | {float(metric_map.get('ai_exact_agreement_rate', 0)):.2%} | Label-isolated A/B exact agreement. |",
+        f"| Blind-v2 AI conflict rate | {float(metric_map.get('ai_conflict_rate', 0)):.2%} | At least one deterministic conflict field. |",
+        f"| Expert vs blind-v2 divergence rate | {float(metric_map.get('expert_vs_blind_v2_divergence_rate', 0)):.2%} | Workflow divergence, not model ranking. |",
+        f"| Self-reported review entry median | {metric_map.get('median_self_reported_review_entry_seconds', '')} seconds | Reviewer-entered duration; not instrumented active review time. |",
+        f"| Official bug-reproduction pass rate | {pass_rate:.2%} | Five real attempt-{official_attempt} reruns; strict product gates, not legal accuracy. |",
+        "",
+        "## Official bug-reproduction reruns",
+        "",
+        "| Asset | Result | Failed gate |",
+        "| --- | --- | --- |",
+    ]
+    for row in results.to_dict(orient="records"):
+        report_lines.append(
+            f"| {row['asset_id']} | {row['regression_status']} | {str(row.get('failure_reason') or 'none').replace('_', ' ')} |"
+        )
+    report_lines.extend(
+        [
+            "",
+            f"Attempt {official_attempt} is the official V5/W4 view. Immutable attempt directories and the",
+            "append-only `regression_attempt_events.jsonl` are the system of record; `regression_results.csv`",
+            "is only the current official view. Failed results are retained and are not legal-correctness scores.",
+            "",
+            "## Evidence boundary",
+            "",
+            "This pilot is not a representative Chinese-law corpus, legal service, independent test estimate,",
+            "or model leaderboard. Full prompts, outputs, expert submissions, and lineage evidence remain restricted.",
+            "",
+        ]
+    )
+    (release_root / "metrics_report.md").write_text("\n".join(report_lines), encoding="utf-8")
     manifest = yaml.safe_load(manifest_path.read_text(encoding="utf-8")) or {}
     for path in sorted(release_root.rglob("*")):
         if path.is_file() and path != manifest_path:
@@ -470,6 +626,7 @@ def refresh_release_after_regression(root: str | Path) -> None:
                 "bytes": path.stat().st_size,
             }
     manifest["regression_summary"] = {
+        "official_attempt": official_attempt,
         "rerun_count": 5,
         "passed": int((results["regression_status"] == "passed").sum()),
         "failed": int((results["regression_status"] == "failed").sum()),
@@ -496,6 +653,24 @@ def validate_dataset_release(path: str | Path) -> list[str]:
     assets_path = root / "accepted_assets.jsonl"
     if assets_path.exists():
         rows = [json.loads(line) for line in assets_path.read_text(encoding="utf-8").splitlines() if line]
+        candidate_models = [AssetCandidate.model_validate(row) for row in rows]
+        memberships_path = root / "dataset_memberships.csv"
+        if not memberships_path.exists():
+            errors.append("missing dataset_memberships.csv")
+            membership_models: list[DatasetMembership] = []
+        else:
+            membership_models = [
+                DatasetMembership.model_validate(row)
+                for row in pd.read_csv(memberships_path).fillna("").to_dict(orient="records")
+            ]
+            contamination = cross_split_contamination(candidate_models, membership_models)
+            if contamination:
+                errors.append(f"train/test contamination detected: {contamination}")
+        split_by_asset = {
+            row.asset_id: row.split
+            for row in membership_models
+            if row.status == DatasetMembershipStatus.INCLUDED
+        }
         counts = Counter(row["asset_type"] for row in rows)
         if counts != {"sft": 5, "preference": 5, "regression": 5}:
             errors.append(f"invalid accepted asset counts: {dict(counts)}")
@@ -525,6 +700,10 @@ def validate_dataset_release(path: str | Path) -> list[str]:
                         errors.append(f"blind review correction hash mismatch: {asset_id}")
                     if event.get("correction_id") != correction.get("correction_id"):
                         errors.append(f"blind review correction id mismatch: {asset_id}")
+                    if event.get("correction_revision") != correction.get("revision_number"):
+                        errors.append(f"blind review correction revision mismatch: {asset_id}")
+                    if event.get("source_snapshot_id") != row.get("source_snapshot_id"):
+                        errors.append(f"blind review source snapshot mismatch: {asset_id}")
                     raw_evidence = root / "blind_review_evidence" / str(asset_id) / f"{event.get('review_role')}.json"
                     if not raw_evidence.exists():
                         errors.append(f"missing blind raw output evidence: {asset_id}/{event.get('review_role')}")
@@ -537,6 +716,16 @@ def validate_dataset_release(path: str | Path) -> list[str]:
                 errors.append(f"missing final expert approval: {asset_id}")
             elif final[-1].get("review_actor_type") != "legal_expert":
                 errors.append(f"final approval is not from legal_expert: {asset_id}")
+            elif (
+                final[-1].get("correction_id") != correction.get("correction_id")
+                or final[-1].get("correction_revision") != correction.get("revision_number")
+                or final[-1].get("source_snapshot_id") != row.get("source_snapshot_id")
+                or final[-1].get("corrected_answer_hash")
+                != hashlib.sha256(
+                    str(correction.get("corrected_answer", "")).encode("utf-8")
+                ).hexdigest()
+            ):
+                errors.append(f"final expert lineage mismatch: {asset_id}")
             quality = row.get("quality_check") or {}
             required_quality = (
                 "pii_check",
@@ -546,13 +735,37 @@ def validate_dataset_release(path: str | Path) -> list[str]:
                 "law_effective_date_check",
                 "type_specific_check",
             )
-            if any(quality.get(field) != "passed" for field in required_quality):
+            if any(
+                quality.get(field) != "passed"
+                for field in required_quality
+                if field != "contamination_check"
+            ) or quality.get("contamination_check") not in {"passed", "not_applicable"}:
                 errors.append(f"final QA not passed: {asset_id}")
+            if (
+                quality.get("correction_id") != correction.get("correction_id")
+                or quality.get("correction_revision") != correction.get("revision_number")
+                or quality.get("source_snapshot_id") != row.get("source_snapshot_id")
+                or quality.get("corrected_answer_hash")
+                != hashlib.sha256(
+                    str(correction.get("corrected_answer", "")).encode("utf-8")
+                ).hexdigest()
+            ):
+                errors.append(f"final QA lineage mismatch: {asset_id}")
             adjudication = row.get("adjudication") or {}
             if adjudication.get("status") not in {"not_required", "proposed_adjudication"}:
                 errors.append(f"missing adjudication evidence: {asset_id}")
             elif adjudication.get("review_protocol_version") != "blind-v2":
                 errors.append(f"final adjudication is not blind-v2: {asset_id}")
+            elif (
+                adjudication.get("correction_id") != correction.get("correction_id")
+                or adjudication.get("correction_revision") != correction.get("revision_number")
+                or adjudication.get("source_snapshot_id") != row.get("source_snapshot_id")
+                or adjudication.get("corrected_answer_hash")
+                != hashlib.sha256(
+                    str(correction.get("corrected_answer", "")).encode("utf-8")
+                ).hexdigest()
+            ):
+                errors.append(f"final adjudication lineage mismatch: {asset_id}")
             binding = row.get("expert_approval_binding") or {}
             if not binding:
                 errors.append(f"missing expert approval binding: {asset_id}")
@@ -576,8 +789,22 @@ def validate_dataset_release(path: str | Path) -> list[str]:
                 errors.append(f"missing source snapshot version lineage: {asset_id}")
             if row.get("dataset_membership_status") != "included":
                 errors.append(f"asset not marked included: {asset_id}")
+            if asset_id not in split_by_asset:
+                errors.append(f"asset missing included membership: {asset_id}")
+            if row.get("asset_type") == "regression" and split_by_asset.get(asset_id) not in {
+                "test",
+                "bug_reproduction",
+            }:
+                errors.append(f"invalid regression split: {asset_id}")
             if row.get("asset_type") == "regression" and not row.get("regression_assertion"):
                 errors.append(f"missing regression assertion: {asset_id}")
+        contamination_path = root / "contamination_audit.csv"
+        if not contamination_path.exists():
+            errors.append("missing contamination_audit.csv")
+        else:
+            audit = pd.read_csv(contamination_path).fillna("")
+            if len(audit) != 1 or set(audit.get("status", [])) - {"passed", "not_applicable"}:
+                errors.append("invalid contamination audit")
     regression_path = root / "regression_results.csv"
     if not regression_path.exists():
         errors.append("missing regression_results.csv")
@@ -595,9 +822,19 @@ def validate_dataset_release(path: str | Path) -> list[str]:
             errors.append("invalid regression_status values")
         if "scoring_revision" not in results or set(results["scoring_revision"]) != {"scoring-v2"}:
             errors.append("official regression results are not uniformly scoring-v2")
-        if "rerun_attempt_number" not in results or set(results["rerun_attempt_number"]) != {4}:
-            errors.append("official regression results are not bound to rerun attempt 4")
-        run_log_path = root / "regression_run_log.jsonl"
+        attempt_numbers = set(results.get("rerun_attempt_number", []))
+        if len(attempt_numbers) != 1:
+            errors.append("official regression results must reference exactly one attempt")
+            official_attempt = 0
+        else:
+            official_attempt = int(next(iter(attempt_numbers)))
+        manifest_attempt = (manifest.get("regression_summary") or {}).get("official_attempt")
+        if manifest_attempt != official_attempt:
+            errors.append(
+                f"official attempt mismatch: csv={official_attempt}, manifest={manifest_attempt}"
+            )
+        attempt_dir = root / "regression_attempts" / f"attempt_{official_attempt:02d}"
+        run_log_path = attempt_dir / "regression_run_log.jsonl"
         if not run_log_path.exists():
             errors.append("missing regression_run_log.jsonl")
         else:
@@ -610,6 +847,60 @@ def validate_dataset_release(path: str | Path) -> list[str]:
                 errors.append(f"expected 5 regression run logs; found {len(run_logs)}")
             elif {str(row.get("rerun_id")) for row in run_logs} != set(results["rerun_id"].astype(str)):
                 errors.append("regression result and run-log rerun_id sets differ")
+        ledger_path = root / "regression_attempt_events.jsonl"
+        if not ledger_path.exists():
+            errors.append("missing regression_attempt_events.jsonl")
+        else:
+            events = [
+                json.loads(line)
+                for line in ledger_path.read_text(encoding="utf-8").splitlines()
+                if line.strip()
+            ]
+            recorded = {
+                int(row.get("attempt_number", 0))
+                for row in events
+                if row.get("event_type") == "attempt_recorded"
+            }
+            for event in events:
+                if event.get("event_type") != "attempt_recorded":
+                    continue
+                event_dir = root / str(event.get("attempt_path", ""))
+                for name, expected_hash in (event.get("file_sha256") or {}).items():
+                    evidence = event_dir / name
+                    if not evidence.exists():
+                        errors.append(f"attempt evidence missing: {event.get('attempt_path')}/{name}")
+                    elif file_sha256(evidence) != expected_hash:
+                        errors.append(f"immutable attempt evidence hash mismatch: {event.get('attempt_path')}/{name}")
+            directories = {
+                int(path.name.split("_")[-1])
+                for path in (root / "regression_attempts").glob("attempt_*")
+                if path.is_dir()
+            }
+            if recorded != directories:
+                errors.append(
+                    f"attempt ledger/directory mismatch: ledger={sorted(recorded)}, dirs={sorted(directories)}"
+                )
+            selected = {
+                int(row.get("attempt_number", 0))
+                for row in events
+                if row.get("event_type") == "official_attempt_selected"
+            }
+            if official_attempt not in selected:
+                errors.append("official attempt has no append-only selection event")
+        report_path = root / "metrics_report.md"
+        if not report_path.exists():
+            errors.append("missing metrics_report.md")
+        else:
+            import re
+
+            report_attempts = {
+                int(value)
+                for value in re.findall(r"Five real attempt-(\d+) reruns", report_path.read_text(encoding="utf-8"))
+            }
+            if report_attempts != {official_attempt}:
+                errors.append(
+                    f"report attempt mismatch: report={sorted(report_attempts)}, official={official_attempt}"
+                )
     metrics_path = root / "metrics_summary.csv"
     if not metrics_path.exists():
         errors.append("missing metrics_summary.csv")

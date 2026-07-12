@@ -65,8 +65,35 @@ def validate(release: Path) -> list[str]:
             errors.append(f"expected 5 regression summary rows; found {len(frame)}")
         if set(frame.get("prompt_version", [])) != {"V5"}:
             errors.append("public regression summary is not V5")
+        attempts = {int(value) for value in frame.get("rerun_attempt_number", [])}
+        manifest_attempt = (manifest.get("official_regression") or {}).get("attempt")
+        if len(attempts) != 1 or attempts != {manifest_attempt}:
+            errors.append(
+                f"attempt mismatch between regression CSV and manifest: {sorted(attempts)} vs {manifest_attempt}"
+            )
+        report_path = release / "metrics_report.md"
+        report_text = report_path.read_text(encoding="utf-8") if report_path.exists() else ""
+        report_attempts = {
+            int(value) for value in re.findall(r"Five real attempt-(\d+) reruns", report_text)
+        }
+        if report_attempts != attempts:
+            errors.append(
+                f"attempt mismatch between report and regression CSV: {sorted(report_attempts)} vs {sorted(attempts)}"
+            )
     else:
         errors.append("missing regression_summary.csv")
+    split_policy = manifest.get("split_policy") or {}
+    if split_policy.get("independent_test_assets") != 0:
+        errors.append("v0.1 public package must not claim an independent test split")
+    if split_policy.get("cross_split_contamination_check") != "not_applicable_no_independent_test_split":
+        errors.append("v0.1 contamination status must be not applicable without an independent test split")
+    metrics_path = release / "metrics_summary.csv"
+    if metrics_path.exists():
+        metrics = set(pd.read_csv(metrics_path).get("metric", []))
+        if "median_expert_review_elapsed_seconds" in metrics:
+            errors.append("deprecated expert active-review metric remains public")
+        if "median_self_reported_review_entry_seconds" not in metrics:
+            errors.append("missing self-reported review-entry metric")
     return errors
 
 

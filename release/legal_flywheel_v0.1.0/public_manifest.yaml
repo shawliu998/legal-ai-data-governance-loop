@@ -1,14 +1,25 @@
 release_id: legal_flywheel_v0.1.0-public
 source_release_id: legal_flywheel_v0.1.0
-source_release_manifest_sha256: ba27828173b5b76c5db1222cb2b576f2eb3c6bd79c98b5b3a3d0ee735dabb576
+source_release_manifest_sha256: 307fad99fd74fbb997f95974f82772e77c1fce5547645ab42c31ad47e7450fa6
 counts:
   restricted_accepted_assets: 15
   public_redacted_samples: 3
 official_regression:
+  attempt: 4
   reruns: 5
   passed: 0
   failed: 5
   workflow: V5/W4
+  evaluation_role: same_source_bug_reproduction
+split_policy:
+  independent_test_assets: 0
+  same_source_bug_reproductions: 5
+  cross_split_contamination_check: not_applicable_no_independent_test_split
+  signals_checked:
+  - source_case_id
+  - source_snapshot_id
+  - normalized_user_prompt_hash
+  - counterfactual_family_id
 included:
 - README.md
 - metrics_report.md
@@ -25,14 +36,14 @@ excluded_restricted_categories:
 license: MIT for repository code; evidence remains subject to stated source boundaries
 files:
   README.md:
-    sha256: e509b01e3f06dce298686ace7e4dccf17dc55fa02a227490a6a3e622d7098c05
-    bytes: 1186
+    sha256: c67ab8791e3753fd6f0d2395e2d3a3c30a625e577c2ca679228caa9ddfaa8956
+    bytes: 1272
   metrics_report.md:
-    sha256: 3db798d9ff2490062b9074c801f6c6fe9e0f0d3b96102614a2f492161356125c
-    bytes: 4441
+    sha256: ef12b2058630958f23a855914748add4ca62f0bb8c4ea0ff4dde6686a690ebc3
+    bytes: 2140
   metrics_summary.csv:
-    sha256: 8fff72358afb6f87d7b41e0b2a04226ea1a5e0d4cd10d39dbf7b7926e21b1830
-    bytes: 329
+    sha256: a7ff39afa740f46b1edd88d321b3f2cb547a4611034b2e61e869d2a0deb5e2b2
+    bytes: 334
   public_redacted_samples.jsonl:
     sha256: 31e6178d8592273befd5d6501a17f1f59afb2973e3fe3f2809467234515f97cc
     bytes: 5332

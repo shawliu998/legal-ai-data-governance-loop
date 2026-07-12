@@ -12,7 +12,7 @@ from .asset_schemas import AssetStatus, AssetType, RegressionResult
 from .asset_service import AssetService
 from .llm_client import LLMClient
 from .utils import utc_now_iso
-from .dataset_release import refresh_release_after_regression
+from .dataset_release import file_sha256, refresh_release_after_regression
 from .prompt_builder import PromptBuilder
 from .rag import inject_retrieved_context
 from .asset_schemas import RegressionAssertion
@@ -49,6 +49,101 @@ REQUIRED_TOPIC_ALIASES_V2: dict[str, dict[str, list[str]]] = {
         "订单金额": ["订单金额", "商品价款", "价款", "金额"],
     },
 }
+
+
+def _attempt_number_from_dir(path: Path) -> int:
+    match = re.fullmatch(r"attempt_(\d+)", path.name)
+    return int(match.group(1)) if match else 0
+
+
+def _attempt_dirs(root: Path) -> list[Path]:
+    parent = root / "regression_attempts"
+    return sorted(
+        [path for path in parent.glob("attempt_*") if path.is_dir() and _attempt_number_from_dir(path)],
+        key=_attempt_number_from_dir,
+    )
+
+
+def _append_attempt_event(root: Path, event: dict[str, Any]) -> None:
+    ledger = root / "regression_attempt_events.jsonl"
+    existing = {
+        str(row.get("event_id")): row
+        for row in (
+            json.loads(line)
+            for line in ledger.read_text(encoding="utf-8").splitlines()
+            if line.strip()
+        )
+    } if ledger.exists() else {}
+    event_id = str(event["event_id"])
+    if event_id in existing:
+        if existing[event_id] != event:
+            raise ValueError(f"immutable regression attempt event conflict: {event_id}")
+        return
+    ledger.parent.mkdir(parents=True, exist_ok=True)
+    with ledger.open("a", encoding="utf-8") as fh:
+        fh.write(json.dumps(event, ensure_ascii=False, sort_keys=True) + "\n")
+
+
+def _record_attempt_directory(root: Path, attempt_dir: Path) -> None:
+    number = _attempt_number_from_dir(attempt_dir)
+    files = {
+        path.name: file_sha256(path)
+        for path in sorted(attempt_dir.iterdir())
+        if path.is_file()
+    }
+    _append_attempt_event(
+        root,
+        {
+            "event_id": f"REG-ATTEMPT-{number:02d}-RECORDED",
+            "event_type": "attempt_recorded",
+            "attempt_number": number,
+            "attempt_path": attempt_dir.relative_to(root).as_posix(),
+            "file_sha256": files,
+        },
+    )
+
+
+def ensure_regression_attempt_ledger(root: Path) -> None:
+    for attempt_dir in _attempt_dirs(root):
+        _record_attempt_directory(root, attempt_dir)
+
+
+def _write_new_attempt(
+    root: Path,
+    attempt_number: int,
+    results: list[RegressionResult],
+    run_logs: list[dict[str, Any]],
+    service: AssetService,
+) -> Path:
+    attempt_dir = root / "regression_attempts" / f"attempt_{attempt_number:02d}"
+    attempt_dir.mkdir(parents=True, exist_ok=False)
+    results_frame = pd.DataFrame([row.model_dump(mode="json") for row in results])
+    results_frame.to_csv(attempt_dir / "regression_results.csv", index=False, encoding="utf-8-sig")
+    with (attempt_dir / "regression_results.jsonl").open("x", encoding="utf-8") as fh:
+        fh.write("".join(row.model_dump_json() + "\n" for row in results))
+    with (attempt_dir / "regression_run_log.jsonl").open("x", encoding="utf-8") as fh:
+        fh.write(
+            "".join(json.dumps(row, ensure_ascii=False, sort_keys=True) + "\n" for row in run_logs)
+        )
+    _write_assertion_audit(
+        service,
+        run_log_path=attempt_dir / "regression_run_log.jsonl",
+        output_path=attempt_dir / "regression_assertion_audit.csv",
+    )
+    _record_attempt_directory(root, attempt_dir)
+    return attempt_dir
+
+
+def _select_official_attempt(root: Path, attempt_number: int, results_path: Path) -> None:
+    _append_attempt_event(
+        root,
+        {
+            "event_id": f"REG-ATTEMPT-{attempt_number:02d}-OFFICIAL-{file_sha256(results_path)[:12]}",
+            "event_type": "official_attempt_selected",
+            "attempt_number": attempt_number,
+            "official_results_sha256": file_sha256(results_path),
+        },
+    )
 
 
 def _contains_topic(text: str, topic: str) -> bool:
@@ -126,6 +221,26 @@ def _evaluate_output(
     )
 
 
+def build_regression_prompt(candidate: Any) -> tuple[str, list[str]]:
+    snapshot = candidate.source_snapshot
+    eval_row = {
+        "sample_id": candidate.source_case_id,
+        "source_dataset": "legal_product_boundary_pilot_v1",
+        "task_category": "document_drafting" if "ADV" in candidate.source_case_id else "case_analysis",
+        "user_question": snapshot.get("user_prompt", ""),
+        "known_facts": json.dumps(snapshot.get("critical_facts", []), ensure_ascii=False),
+        "legal_concepts": "",
+        "jurisdiction": snapshot.get("jurisdiction", "CN"),
+        "law_snapshot_date": snapshot.get("law_snapshot_date", ""),
+        "task_type": "asset_regression",
+        "legal_advice_boundary": "仅用于诊断评测，不构成法律咨询。",
+    }
+    provided_context = snapshot.get("provided_context") or []
+    if provided_context:
+        eval_row = inject_retrieved_context(eval_row, provided_context)
+    return PromptBuilder().render_agent_prompt("V5", eval_row)
+
+
 def register_regression_assertions_v2(service: AssetService) -> int:
     created = 0
     for asset_id, aliases in REQUIRED_TOPIC_ALIASES_V2.items():
@@ -192,13 +307,20 @@ def run_asset_regressions(
     force: bool = False,
 ) -> list[RegressionResult]:
     output_file = Path(output_path)
-    output_jsonl = output_file.parent / "regression_results.jsonl"
-    if not force and output_file.exists() and output_jsonl.exists():
+    root = output_file.parent
+    ensure_regression_attempt_ledger(root)
+    if not force and output_file.exists():
+        official = pd.read_csv(output_file).fillna("")
+        attempt_numbers = set(official.get("rerun_attempt_number", []))
+        attempt_number = int(next(iter(attempt_numbers))) if len(attempt_numbers) == 1 else 0
+        attempt_jsonl = (
+            root / "regression_attempts" / f"attempt_{attempt_number:02d}" / "regression_results.jsonl"
+        )
         recovered = [
             RegressionResult.model_validate_json(line)
-            for line in output_jsonl.read_text(encoding="utf-8").splitlines()
+            for line in attempt_jsonl.read_text(encoding="utf-8").splitlines()
             if line.strip()
-        ]
+        ] if attempt_jsonl.exists() else []
         if len(recovered) == 5 and len({row.asset_id for row in recovered}) == 5:
             reconciled: list[RegressionResult] = []
             changed = False
@@ -218,20 +340,18 @@ def run_asset_regressions(
                 pd.DataFrame([row.model_dump(mode="json") for row in reconciled]).to_csv(
                     output_file, index=False, encoding="utf-8-sig"
                 )
-                output_jsonl.write_text(
-                    "".join(row.model_dump_json() + "\n" for row in reconciled), encoding="utf-8"
-                )
             _write_assertion_audit(
                 service,
-                run_log_path=output_file.parent / "regression_run_log.jsonl",
-                output_path=output_file.parent / "regression_assertion_audit.csv",
+                run_log_path=root
+                / "regression_attempts"
+                / f"attempt_{attempt_number:02d}"
+                / "regression_run_log.jsonl",
+                output_path=root / "regression_assertion_audit.csv",
             )
-            refresh_release_after_regression(output_file.parent)
+            _select_official_attempt(root, attempt_number, output_file)
+            refresh_release_after_regression(root)
             return sorted(reconciled, key=lambda row: row.asset_id)
     existing = service.regression_results.all()
-    if len(existing) == 5 and output_file.exists():
-        refresh_release_after_regression(output_file.parent)
-        return sorted(existing, key=lambda row: row.asset_id)
     candidates = [
         row
         for row in service.candidates.all()
@@ -243,27 +363,13 @@ def run_asset_regressions(
         raise ValueError(f"expected five included accepted regression assets; found {len(candidates)}")
     results: list[RegressionResult] = []
     run_logs: list[dict[str, Any]] = []
+    attempt_number = max((_attempt_number_from_dir(path) for path in _attempt_dirs(root)), default=0) + 1
     for candidate in sorted(candidates, key=lambda row: row.asset_id):
         assertion = service.assertion_for(candidate.asset_id)
         if assertion is None:
             raise ValueError(f"missing assertion for {candidate.asset_id}")
         snapshot = candidate.source_snapshot
-        provided_context = snapshot.get("provided_context") or []
-        eval_row = {
-            "sample_id": candidate.source_case_id,
-            "source_dataset": "legal_product_boundary_pilot_v1",
-            "task_category": "document_drafting" if "ADV" in candidate.source_case_id else "case_analysis",
-            "user_question": snapshot.get("user_prompt", ""),
-            "known_facts": json.dumps(snapshot.get("critical_facts", []), ensure_ascii=False),
-            "legal_concepts": "",
-            "jurisdiction": snapshot.get("jurisdiction", "CN"),
-            "law_snapshot_date": snapshot.get("law_snapshot_date", ""),
-            "task_type": "asset_regression",
-            "legal_advice_boundary": "仅用于诊断评测，不构成法律咨询。",
-        }
-        if provided_context:
-            eval_row = inject_retrieved_context(eval_row, provided_context)
-        prompt, visible_fields = PromptBuilder().render_agent_prompt("V5", eval_row)
+        prompt, visible_fields = build_regression_prompt(candidate)
         started_at = utc_now_iso()
         output_text, call_metadata = client.generate_with_metadata(
             prompt=prompt,
@@ -295,8 +401,7 @@ def run_asset_regressions(
             regression_status="passed" if passed else "failed",
             failure_reason="" if passed else ",".join(key for key, value in checks.items() if not value),
             output_text_hash=hashlib.sha256(output_text.encode()).hexdigest(),
-            rerun_attempt_number=1
-            + len({row.rerun_id for row in existing if row.asset_id == candidate.asset_id}),
+            rerun_attempt_number=attempt_number,
             scoring_revision="scoring-v2",
             created_at=utc_now_iso(),
         )
@@ -322,24 +427,19 @@ def run_asset_regressions(
             }
         )
     output_file.parent.mkdir(parents=True, exist_ok=True)
+    attempt_dir = _write_new_attempt(root, attempt_number, results, run_logs, service)
     pd.DataFrame([row.model_dump(mode="json") for row in results]).to_csv(
         output_file, index=False, encoding="utf-8-sig"
     )
-    (output_file.parent / "regression_results.jsonl").write_text(
-        "".join(row.model_dump_json() + "\n" for row in results), encoding="utf-8"
-    )
-    (output_file.parent / "regression_run_log.jsonl").write_text(
-        "".join(json.dumps(row, ensure_ascii=False, sort_keys=True) + "\n" for row in run_logs),
-        encoding="utf-8",
-    )
     _write_assertion_audit(
         service,
-        run_log_path=output_file.parent / "regression_run_log.jsonl",
-        output_path=output_file.parent / "regression_assertion_audit.csv",
+        run_log_path=attempt_dir / "regression_run_log.jsonl",
+        output_path=root / "regression_assertion_audit.csv",
     )
     for result in results:
         service.record_regression_result(result)
-    refresh_release_after_regression(output_file.parent)
+    _select_official_attempt(root, attempt_number, output_file)
+    refresh_release_after_regression(root)
     return results
 
 
@@ -349,7 +449,21 @@ def rescore_regression_outputs_v2(
     output_path: str | Path,
 ) -> list[RegressionResult]:
     output_file = Path(output_path)
-    run_log_path = output_file.parent / "regression_run_log.jsonl"
+    root = output_file.parent
+    ensure_regression_attempt_ledger(root)
+    if not output_file.exists():
+        raise ValueError("official regression results view is required for rescoring")
+    official = pd.read_csv(output_file).fillna("")
+    attempt_numbers = set(official.get("rerun_attempt_number", []))
+    if len(attempt_numbers) != 1:
+        raise ValueError("official regression results must reference exactly one attempt")
+    attempt_number = int(next(iter(attempt_numbers)))
+    run_log_path = (
+        root
+        / "regression_attempts"
+        / f"attempt_{attempt_number:02d}"
+        / "regression_run_log.jsonl"
+    )
     if not run_log_path.exists():
         raise ValueError("regression run log is required for deterministic rescoring")
     logs = [
@@ -406,7 +520,7 @@ def rescore_regression_outputs_v2(
             regression_status="passed" if passed else "failed",
             failure_reason="" if passed else ",".join(key for key, value in checks.items() if not value),
             output_text_hash=str(log.get("output_text_hash", "")),
-            rerun_attempt_number=4,
+            rerun_attempt_number=attempt_number,
             scoring_revision="scoring-v2",
             source_regression_id=source_result.regression_id if source_result else "",
             created_at=utc_now_iso(),
@@ -416,13 +530,21 @@ def rescore_regression_outputs_v2(
     pd.DataFrame([row.model_dump(mode="json") for row in results]).to_csv(
         output_file, index=False, encoding="utf-8-sig"
     )
-    (output_file.parent / "regression_results.jsonl").write_text(
-        "".join(row.model_dump_json() + "\n" for row in results), encoding="utf-8"
-    )
     _write_assertion_audit(
         service,
         run_log_path=run_log_path,
-        output_path=output_file.parent / "regression_assertion_audit.csv",
+        output_path=root / "regression_assertion_audit.csv",
     )
-    refresh_release_after_regression(output_file.parent)
+    _append_attempt_event(
+        root,
+        {
+            "event_id": f"REG-ATTEMPT-{attempt_number:02d}-RESCORED-scoring-v2-{file_sha256(output_file)[:12]}",
+            "event_type": "attempt_rescored",
+            "attempt_number": attempt_number,
+            "scoring_revision": "scoring-v2",
+            "official_results_sha256": file_sha256(output_file),
+        },
+    )
+    _select_official_attempt(root, attempt_number, output_file)
+    refresh_release_after_regression(root)
     return results

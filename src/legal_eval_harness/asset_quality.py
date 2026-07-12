@@ -15,31 +15,68 @@ PII_PATTERNS = [
 ]
 
 
-def run_asset_qa(service: AssetService, asset_id: str) -> QualityCheck:
+def run_asset_qa(
+    service: AssetService, asset_id: str, *, transition_after_check: bool = True
+) -> QualityCheck:
     candidate = service.candidates.get(asset_id)
     correction = service.latest_correction(asset_id)
     if candidate is None or correction is None:
         raise ValueError("candidate and correction are required")
     findings: list[str] = []
-    pii_ok = not any(pattern.search(correction.corrected_answer) for pattern in PII_PATTERNS)
+    releasable_payload = "\n".join(
+        (
+            correction.corrected_answer,
+            correction.chosen_answer,
+            correction.rejected_answer,
+            correction.preference_reason,
+        )
+    )
+    pii_ok = not any(pattern.search(releasable_payload) for pattern in PII_PATTERNS)
     if not pii_ok:
-        findings.append("possible PII in corrected answer")
-    answer_hash = hashlib.sha256(correction.corrected_answer.strip().encode()).hexdigest()
+        findings.append("possible PII in releasable correction/preference payload")
+    answer_hash = hashlib.sha256(correction.corrected_answer.encode("utf-8")).hexdigest()
+    duplicate_answer_hash = hashlib.sha256(correction.corrected_answer.strip().encode()).hexdigest()
     other_hashes = {
         hashlib.sha256(row.corrected_answer.strip().encode()).hexdigest()
         for row in service.corrections.all()
         if row.asset_id != asset_id
     }
-    duplicate_ok = answer_hash not in other_hashes
+    duplicate_ok = duplicate_answer_hash not in other_hashes
     if not duplicate_ok:
         findings.append("duplicate corrected answer")
     trace_ok = bool(candidate.source_case_id and candidate.source_run_id and candidate.source_snapshot_id)
     law_date_ok = bool(candidate.source_snapshot.get("law_snapshot_date"))
-    contamination_ok = candidate.source_snapshot_id not in {
-        row.source_snapshot_id
+    overlapping = [
+        row
         for row in service.candidates.all()
-        if row.asset_id != asset_id and row.asset_type == candidate.asset_type
+        if row.asset_id != asset_id
+        and (
+            row.source_case_id == candidate.source_case_id
+            or row.source_snapshot_id == candidate.source_snapshot_id
+        )
+    ]
+    regression_overlap = bool(overlapping) and (
+        candidate.asset_type == AssetType.REGRESSION
+        or any(row.asset_type == AssetType.REGRESSION for row in overlapping)
+    )
+    roles = {
+        str(row.source_snapshot.get("evaluation_role") or "")
+        for row in [candidate, *overlapping]
     }
+    explicitly_bug_reproduction = "same_source_bug_reproduction" in roles
+    legacy_undeclared = roles == {""}
+    same_source_bug_reproduction = regression_overlap and (
+        explicitly_bug_reproduction or legacy_undeclared
+    )
+    contamination_status = (
+        "not_applicable"
+        if same_source_bug_reproduction
+        else "failed" if regression_overlap else "passed"
+    )
+    if same_source_bug_reproduction:
+        findings.append("same-source regression is classified as bug_reproduction, not an independent test split")
+    elif regression_overlap:
+        findings.append("independent regression overlaps training source")
     if candidate.asset_type == AssetType.PREFERENCE:
         type_ok = bool(
             correction.chosen_answer
@@ -57,15 +94,20 @@ def run_asset_qa(service: AssetService, asset_id: str) -> QualityCheck:
         pii_check="passed" if pii_ok else "failed",
         duplicate_check="passed" if duplicate_ok else "failed",
         source_traceability="passed" if trace_ok else "failed",
-        contamination_check="passed" if contamination_ok else "failed",
+        contamination_check=contamination_status,
         law_effective_date_check="passed" if law_date_ok else "failed",
         type_specific_check="passed" if type_ok else "failed",
+        correction_id=correction.correction_id,
+        correction_revision=correction.revision_number,
+        source_snapshot_id=candidate.source_snapshot_id,
+        corrected_answer_hash=answer_hash,
         findings=findings + ([] if type_ok else ["asset type-specific validation failed"]),
         created_at=utc_now_iso(),
     )
     service.quality_checks.append(check)
-    if check.passed:
-        service.transition(asset_id, AssetStatus.EXPERT_REVIEW_PENDING, reason="automated QA passed")
-    else:
-        service.transition(asset_id, AssetStatus.REWORK_REQUIRED, reason="automated QA failed")
+    if transition_after_check:
+        if check.passed:
+            service.transition(asset_id, AssetStatus.EXPERT_REVIEW_PENDING, reason="automated QA passed")
+        else:
+            service.transition(asset_id, AssetStatus.REWORK_REQUIRED, reason="automated QA failed")
     return check

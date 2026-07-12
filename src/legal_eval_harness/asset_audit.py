@@ -296,6 +296,7 @@ def backfill_lineage_and_expert_bindings(
             reconstructed=True,
         )
     binding_count = 0
+    final_event_updates: dict[str, ReviewEvent] = {}
     for candidate in service.candidates.all():
         if candidate.asset_status.value != "accepted":
             continue
@@ -323,8 +324,10 @@ def backfill_lineage_and_expert_bindings(
         if not final_events:
             raise ValueError(f"accepted submission has no matching expert event: {candidate.asset_id}")
         file_hash = hashlib.sha256(path.read_bytes()).hexdigest()
-        binding = ExpertApprovalBinding(
-            binding_id=f"EAB-{candidate.asset_id}-{correction.revision_number:02d}",
+        binding_id = f"EAB-{candidate.asset_id}-{correction.revision_number:02d}"
+        existing_binding = service.expert_approval_bindings.get(binding_id)
+        binding = existing_binding or ExpertApprovalBinding(
+            binding_id=binding_id,
             asset_id=candidate.asset_id,
             correction_id=correction.correction_id,
             correction_revision=correction.revision_number,
@@ -337,6 +340,37 @@ def backfill_lineage_and_expert_bindings(
             reconstruction_method="matched_submitted_text_and_reason",
             created_at=utc_now_iso(),
         )
-        if service.expert_approval_bindings.append(binding):
+        if existing_binding is not None and (
+            binding.correction_id != correction.correction_id
+            or binding.source_snapshot_id
+            != (safe_text(row.get("source_snapshot_id")) or candidate.source_snapshot_id)
+            or binding.corrected_answer_hash != _hash(correction.corrected_answer)
+        ):
+            raise ValueError(f"existing expert binding conflicts with current correction: {candidate.asset_id}")
+        if existing_binding is None and service.expert_approval_bindings.append(binding):
             binding_count += 1
+        final_event = final_events[-1]
+        final_event_updates[final_event.event_id] = final_event.model_copy(
+            update={
+                "correction_id": correction.correction_id,
+                "correction_revision": correction.revision_number,
+                "source_snapshot_id": binding.source_snapshot_id,
+                "corrected_answer_hash": binding.corrected_answer_hash,
+            }
+        )
+    if final_event_updates:
+        service.reviews.replace_all(
+            [final_event_updates.get(row.event_id, row) for row in service.reviews.all()]
+        )
+    from .asset_quality import run_asset_qa
+
+    for candidate in service.candidates.all():
+        if candidate.asset_status.value != "accepted":
+            continue
+        if service.current_quality_check_for(candidate.asset_id) is None:
+            check = run_asset_qa(
+                service, candidate.asset_id, transition_after_check=False
+            )
+            if not check.passed:
+                raise ValueError(f"current-correction QA failed during lineage backfill: {candidate.asset_id}")
     return len(service.source_snapshot_versions.all()), binding_count

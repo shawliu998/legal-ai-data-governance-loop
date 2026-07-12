@@ -1,18 +1,23 @@
 # Legal flywheel v0.1 runbook
 
-This runbook produces the first reviewable release: five SFT, five preference, and five regression
-assets. JSONL is the system of record. Scripts must not edit status fields directly; only
+This runbook produces the first reviewable release: five SFT, five preference, and five same-source
+regression bug reproductions. The v0.1 regressions are not an independent test split. JSONL is the
+system of record. Scripts must not edit status fields directly; only
 `AssetService` transitions state.
 
 ## 1. Build candidates
 
 ```bash
-.venv/bin/legal-ai-data-loop build-asset-candidates --data-dir data/flywheel
+.venv/bin/legal-ai-data-loop build-asset-candidates \
+  --data-dir data/flywheel \
+  --allow-same-source-bug-reproduction
 ```
 
-The command deterministically selects ten existing cases from the API pilot and reviewed priority
-queue, then derives 15 assets. Preference candidates require a non-empty reviewed failure response.
-Regression candidates receive structured assertions and are never training eligible.
+The explicit compatibility flag reconstructs this already-reviewed ten-case pilot and marks the five
+reused sources as bug reproductions. Without that flag, the standard builder requires 15 distinct
+evidenced source cases and assigns mutually exclusive SFT, preference, and regression sources.
+Preference candidates require a non-empty reviewed failure response. Regression candidates receive
+structured assertions and are never training eligible.
 
 ## 2. Prepare the expert review bundle
 
@@ -45,7 +50,8 @@ The legal PhD reviews every row in `outputs/flywheel/expert_review_bundle.csv` a
 - `expert_decision`: `accepted`, `rework_required`, or `rejected`;
 - `expert_override`: `yes` or `no`;
 - `expert_override_reason`: the actual review rationale, including any override reason;
-- `review_elapsed_seconds`: positive actual review time.
+- `self_reported_review_entry_seconds`: positive reviewer-entered duration. It is not instrumented
+  active review time and must not be presented as such.
 
 Then import all decisions atomically after validation:
 
@@ -75,8 +81,10 @@ and final expert review before the release can contain it.
   --release outputs/flywheel/legal_flywheel_v0.1.0
 ```
 
-The regression command records restricted raw run evidence, usage metadata, prompt/output hashes, and
-five unique rerun IDs. The stabilized path uses `PromptBuilder(V5)` / W4 and assertion revision 2:
+Every forced regression command creates a new immutable `regression_attempts/attempt_NN/` directory,
+records restricted raw run evidence, usage metadata, prompt/output hashes, and five unique rerun IDs,
+and appends to `regression_attempt_events.jsonl`. `regression_results.csv` is only the current official
+view. The stabilized path uses `PromptBuilder(V5)` / W4 and assertion revision 2:
 
 ```bash
 .venv/bin/legal-ai-data-loop upgrade-regression-assertions-v2
@@ -84,6 +92,10 @@ five unique rerun IDs. The stabilized path uses `PromptBuilder(V5)` / W4 and ass
 
 It updates the manifest and metrics with the observed pass rate. Failed
 assertions remain failed; the runner does not rewrite results to improve the metric.
+
+The release builder compares train and test members across `source_case_id`, `source_snapshot_id`,
+normalized user-prompt hash, and counterfactual family ID. This v0.1 release has no independent test
+members, so its cross-split contamination result is `not_applicable_no_independent_test_split`.
 
 ## Evidence boundary
 

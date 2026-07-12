@@ -111,6 +111,7 @@ def cmd_build_asset_candidates(args: argparse.Namespace) -> None:
         cases_path=args.cases,
         runs_path=args.runs,
         reviewed_path=args.reviewed,
+        allow_same_source_bug_reproduction=args.allow_same_source_bug_reproduction,
     )
     print(f"Prepared {len(rows)} asset candidates in {args.data_dir}")
 
@@ -250,11 +251,7 @@ def cmd_prepare_flywheel_review(args: argparse.Namespace) -> None:
                 reason="resume after stored correction draft",
             )
         correction = service.latest_correction(candidate.asset_id)
-        roles = {
-            row.review_role
-            for row in service.reviews_for(candidate.asset_id)
-            if correction is not None and row.created_at >= correction.created_at
-        }
+        roles = {row.review_role for row in service.current_reviews_for(candidate.asset_id)}
         if "reviewer_a" not in roles:
             review_asset(
                 service, candidate.asset_id, "reviewer_a", client=client, model_config=reviewer_a_model
@@ -263,8 +260,8 @@ def cmd_prepare_flywheel_review(args: argparse.Namespace) -> None:
             review_asset(
                 service, candidate.asset_id, "reviewer_b", client=client, model_config=reviewer_b_model
             )
-        adjudication = service.adjudication_for(candidate.asset_id)
-        if adjudication is None or (correction is not None and adjudication.created_at < correction.created_at):
+        adjudication = service.current_adjudication_for(candidate.asset_id)
+        if adjudication is None:
             adjudicate_asset(service, candidate.asset_id, client=client, model_config=adjudicator_model)
         current = service.candidates.get(candidate.asset_id)
         if current and current.asset_status.value == "qa_pending":
@@ -708,6 +705,11 @@ def build_parser() -> argparse.ArgumentParser:
     asset_candidates.add_argument("--runs", default="outputs/product_boundary_api_pilot_v1/model_run_log.csv")
     asset_candidates.add_argument(
         "--reviewed", default="outputs/product_boundary_api_pilot_v1/human_review_priority_80_reviewed.csv"
+    )
+    asset_candidates.add_argument(
+        "--allow-same-source-bug-reproduction",
+        action="store_true",
+        help="Reuse SFT sources only as disclosed bug reproductions; they are never an independent test split",
     )
     asset_candidates.set_defaults(func=cmd_build_asset_candidates)
 

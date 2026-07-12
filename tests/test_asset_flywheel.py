@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from pathlib import Path
+import hashlib
+import json
 
 import pytest
 from pydantic import ValidationError
@@ -21,12 +23,20 @@ from legal_eval_harness.asset_schemas import (
 )
 from legal_eval_harness.asset_service import AssetService
 from legal_eval_harness.asset_audit import _blind_payload
+from legal_eval_harness.asset_candidate_builder import build_asset_candidates
+from legal_eval_harness.asset_contamination import cross_split_contamination
+from legal_eval_harness.asset_quality import run_asset_qa
 from legal_eval_harness.dataset_release import (
     build_dataset_release,
     refresh_release_after_regression,
     validate_dataset_release,
 )
-from legal_eval_harness.regression_runner import _evaluate_output
+from legal_eval_harness.regression_runner import (
+    _evaluate_output,
+    _select_official_attempt,
+    _write_new_attempt,
+    build_regression_prompt,
+)
 
 
 NOW = "2026-07-11T00:00:00Z"
@@ -60,9 +70,17 @@ def correction(asset_id: str = "ASSET-SFT-001") -> Correction:
     )
 
 
-def review(asset_id: str, role: str, decision: str = "approve") -> ReviewEvent:
+def review(
+    asset_id: str,
+    role: str,
+    decision: str = "approve",
+    *,
+    source_snapshot_id: str = "SNAP-1",
+    corrected_answer: str = "请先补充合同和通知，再作条件化判断。",
+    correction_revision: int = 1,
+) -> ReviewEvent:
     return ReviewEvent(
-        event_id=f"REV-{asset_id}-{role}-01",
+        event_id=f"REV-{asset_id}-{role}-{correction_revision:02d}",
         asset_id=asset_id,
         review_actor_type="legal_expert" if role == "final_expert" else "ai_model",
         review_role=role,
@@ -74,6 +92,10 @@ def review(asset_id: str, role: str, decision: str = "approve") -> ReviewEvent:
         input_hash="a" * 64,
         output_hash="b" * 64,
         review_elapsed_seconds=1,
+        correction_id=f"COR-{asset_id}-{correction_revision:02d}",
+        correction_revision=correction_revision,
+        source_snapshot_id=source_snapshot_id,
+        corrected_answer_hash=hashlib.sha256(corrected_answer.encode("utf-8")).hexdigest(),
         created_at=NOW,
     )
 
@@ -153,6 +175,12 @@ def test_acceptance_requires_qa_and_final_legal_expert(tmp_path: Path):
         contamination_check="passed",
         law_effective_date_check="passed",
         type_specific_check="passed",
+        correction_id="COR-ASSET-SFT-001-01",
+        correction_revision=1,
+        source_snapshot_id="SNAP-1",
+        corrected_answer_hash=hashlib.sha256(
+            correction().corrected_answer.encode("utf-8")
+        ).hexdigest(),
         created_at=NOW,
     )
     service.quality_checks.append(qa)
@@ -267,10 +295,15 @@ def test_release_manifest_covers_15_assets_and_five_regressions(tmp_path: Path):
                 created_at=NOW,
             )
         )
-        service.reviews.append(review(asset_id, "reviewer_a"))
-        service.reviews.append(review(asset_id, "reviewer_b"))
-        service.reviews.append(review(asset_id, "final_expert"))
-        import hashlib
+        service.reviews.append(
+            review(asset_id, "reviewer_a", source_snapshot_id=f"SNAP-{index}", corrected_answer=chosen)
+        )
+        service.reviews.append(
+            review(asset_id, "reviewer_b", source_snapshot_id=f"SNAP-{index}", corrected_answer=chosen)
+        )
+        service.reviews.append(
+            review(asset_id, "final_expert", source_snapshot_id=f"SNAP-{index}", corrected_answer=chosen)
+        )
 
         answer_hash = hashlib.sha256(chosen.encode()).hexdigest()
         for role in ("reviewer_a", "reviewer_b"):
@@ -339,6 +372,10 @@ def test_release_manifest_covers_15_assets_and_five_regressions(tmp_path: Path):
                 contamination_check="passed",
                 law_effective_date_check="passed",
                 type_specific_check="passed",
+                correction_id=f"COR-{asset_id}-01",
+                correction_revision=1,
+                source_snapshot_id=f"SNAP-{index}",
+                corrected_answer_hash=answer_hash,
                 created_at=NOW,
             )
         )
@@ -390,17 +427,275 @@ def test_release_manifest_covers_15_assets_and_five_regressions(tmp_path: Path):
     import pandas as pd
 
     pd.DataFrame(regression_rows).to_csv(release_dir / "regression_results.csv", index=False)
-    (release_dir / "regression_results.jsonl").write_text(
-        "".join(__import__("json").dumps(row) + "\n" for row in regression_rows)
+    attempt_results = [RegressionResult.model_validate(row) for row in regression_rows]
+    attempt_logs = [
+        {"rerun_id": row["rerun_id"], "asset_id": row["asset_id"], "output_text": "ok"}
+        for row in regression_rows
+    ]
+    _write_new_attempt(
+        release_dir,
+        4,
+        attempt_results,
+        attempt_logs,
+        service,
     )
-    (release_dir / "regression_run_log.jsonl").write_text(
-        "".join(
-            __import__("json").dumps(
-                {"rerun_id": row["rerun_id"], "asset_id": row["asset_id"], "output_text": "ok"}
-            )
-            + "\n"
-            for row in regression_rows
-        )
-    )
+    _select_official_attempt(release_dir, 4, release_dir / "regression_results.csv")
     refresh_release_after_regression(release_dir)
     assert validate_dataset_release(release_dir) == []
+
+
+def test_revision_two_cannot_reuse_revision_one_review_adjudication_or_qa(tmp_path: Path):
+    service = AssetService(tmp_path)
+    asset_id = "ASSET-SFT-001"
+    service.add_candidate(candidate())
+    service.transition(asset_id, AssetStatus.CORRECTION_DRAFTING, reason="draft v1")
+    c1 = correction()
+    service.corrections.append(c1)
+    service.transition(asset_id, AssetStatus.AI_REVIEW_PENDING, reason="review v1")
+    service.reviews.append(review(asset_id, "reviewer_a"))
+    service.reviews.append(review(asset_id, "reviewer_b", decision="rework"))
+    service.adjudications.append(
+        Adjudication(
+            adjudication_id=f"ADJ-{asset_id}-01",
+            asset_id=asset_id,
+            status="proposed_adjudication",
+            proposed_decision="rework",
+            rationale="v1 conflict",
+            model_identifier="m",
+            prompt_version="v1",
+            input_hash="a" * 64,
+            output_hash="b" * 64,
+            correction_id=c1.correction_id,
+            correction_revision=1,
+            source_snapshot_id="SNAP-1",
+            corrected_answer_hash=hashlib.sha256(c1.corrected_answer.encode("utf-8")).hexdigest(),
+            created_at=NOW,
+        )
+    )
+    service.transition(asset_id, AssetStatus.QA_PENDING, reason="reviews v1")
+    q1 = run_asset_qa(service, asset_id, transition_after_check=False)
+    assert q1.passed
+    service.transition(asset_id, AssetStatus.EXPERT_REVIEW_PENDING, reason="qa v1")
+    service.reviews.append(review(asset_id, "final_expert", decision="rework"))
+    service.transition(asset_id, AssetStatus.REWORK_REQUIRED, reason="expert rework", actor_type="legal_expert")
+
+    service.transition(asset_id, AssetStatus.CORRECTION_DRAFTING, reason="draft v2")
+    c2 = c1.model_copy(
+        update={
+            "correction_id": f"COR-{asset_id}-02",
+            "revision_number": 2,
+            "corrected_answer": "第二版条件化答案。",
+        }
+    )
+    service.corrections.append(c2)
+    service.transition(asset_id, AssetStatus.AI_REVIEW_PENDING, reason="review v2")
+    with pytest.raises(ValueError, match="reviewer_a"):
+        service.transition(asset_id, AssetStatus.QA_PENDING, reason="must not reuse v1 reviews")
+
+    for role in ("reviewer_a", "reviewer_b"):
+        service.reviews.append(
+            review(
+                asset_id,
+                role,
+                decision="rework" if role == "reviewer_b" else "approve",
+                correction_revision=2,
+                corrected_answer=c2.corrected_answer,
+            )
+        )
+    with pytest.raises(ValueError, match="adjudication"):
+        service.transition(asset_id, AssetStatus.QA_PENDING, reason="must not reuse v1 adjudication")
+    service.adjudications.append(
+        Adjudication(
+            adjudication_id=f"ADJ-{asset_id}-02",
+            asset_id=asset_id,
+            status="proposed_adjudication",
+            proposed_decision="approve",
+            rationale="v2 conflict",
+            model_identifier="m",
+            prompt_version="v2",
+            input_hash="c" * 64,
+            output_hash="d" * 64,
+            correction_id=c2.correction_id,
+            correction_revision=2,
+            source_snapshot_id="SNAP-1",
+            corrected_answer_hash=hashlib.sha256(c2.corrected_answer.encode("utf-8")).hexdigest(),
+            created_at=NOW,
+        )
+    )
+    service.transition(asset_id, AssetStatus.QA_PENDING, reason="reviews and adjudication v2")
+    with pytest.raises(ValueError, match="QA"):
+        service.transition(asset_id, AssetStatus.EXPERT_REVIEW_PENDING, reason="must not reuse v1 QA")
+    q2 = run_asset_qa(service, asset_id, transition_after_check=False)
+    assert q2.correction_revision == 2
+    service.transition(asset_id, AssetStatus.EXPERT_REVIEW_PENDING, reason="qa v2")
+    service.reviews.append(
+        review(asset_id, "final_expert").model_copy(
+            update={"event_id": f"REV-{asset_id}-final_expert-old-approve"}
+        )
+    )
+    with pytest.raises(ValueError, match="legal expert"):
+        service.transition(asset_id, AssetStatus.ACCEPTED, reason="must not reuse v1 expert")
+    service.reviews.append(
+        review(
+            asset_id,
+            "final_expert",
+            correction_revision=2,
+            corrected_answer=c2.corrected_answer,
+        ).model_copy(update={"event_id": f"REV-{asset_id}-final_expert-02"})
+    )
+    assert service.transition(
+        asset_id, AssetStatus.ACCEPTED, reason="v2 approved", actor_type="legal_expert"
+    ).asset_status == AssetStatus.ACCEPTED
+
+
+def test_same_case_cannot_be_train_and_test(tmp_path: Path):
+    train = candidate("ASSET-SFT-001", AssetType.SFT)
+    test = candidate("ASSET-REGRESSION-001", AssetType.REGRESSION)
+    memberships = [
+        DatasetMembership(
+            asset_id=train.asset_id,
+            dataset_release_id="v1",
+            split="train",
+            created_at=NOW,
+        ),
+        DatasetMembership(
+            asset_id=test.asset_id,
+            dataset_release_id="v1",
+            split="test",
+            created_at=NOW,
+        ),
+    ]
+    findings = cross_split_contamination([train, test], memberships)
+    assert findings
+    assert {"source_case_id", "source_snapshot_id"}.issubset(findings[0]["matching_signals"])
+
+
+def test_standard_builder_preserves_grounded_context_and_prompt(tmp_path: Path):
+    cases = []
+    reviews = []
+    runs = []
+    for index in range(1, 16):
+        case_id = f"CASE-{index:03d}"
+        context = (
+            [{"source_id": "POLICY-001", "text": "只允许依据本条款回答。"}]
+            if index == 11
+            else []
+        )
+        cases.append(
+            {
+                "case_id": case_id,
+                "jurisdiction": "CN",
+                "user_prompt": f"问题 {index}",
+                "expected_behavior": "条件化回答",
+                "critical_facts": [],
+                "missing_facts": ["事实"],
+                "allowed_sources": ["POLICY-001"] if context else [],
+                "provided_context": context,
+                "forbidden_claims": [],
+                "expected_human_review": True,
+            }
+        )
+        run_id = f"RUN-{index:03d}"
+        reviews.append(
+            {
+                "sample_id": case_id,
+                "run_id": run_id,
+                "human_pass_fail": "fail",
+                "priority": index,
+                "output_text": f"旧回答 {index}",
+                "human_failure_type_zh": "缺失事实",
+            }
+        )
+        runs.append({"run_id": run_id, "output_text": f"旧回答 {index}"})
+    cases_path = tmp_path / "cases.jsonl"
+    cases_path.write_text("".join(json.dumps(row, ensure_ascii=False) + "\n" for row in cases))
+    import pandas as pd
+
+    reviews_path = tmp_path / "reviews.csv"
+    runs_path = tmp_path / "runs.csv"
+    pd.DataFrame(reviews).to_csv(reviews_path, index=False)
+    pd.DataFrame(runs).to_csv(runs_path, index=False)
+    built = build_asset_candidates(
+        data_dir=tmp_path / "flywheel",
+        cases_path=cases_path,
+        runs_path=runs_path,
+        reviewed_path=reviews_path,
+    )
+    grounded = next(row for row in built if row.source_case_id == "CASE-011")
+    assert grounded.asset_type == AssetType.REGRESSION
+    assert grounded.source_snapshot["provided_context"][0]["source_id"] == "POLICY-001"
+    prompt, _ = build_regression_prompt(grounded)
+    assert "POLICY-001" in prompt
+    assert "只允许依据本条款回答" in prompt
+
+
+def test_preference_pii_scans_chosen_rejected_and_reason(tmp_path: Path):
+    service = AssetService(tmp_path)
+    item = candidate("ASSET-PREFERENCE-001", AssetType.PREFERENCE)
+    service.add_candidate(item)
+    service.corrections.append(
+        Correction(
+            correction_id="COR-ASSET-PREFERENCE-001-01",
+            asset_id=item.asset_id,
+            revision_number=1,
+            corrected_answer="安全答案",
+            chosen_answer="安全答案",
+            rejected_answer="请联系 13812345678",
+            preference_reason="避免泄露个人信息",
+            author_type="ai_model",
+            prompt_version="v1",
+            model_identifier="m",
+            created_at=NOW,
+        )
+    )
+    check = run_asset_qa(service, item.asset_id, transition_after_check=False)
+    assert check.pii_check == "failed"
+
+
+def test_membership_key_supports_asset_reuse_across_releases(tmp_path: Path):
+    service = AssetService(tmp_path)
+    service.add_candidate(candidate().model_copy(update={"asset_status": AssetStatus.ACCEPTED}))
+    for version in ("v0.1.0", "v0.2.0"):
+        service.include(
+            DatasetMembership(
+                asset_id="ASSET-SFT-001",
+                dataset_release_id=version,
+                split="train",
+                created_at=NOW,
+            )
+        )
+    assert len(service.memberships.all()) == 2
+    assert len({row.dataset_membership_id for row in service.memberships.all()}) == 2
+
+
+def test_regression_attempt_directory_cannot_be_overwritten(tmp_path: Path):
+    service = AssetService(tmp_path / "data")
+    result = RegressionResult(
+        regression_id="REG-A-01",
+        asset_id="A",
+        baseline_run_id="RUN-A",
+        rerun_id="RERUN-A",
+        model_alias="model",
+        prompt_version="V5",
+        assertion_results={"required_topics": True},
+        regression_status="passed",
+        output_text_hash="a" * 64,
+        rerun_attempt_number=1,
+        scoring_revision="scoring-v2",
+        created_at=NOW,
+    )
+    _write_new_attempt(
+        tmp_path / "release",
+        1,
+        [result],
+        [{"asset_id": "A", "rerun_id": "RERUN-A", "output_text": "ok"}],
+        service,
+    )
+    with pytest.raises(FileExistsError):
+        _write_new_attempt(
+            tmp_path / "release",
+            1,
+            [result],
+            [{"asset_id": "A", "rerun_id": "RERUN-A", "output_text": "changed"}],
+            service,
+        )

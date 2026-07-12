@@ -2,8 +2,8 @@
 
 ## Scope
 
-This protocol governs the first flywheel release only: five SFT, five preference, and five regression
-assets. It does not alter the existing meanings of `response_policy`, `workflow_status`, or
+This protocol governs the first flywheel release only: five SFT, five preference, and five disclosed
+same-source regression bug reproductions. It does not alter the existing meanings of `response_policy`, `workflow_status`, or
 `data_asset_routes`. Storage is append-only JSONL plus release CSV/YAML; there is no database or UI.
 
 ## Lifecycle
@@ -25,9 +25,18 @@ proposed adjudication when those decisions conflict, passed PII/duplicate/source
 type-specific QA, and an explicit approval event from a legal expert in the `final_expert` role. AI
 adjudication can never accept an asset.
 
+Review, adjudication, QA, and final-expert events are valid only when all four lineage values match the
+latest correction: correction ID, correction revision, corrected-answer hash, and source-snapshot ID.
+Evidence from a superseded revision cannot advance the state machine.
+
 An included membership additionally requires an accepted asset, release id, and split. Regression
 execution additionally requires a regression asset, included membership, non-empty assertions, and a
-real rerun id. Regression/eval assets are not training eligible.
+real rerun id. Regression/eval assets are not training eligible. Membership identity is the composite
+of release ID, asset ID, and split, so an accepted asset may be reused in a later release.
+
+Train/test contamination checks operate across asset types and compare source case, source snapshot,
+normalized prompt hash, and counterfactual family. The v0.1 same-source regressions are assigned the
+`bug_reproduction` split rather than `test`; no independent test-set claim is made.
 
 ## Review independence and public wording
 

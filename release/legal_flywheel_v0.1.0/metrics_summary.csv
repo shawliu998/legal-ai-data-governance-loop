@@ -9,4 +9,4 @@ expert_vs_blind_v2_divergence_rate,0.1333
 first_pass_acceptance_rate,0.4
 qa_failure_count,2
 regression_pass_rate,0.0
-median_expert_review_elapsed_seconds,7.0
+median_self_reported_review_entry_seconds,7.0
