@@ -122,6 +122,19 @@ class AssetService:
         rows = [row for row in self.corrections.all() if row.asset_id == asset_id]
         return max(rows, key=lambda row: row.revision_number) if rows else None
 
+    def has_stored_correction_for_current_draft(self, asset_id: str) -> bool:
+        correction = self.latest_correction(asset_id)
+        starts = [
+            row
+            for row in self.transitions.all()
+            if row.asset_id == asset_id and row.to_status == AssetStatus.CORRECTION_DRAFTING
+        ]
+        return bool(
+            correction is not None
+            and starts
+            and correction.created_at >= starts[-1].created_at
+        )
+
     def reviews_for(self, asset_id: str) -> list[ReviewEvent]:
         return [row for row in self.reviews.all() if row.asset_id == asset_id]
 

@@ -2,16 +2,17 @@
 
 ## Current status
 
-The v0.2 stage is prepared but not released. Five independent regression candidates are at
-`expert_review_pending`; none is accepted, versioned, or presented as test evidence yet.
+The v0.2 stage is prepared but not released. The first expert round accepted one asset and required
+rework for four. Those four now have revision-2 corrections and are back at `expert_review_pending`.
+No v0.2 dataset version or test result has been released.
 
 | Asset | Self-authored source | Blind-v2 A/B | Consolidated AI proposal |
 | --- | --- | --- | --- |
-| ASSET-REGRESSION-006 | L-006 | approve / approve | approve |
-| ASSET-REGRESSION-007 | L-014 | approve / approve | approve |
-| ASSET-REGRESSION-008 | L-019 | rework / approve | rework |
-| ASSET-REGRESSION-009 | L-021 | approve / approve | approve |
-| ASSET-REGRESSION-010 | L-034 | approve / approve | approve |
+| ASSET-REGRESSION-006 | L-006 | approve / approve | approve; revision 2 pending expert review |
+| ASSET-REGRESSION-007 | L-014 | approve / approve | accepted by expert in round 1 |
+| ASSET-REGRESSION-008 | L-019 | rework / approve | rework; revision 2 pending expert review |
+| ASSET-REGRESSION-009 | L-021 | rework / approve | rework; revision 2 pending expert review |
+| ASSET-REGRESSION-010 | L-034 | approve / approve | approve; revision 2 pending expert review |
 
 AI proposals cannot accept an asset. The legal expert must review the actual prompt, correction,
 assertion, AI findings, and QA evidence in the restricted review CSV.
@@ -26,6 +27,8 @@ assertion, AI findings, and QA evidence in the restricted review CSV.
   source snapshot, normalized prompt hash, and counterfactual family ID.
 - Corrections and both review paths used real hosted model calls. Blind-v2 excludes gold labels,
   router output, historical review, and expert decisions.
+- Blind-v2 event IDs and raw evidence paths are revision-scoped, so a rework cannot reuse or overwrite
+  evidence from the prior correction.
 - A real regression rerun is permitted only after legal-expert acceptance and v0.2 membership.
 
 ## Reproduction

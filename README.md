@@ -87,8 +87,9 @@ Git 仓库只发布 `release/legal_flywheel_v0.1.0/` 中的脱敏证据。完整
 restricted 包，并由 `.gitignore` 排除。
 
 v0.2 已从 `self_authored_core_40` 准备 5 个与 train 来源互斥的 independent regression 候选，
-并完成真实模型 correction、双路预审、blind-v2、冲突归并和 QA。目前全部停在
-`expert_review_pending`，尚未 accepted、versioned 或作为独立测试结果发布；详见
+并完成真实模型 correction、双路预审、blind-v2、冲突归并和 QA。第一轮专家终审接受 1 条、
+要求返工 4 条；四条 revision 2 已重新完成全链路并停在 `expert_review_pending`。v0.2 尚未
+versioned 或作为独立测试结果发布；详见
 [v0.2 阶段说明](docs/flywheel_v0.2_independent_regression.md)。
 
 ## 三个产品决策

@@ -22,13 +22,18 @@ from legal_eval_harness.asset_schemas import (
     ReviewEvent,
 )
 from legal_eval_harness.asset_service import AssetService
-from legal_eval_harness.asset_audit import _blind_payload
+from legal_eval_harness.asset_audit import (
+    _blind_payload,
+    adjudicate_blind_v2,
+    run_blind_review_v2,
+)
 from legal_eval_harness.asset_candidate_builder import (
     build_asset_candidates,
     build_independent_regression_candidates,
 )
 from legal_eval_harness.asset_contamination import cross_split_contamination
 from legal_eval_harness.asset_quality import run_asset_qa
+from legal_eval_harness.asset_ai_review import draft_correction
 from legal_eval_harness.dataset_release import (
     build_dataset_release,
     refresh_release_after_regression,
@@ -817,3 +822,92 @@ def test_v01_and_v02_select_different_regression_cohorts():
         "ASSET-SFT-001",
         "ASSET-REGRESSION-006",
     }
+
+
+def test_blind_v2_events_and_raw_evidence_are_revision_scoped(tmp_path: Path):
+    class StubClient:
+        def generate_with_metadata(self, **_: object):
+            return (
+                json.dumps(
+                    {
+                        "decision": "approve",
+                        "findings": [],
+                        "response_policy": "clarify",
+                        "legal_conclusion_supported": True,
+                        "critical_facts_covered": True,
+                        "dangerous_action_advice": False,
+                        "unsupported_claims": [],
+                        "citation_support": "not_applicable",
+                        "should_clarify": True,
+                        "should_human_review": True,
+                    }
+                ),
+                {},
+            )
+
+    service = AssetService(tmp_path / "data")
+    item = candidate()
+    service.add_candidate(item)
+    c1 = correction()
+    service.corrections.append(c1)
+    model = {"alias": "stub", "model": "stub"}
+    raw = tmp_path / "raw"
+    first = run_blind_review_v2(
+        service, item.asset_id, "reviewer_a", client=StubClient(), model_config=model, raw_output_root=raw
+    )
+    run_blind_review_v2(
+        service, item.asset_id, "reviewer_b", client=StubClient(), model_config=model, raw_output_root=raw
+    )
+    assert first.event_id.endswith("blind-v2-01")
+    assert "revision_01" in first.raw_output_path
+
+    c2 = c1.model_copy(
+        update={
+            "correction_id": "COR-ASSET-SFT-001-02",
+            "revision_number": 2,
+            "corrected_answer": "第二版答案",
+        }
+    )
+    service.corrections.append(c2)
+    second = run_blind_review_v2(
+        service, item.asset_id, "reviewer_a", client=StubClient(), model_config=model, raw_output_root=raw
+    )
+    run_blind_review_v2(
+        service, item.asset_id, "reviewer_b", client=StubClient(), model_config=model, raw_output_root=raw
+    )
+    adjudication = adjudicate_blind_v2(
+        service, item.asset_id, client=StubClient(), model_config=model, raw_output_root=raw
+    )
+    assert second.event_id.endswith("blind-v2-02")
+    assert "revision_02" in second.raw_output_path
+    assert second.raw_output_path != first.raw_output_path
+    assert adjudication.adjudication_id.endswith("blind-v2-02")
+    assert {row.correction_revision for row in service.current_reviews_for(item.asset_id)} == {2}
+
+
+def test_empty_correction_retries_and_old_revision_does_not_count_as_current_draft(tmp_path: Path):
+    class RetryClient:
+        def __init__(self) -> None:
+            self.calls = 0
+
+        def generate_with_metadata(self, **_: object):
+            self.calls += 1
+            return ("" if self.calls == 1 else "第二版完整答案", {})
+
+    service = AssetService(tmp_path)
+    item = candidate().model_copy(update={"asset_status": AssetStatus.REWORK_REQUIRED})
+    service.add_candidate(item)
+    service.corrections.append(correction())
+    service.transition(item.asset_id, AssetStatus.CORRECTION_DRAFTING, reason="start revision 2")
+    assert service.has_stored_correction_for_current_draft(item.asset_id) is False
+    client = RetryClient()
+    revised = draft_correction(
+        service,
+        item.asset_id,
+        client=client,
+        model_config={"alias": "stub", "model": "stub"},
+    )
+    assert client.calls == 2
+    assert revised.revision_number == 2
+    assert revised.corrected_answer == "第二版完整答案"
+    assert service.candidates.get(item.asset_id).asset_status == AssetStatus.AI_REVIEW_PENDING

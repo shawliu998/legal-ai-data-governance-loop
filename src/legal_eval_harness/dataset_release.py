@@ -981,11 +981,22 @@ def validate_dataset_release(path: str | Path) -> list[str]:
 def validate_v02_review_batch(
     service: AssetService, review_path: str | Path
 ) -> list[str]:
-    expected_ids = {f"ASSET-REGRESSION-{index:03d}" for index in range(6, 11)}
+    cohort_ids = {f"ASSET-REGRESSION-{index:03d}" for index in range(6, 11)}
+    expected_ids = {
+        row.asset_id
+        for row in service.candidates.all()
+        if row.asset_id in cohort_ids
+        and row.asset_status == AssetStatus.EXPERT_REVIEW_PENDING
+    }
     frame = pd.read_csv(review_path).fillna("")
     errors: list[str] = []
-    if set(frame.get("asset_id", [])) != expected_ids or len(frame) != 5:
-        errors.append("v0.2 review batch must contain exactly regression assets 006-010")
+    if not expected_ids:
+        errors.append("v0.2 has no expert-review-pending assets")
+        return errors
+    if set(frame.get("asset_id", [])) != expected_ids or len(frame) != len(expected_ids):
+        errors.append(
+            f"v0.2 review batch must match pending assets: {sorted(expected_ids)}"
+        )
         return errors
     train = [
         row

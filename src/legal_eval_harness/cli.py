@@ -263,21 +263,25 @@ def cmd_prepare_flywheel_review(args: argparse.Namespace) -> None:
         if current and current.asset_status.value in {"accepted", "rejected"}:
             print(f"Skipped terminal {candidate.asset_id}: {current.asset_status.value}")
             continue
-        if candidate.asset_status.value in {"proposed", "rework_required"}:
+        if current.asset_status.value in {"proposed", "rework_required"}:
             draft_correction(service, candidate.asset_id, client=client, model_config=correction_model)
         current = service.candidates.get(candidate.asset_id)
-        if (
-            current
-            and current.asset_status.value == "correction_drafting"
-            and service.latest_correction(candidate.asset_id) is not None
-        ):
+        if current and current.asset_status.value == "correction_drafting":
             from .asset_schemas import AssetStatus
 
-            service.transition(
-                candidate.asset_id,
-                AssetStatus.AI_REVIEW_PENDING,
-                reason="resume after stored correction draft",
-            )
+            if service.has_stored_correction_for_current_draft(candidate.asset_id):
+                service.transition(
+                    candidate.asset_id,
+                    AssetStatus.AI_REVIEW_PENDING,
+                    reason="resume after stored correction draft",
+                )
+            else:
+                draft_correction(
+                    service,
+                    candidate.asset_id,
+                    client=client,
+                    model_config=correction_model,
+                )
         correction = service.latest_correction(candidate.asset_id)
         roles = {row.review_role for row in service.current_reviews_for(candidate.asset_id)}
         if "reviewer_a" not in roles:

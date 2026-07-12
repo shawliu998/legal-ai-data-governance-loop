@@ -76,11 +76,13 @@ def run_blind_review_v2(
 ) -> ReviewEvent:
     if role not in {"reviewer_a", "reviewer_b"}:
         raise ValueError("blind review role must be reviewer_a or reviewer_b")
-    existing_id = f"REV-{asset_id}-{role}-{BLIND_PROTOCOL}-01"
+    payload, candidate, correction = _blind_payload(service, asset_id)
+    existing_id = (
+        f"REV-{asset_id}-{role}-{BLIND_PROTOCOL}-{correction.revision_number:02d}"
+    )
     existing = service.reviews.get(existing_id)
     if existing is not None:
         return existing
-    payload, candidate, correction = _blind_payload(service, asset_id)
     focus = (
         "独立判断法律结论、关键事实覆盖、危险行动建议、回答策略与资产类型适配"
         if role == "reviewer_a"
@@ -111,7 +113,12 @@ def run_blind_review_v2(
     citation = safe_text(parsed.get("citation_support"))
     if citation not in {"passed", "failed", "not_applicable"}:
         citation = "not_applicable"
-    raw_path = Path(raw_output_root) / asset_id / f"{role}.json"
+    raw_path = (
+        Path(raw_output_root)
+        / asset_id
+        / f"revision_{correction.revision_number:02d}"
+        / f"{role}.json"
+    )
     raw_path.parent.mkdir(parents=True, exist_ok=True)
     raw_record = {
         "asset_id": asset_id,
@@ -165,18 +172,18 @@ def adjudicate_blind_v2(
     model_config: dict[str, Any],
     raw_output_root: str | Path,
 ) -> Adjudication:
-    event_id = f"ADJ-{asset_id}-{BLIND_PROTOCOL}-01"
-    existing = service.adjudications.get(event_id)
-    if existing is not None:
-        return existing
     reviews = {
         row.review_role: row
-        for row in service.reviews_for(asset_id)
+        for row in service.current_reviews_for(asset_id)
         if row.review_protocol_version == BLIND_PROTOCOL
     }
     if not {"reviewer_a", "reviewer_b"}.issubset(reviews):
         raise ValueError(f"blind-v2 reviews missing for {asset_id}")
     a, b = reviews["reviewer_a"], reviews["reviewer_b"]
+    event_id = f"ADJ-{asset_id}-{BLIND_PROTOCOL}-{a.correction_revision:02d}"
+    existing = service.adjudications.get(event_id)
+    if existing is not None:
+        return existing
     fields = (
         "decision",
         "response_policy",
@@ -188,7 +195,12 @@ def adjudicate_blind_v2(
         "should_human_review",
     )
     conflicts = [field for field in fields if getattr(a, field) != getattr(b, field)]
-    raw_path = Path(raw_output_root) / asset_id / "adjudicator.json"
+    raw_path = (
+        Path(raw_output_root)
+        / asset_id
+        / f"revision_{a.correction_revision:02d}"
+        / "adjudicator.json"
+    )
     if conflicts:
         prompt = f"""仅归并两个 blind-v2 AI 预审的冲突，不得批准资产或参考任何人审标签。
 只输出 JSON：{{"proposed_decision":"approve|rework|reject","rationale":"..."}}

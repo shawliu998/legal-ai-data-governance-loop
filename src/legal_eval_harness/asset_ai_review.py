@@ -85,15 +85,24 @@ def draft_correction(
 需要补充：{json.dumps(snapshot.get('missing_facts', []), ensure_ascii=False)}
 禁止主张：{json.dumps(snapshot.get('forbidden_claims', []), ensure_ascii=False)}
 """
-    answer, _ = client.generate_with_metadata(
-        prompt=prompt,
-        model_config=model_config,
-        version="asset-correction-v1",
-        sample_id=asset_id,
-    )
-    answer = safe_text(answer).strip()
+    answer = ""
+    for attempt in range(1, 4):
+        retry_prompt = prompt + (
+            f"\n第 {attempt} 次重试提醒：必须输出非空、完整、未截断的最终中文答案。"
+            if attempt > 1
+            else ""
+        )
+        output, _ = client.generate_with_metadata(
+            prompt=retry_prompt,
+            model_config=model_config,
+            version="asset-correction-v1",
+            sample_id=asset_id,
+        )
+        answer = safe_text(output).strip()
+        if answer:
+            break
     if not answer:
-        raise ValueError(f"empty correction for {asset_id}")
+        raise ValueError(f"empty correction for {asset_id} after 3 attempts")
     prior = service.latest_correction(asset_id)
     revision = 1 if prior is None else prior.revision_number + 1
     rejected = safe_text(snapshot.get("source_output")) if candidate.asset_type.value == "preference" else ""
