@@ -1,6 +1,6 @@
 release_id: legal_flywheel_v0.1.0-public
 source_release_id: legal_flywheel_v0.1.0
-source_release_manifest_sha256: 0d363181647f47483a8dfcfb75a4131b4e3521964828cd404e56f301e2437190
+source_release_manifest_sha256: ba27828173b5b76c5db1222cb2b576f2eb3c6bd79c98b5b3a3d0ee735dabb576
 counts:
   restricted_accepted_assets: 15
   public_redacted_samples: 3
