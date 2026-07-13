@@ -86,11 +86,19 @@ Git 仓库只发布 `release/legal_flywheel_v0.1.0/` 中的脱敏证据。完整
 逐条提交、source snapshot 历史、blind-review 原始输出和 regression 原始运行日志保留在本地
 restricted 包，并由 `.gitignore` 排除。
 
-v0.2 已从 `self_authored_core_40` 准备 5 个与 train 来源互斥的 independent regression 候选，
-并完成真实模型 correction、双路预审、blind-v2、冲突归并和 QA。第一轮专家终审接受 1 条、
-要求返工 4 条；四条 revision 2 已重新完成全链路并停在 `expert_review_pending`。v0.2 尚未
-versioned 或作为独立测试结果发布；详见
-[v0.2 阶段说明](docs/flywheel_v0.2_independent_regression.md)。
+v0.2 已发布 `legal_flywheel_v0.2.0`：保留原有 5 SFT、5 preference 训练资产，并从
+`self_authored_core_40` 新增 5 个与 train 在 source case、source snapshot、normalized prompt hash
+和 counterfactual family 上互斥的 independent regression test。五条均完成真实模型 correction、
+双路预审、blind-v2、冲突归并、QA 与法律专家逐版本终审；中途的截断输出和实质法律错误均按
+lineage 退回重做，没有复用旧 revision 的批准。
+
+正式 V5/W4 attempt 1 保留 5 次真实托管模型调用。最初 exact-topic assertion revision 2 得到
+`0/5`；随后登记限定同义词的 assertion revision 3，对同一批不可变输出透明重评分为 `2/5`
+（006、010 通过，007、008、009 仍缺关键追问）。原始 attempt 目录和哈希未覆盖，也没有反复
+抽样追求更高分。train/test contamination check 为 `passed`。脱敏包见
+[v0.2.0 公开指标报告](release/legal_flywheel_v0.2.0/metrics_report.md)、
+[公开 manifest](release/legal_flywheel_v0.2.0/public_manifest.yaml) 和
+[v0.2 复现说明](docs/flywheel_v0.2_independent_regression.md)。
 
 ## 三个产品决策
 

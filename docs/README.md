@@ -1,7 +1,7 @@
 # 文档导航
 
 - [Legal flywheel v0.1 复现手册](flywheel_v0.1_runbook.md)：15 个资产、双路 AI 预审、法律博士终审、数据版本与真实 regression rerun。
-- [Legal flywheel v0.2 independent regression](flywheel_v0.2_independent_regression.md)：5 个来源互斥候选、许可边界、blind-v2 与终审门禁；当前尚未发布。
+- [Legal flywheel v0.2 independent regression](flywheel_v0.2_independent_regression.md)：15 个 accepted 资产、5 个来源互斥独立测试、blind-v2、终审门禁与正式 attempt-1；已发布脱敏证据包。
 
 ## 求职评审优先阅读
 
