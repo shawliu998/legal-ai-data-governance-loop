@@ -5,13 +5,14 @@
 
 ## 求职评审优先阅读
 
-1. [完整案例说明](case_study.md)
-2. [DeepSeek 法律数据产品经理能力映射](role_fit_deepseek_data_pm.md)
-3. [最终产品结论](final_portfolio_findings.md)
-4. [人审方法与证据边界](human_review_methodology.md)
-5. [DeepSeek 产品观察](deepseek_product_note.md)
-6. [API pilot 与 release gate 结果](results_product_boundary_eval.md)
-7. [数据卡](data_card.md)
+1. [Legal flywheel v0.2 面试展示说明](interview_walkthrough_v0.2.md)
+2. [完整案例说明](case_study.md)
+3. [DeepSeek 法律数据产品经理能力映射](role_fit_deepseek_data_pm.md)
+4. [最终产品结论](final_portfolio_findings.md)
+5. [人审方法与证据边界](human_review_methodology.md)
+6. [DeepSeek 产品观察](deepseek_product_note.md)
+7. [API pilot 与 release gate 结果](results_product_boundary_eval.md)
+8. [数据卡](data_card.md)
 
 ## 方法与产品设计
 

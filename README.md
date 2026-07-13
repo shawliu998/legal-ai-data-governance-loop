@@ -98,7 +98,8 @@ lineage 退回重做，没有复用旧 revision 的批准。
 抽样追求更高分。train/test contamination check 为 `passed`。脱敏包见
 [v0.2.0 公开指标报告](release/legal_flywheel_v0.2.0/metrics_report.md)、
 [公开 manifest](release/legal_flywheel_v0.2.0/public_manifest.yaml) 和
-[v0.2 复现说明](docs/flywheel_v0.2_independent_regression.md)。
+[v0.2 复现说明](docs/flywheel_v0.2_independent_regression.md)。求职演示可按
+[v0.2 面试展示说明](docs/interview_walkthrough_v0.2.md)依次说明问题、治理改造、真实结果和证据边界。
 
 ## 三个产品决策
 
