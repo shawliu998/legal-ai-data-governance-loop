@@ -50,8 +50,11 @@ def validate(release: Path) -> list[str]:
         for line in samples_path.read_text(encoding="utf-8").splitlines()
         if line.strip()
     ] if samples_path.exists() else []
-    if len(samples) != 3:
-        errors.append(f"expected 3 public samples; found {len(samples)}")
+    expected_samples = int((manifest.get("counts") or {}).get("public_redacted_samples", 0))
+    if not 1 <= len(samples) <= 3 or len(samples) != expected_samples:
+        errors.append(
+            f"public sample count mismatch: files={len(samples)}, manifest={expected_samples}"
+        )
     public_text = json.dumps(samples, ensure_ascii=False)
     if any(pattern.search(public_text) for pattern in PII_PATTERNS):
         errors.append("public sample PII pattern detected")
@@ -65,6 +68,13 @@ def validate(release: Path) -> list[str]:
             errors.append(f"expected 5 regression summary rows; found {len(frame)}")
         if set(frame.get("prompt_version", [])) != {"V5"}:
             errors.append("public regression summary is not V5")
+        scoring_revisions = set(frame.get("scoring_revision", []))
+        manifest_scoring = (manifest.get("official_regression") or {}).get("scoring_revision")
+        if len(scoring_revisions) != 1 or scoring_revisions != {manifest_scoring}:
+            errors.append(
+                "scoring revision mismatch between regression CSV and manifest: "
+                f"{sorted(scoring_revisions)} vs {manifest_scoring}"
+            )
         attempts = {int(value) for value in frame.get("rerun_attempt_number", [])}
         manifest_attempt = (manifest.get("official_regression") or {}).get("attempt")
         if len(attempts) != 1 or attempts != {manifest_attempt}:
@@ -83,10 +93,20 @@ def validate(release: Path) -> list[str]:
     else:
         errors.append("missing regression_summary.csv")
     split_policy = manifest.get("split_policy") or {}
-    if split_policy.get("independent_test_assets") != 0:
-        errors.append("v0.1 public package must not claim an independent test split")
-    if split_policy.get("cross_split_contamination_check") != "not_applicable_no_independent_test_split":
-        errors.append("v0.1 contamination status must be not applicable without an independent test split")
+    independent_test = int(split_policy.get("independent_test_assets", 0))
+    evaluation_role = (manifest.get("official_regression") or {}).get("evaluation_role")
+    if independent_test:
+        if independent_test != 5:
+            errors.append(f"independent public package must contain 5 test assets; found {independent_test}")
+        if split_policy.get("cross_split_contamination_check") != "passed":
+            errors.append("independent public package requires a passed contamination check")
+        if evaluation_role != "independent_test":
+            errors.append("independent public package has the wrong evaluation role")
+    else:
+        if split_policy.get("cross_split_contamination_check") != "not_applicable_no_independent_test_split":
+            errors.append("bug-reproduction package requires a not-applicable contamination status")
+        if evaluation_role != "same_source_bug_reproduction":
+            errors.append("bug-reproduction public package has the wrong evaluation role")
     metrics_path = release / "metrics_summary.csv"
     if metrics_path.exists():
         metrics = set(pd.read_csv(metrics_path).get("metric", []))
