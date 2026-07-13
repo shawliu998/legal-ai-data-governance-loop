@@ -6,17 +6,17 @@ The v0.2 stage is prepared but not released. The first expert round accepted one
 rework for four. The second round required another rework for all four. The third round accepted two
 more assets and required rework for two; the fourth round required another rework for those two.
 Revision 5 for the remaining two assets was mechanically incomplete, so a deterministic QA gate—not
-a fabricated expert decision—returned both to rework. They now have revision-6 corrections, fresh
-standard review/QA lineage, and revision-scoped blind-v2 evidence. Both are back at
-`expert_review_pending` in one complete final review bundle. No v0.2 dataset version or test result
-has been released.
+a fabricated expert decision—returned both to rework. In the complete revision-6 review, the expert
+accepted 006 and required targeted legal rework for 009. Asset 009 now has a revision-7 correction,
+fresh standard review/QA lineage, and revision-scoped blind-v2 evidence. It is the only asset at
+`expert_review_pending`. No v0.2 dataset version or test result has been released.
 
 | Asset | Self-authored source | Blind-v2 A/B | Consolidated AI proposal |
 | --- | --- | --- | --- |
-| ASSET-REGRESSION-006 | L-006 | approve / approve | approve; revision 6 pending expert review |
+| ASSET-REGRESSION-006 | L-006 | approve / approve | accepted by expert at revision 6 |
 | ASSET-REGRESSION-007 | L-014 | approve / approve | accepted by expert in round 1 |
 | ASSET-REGRESSION-008 | L-019 | approve / approve | accepted by expert in round 3 |
-| ASSET-REGRESSION-009 | L-021 | approve / approve | approve; revision 6 pending expert review |
+| ASSET-REGRESSION-009 | L-021 | approve / approve | approve; revision 7 pending expert review |
 | ASSET-REGRESSION-010 | L-034 | rework / approve | accepted by expert override in round 3 |
 
 AI proposals cannot accept an asset. The legal expert must review the actual prompt, correction,
@@ -73,7 +73,8 @@ The expert fills exactly four human fields for every row in the complete remaini
 - `expert_override_reason`: actual item-level rationale;
 - `self_reported_review_entry_seconds`: positive reviewer-entered duration, not instrumented active time.
 
-After review, import the complete two-row file atomically. Assets 007, 008, and 010 are already
-accepted and are intentionally excluded from the editable rows. Any newly reworked asset must repeat
-correction, A/B review, adjudication, QA, blind-v2, and final expert review for the new correction
-lineage; that later review cannot be eliminated without allowing unreviewed legal text into a release.
+After review, import the complete current pending-asset file atomically. Assets 006, 007, 008, and
+010 are already accepted and are intentionally excluded from the editable row. Any newly reworked
+asset must repeat correction, A/B review, adjudication, QA, blind-v2, and final expert review for the
+new correction lineage; that later review cannot be eliminated without allowing unreviewed legal
+text into a release.
