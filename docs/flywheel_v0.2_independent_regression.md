@@ -3,16 +3,18 @@
 ## Current status
 
 The v0.2 stage is prepared but not released. The first expert round accepted one asset and required
-rework for four. Those four now have revision-2 corrections and are back at `expert_review_pending`.
-No v0.2 dataset version or test result has been released.
+rework for four. The second expert round reviewed revision 2 and required another rework for all four.
+Those assets now have revision-3 corrections, fresh standard review/QA lineage, and revision-scoped
+blind-v2 evidence. They are back at `expert_review_pending`. No v0.2 dataset version or test result
+has been released.
 
 | Asset | Self-authored source | Blind-v2 A/B | Consolidated AI proposal |
 | --- | --- | --- | --- |
-| ASSET-REGRESSION-006 | L-006 | approve / approve | approve; revision 2 pending expert review |
+| ASSET-REGRESSION-006 | L-006 | rework / approve | rework; revision 3 pending expert review |
 | ASSET-REGRESSION-007 | L-014 | approve / approve | accepted by expert in round 1 |
-| ASSET-REGRESSION-008 | L-019 | rework / approve | rework; revision 2 pending expert review |
-| ASSET-REGRESSION-009 | L-021 | rework / approve | rework; revision 2 pending expert review |
-| ASSET-REGRESSION-010 | L-034 | approve / approve | approve; revision 2 pending expert review |
+| ASSET-REGRESSION-008 | L-019 | approve / approve | approve; revision 3 pending expert review |
+| ASSET-REGRESSION-009 | L-021 | rework / approve | rework; revision 3 pending expert review |
+| ASSET-REGRESSION-010 | L-034 | rework / approve | rework; revision 3 pending expert review |
 
 AI proposals cannot accept an asset. The legal expert must review the actual prompt, correction,
 assertion, AI findings, and QA evidence in the restricted review CSV.
