@@ -264,5 +264,5 @@ class StateTransitionEvent(BaseModel):
     from_status: AssetStatus
     to_status: AssetStatus
     reason: str
-    actor_type: Literal["system", "ai_model", "legal_expert"]
+    actor_type: Literal["system", "qa_system", "ai_model", "legal_expert"]
     created_at: str

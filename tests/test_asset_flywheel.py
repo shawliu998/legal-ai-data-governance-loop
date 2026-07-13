@@ -32,7 +32,11 @@ from legal_eval_harness.asset_candidate_builder import (
     build_independent_regression_candidates,
 )
 from legal_eval_harness.asset_contamination import cross_split_contamination
-from legal_eval_harness.asset_quality import run_asset_qa
+from legal_eval_harness.asset_quality import (
+    correction_completeness_issues,
+    requeue_incomplete_corrections,
+    run_asset_qa,
+)
 from legal_eval_harness.asset_ai_review import draft_correction
 from legal_eval_harness.dataset_release import (
     build_dataset_release,
@@ -663,6 +667,69 @@ def test_preference_pii_scans_chosen_rejected_and_reason(tmp_path: Path):
     )
     check = run_asset_qa(service, item.asset_id, transition_after_check=False)
     assert check.pii_check == "failed"
+
+
+@pytest.mark.parametrize(
+    "answer, expected_issue",
+    [
+        (
+            "这是一个足够长的法律分析。" * 20 + "这与劳动关系",
+            "long corrected answer ends without sentence-closing punctuation",
+        ),
+        (
+            "这是一个完整段落。" * 30 + "\n\n**",
+            "unbalanced Markdown bold delimiter",
+        ),
+    ],
+)
+def test_correction_completeness_gate_detects_truncated_outputs(answer: str, expected_issue: str):
+    assert expected_issue in correction_completeness_issues(answer)
+
+
+def test_correction_completeness_gate_accepts_complete_markdown_answer():
+    answer = "这是一个完整的法律分析段落。" * 20 + "*本回答不构成正式法律意见。*"
+    assert correction_completeness_issues(answer) == []
+
+
+def test_incomplete_pending_correction_is_requeued_without_expert_event(tmp_path: Path):
+    service = AssetService(tmp_path)
+    item = candidate()
+    service.add_candidate(item)
+    service.transition(item.asset_id, AssetStatus.CORRECTION_DRAFTING, reason="draft")
+    draft = correction().model_copy(
+        update={"corrected_answer": "这是一个足够长的法律分析。" * 20 + "这与劳动关系"}
+    )
+    service.corrections.append(draft)
+    service.transition(item.asset_id, AssetStatus.AI_REVIEW_PENDING, reason="review")
+    service.reviews.append(review(item.asset_id, "reviewer_a", corrected_answer=draft.corrected_answer))
+    service.reviews.append(review(item.asset_id, "reviewer_b", corrected_answer=draft.corrected_answer))
+    service.transition(item.asset_id, AssetStatus.QA_PENDING, reason="reviews complete")
+    service.quality_checks.append(
+        QualityCheck(
+            quality_check_id=f"QA-{item.asset_id}-01",
+            asset_id=item.asset_id,
+            pii_check="passed",
+            duplicate_check="passed",
+            source_traceability="passed",
+            contamination_check="passed",
+            law_effective_date_check="passed",
+            type_specific_check="passed",
+            correction_id=draft.correction_id,
+            correction_revision=draft.revision_number,
+            source_snapshot_id=item.source_snapshot_id,
+            corrected_answer_hash=hashlib.sha256(draft.corrected_answer.encode()).hexdigest(),
+            created_at=NOW,
+        )
+    )
+    service.transition(item.asset_id, AssetStatus.EXPERT_REVIEW_PENDING, reason="legacy QA passed")
+
+    results = requeue_incomplete_corrections(service)
+
+    assert item.asset_id in results
+    assert service.candidates.get(item.asset_id).asset_status == AssetStatus.REWORK_REQUIRED
+    assert not [row for row in service.reviews_for(item.asset_id) if row.review_role == "final_expert"]
+    assert service.current_quality_check_for(item.asset_id).type_specific_check == "failed"
+    assert service.transitions.all()[-1].actor_type == "qa_system"
 
 
 def test_membership_key_supports_asset_reuse_across_releases(tmp_path: Path):

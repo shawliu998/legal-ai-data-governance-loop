@@ -18,7 +18,7 @@ from .asset_candidate_builder import (
     build_independent_regression_candidates,
     build_replacement_candidate,
 )
-from .asset_quality import run_asset_qa
+from .asset_quality import requeue_incomplete_corrections, run_asset_qa
 from .asset_service import AssetService
 from .aggregator import build_executive_dashboard
 from .calibration import build_human_review_sample, summarize_human_calibration
@@ -246,6 +246,15 @@ def cmd_adjudicate_asset(args: argparse.Namespace) -> None:
 def cmd_run_asset_qa(args: argparse.Namespace) -> None:
     result = run_asset_qa(AssetService(args.data_dir), args.asset_id)
     print(f"Stored {result.quality_check_id}: {'passed' if result.passed else 'failed'}")
+
+
+def cmd_requeue_incomplete_corrections(args: argparse.Namespace) -> None:
+    results = requeue_incomplete_corrections(AssetService(args.data_dir))
+    if not results:
+        print("No mechanically incomplete pending corrections found")
+        return
+    for asset_id, issues in results.items():
+        print(f"Requeued {asset_id}: {'; '.join(issues)}")
 
 
 def cmd_prepare_flywheel_review(args: argparse.Namespace) -> None:
@@ -820,6 +829,10 @@ def build_parser() -> argparse.ArgumentParser:
     asset_qa_cmd.add_argument("--data-dir", default="data/flywheel")
     asset_qa_cmd.add_argument("--asset-id", required=True)
     asset_qa_cmd.set_defaults(func=cmd_run_asset_qa)
+
+    requeue_incomplete_cmd = sub.add_parser("requeue-incomplete-corrections")
+    requeue_incomplete_cmd.add_argument("--data-dir", default="data/flywheel")
+    requeue_incomplete_cmd.set_defaults(func=cmd_requeue_incomplete_corrections)
 
     prepare_review_cmd = sub.add_parser("prepare-flywheel-review")
     prepare_review_cmd.add_argument("--data-dir", default="data/flywheel")

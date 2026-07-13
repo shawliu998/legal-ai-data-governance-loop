@@ -14,6 +14,56 @@ PII_PATTERNS = [
     re.compile(r"[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}"),
 ]
 
+_TERMINAL_PUNCTUATION = frozenset("。！？；.!?;）)]】》」』”’\"")
+
+
+def correction_completeness_issues(answer: str) -> list[str]:
+    """Return deterministic signs that a generated correction is mechanically incomplete.
+
+    This gate intentionally avoids legal or stylistic judgment.  It catches only outputs
+    that should never consume expert-review time: empty text, unbalanced Markdown
+    delimiters, and long answers that stop in the middle of a sentence.
+    """
+
+    stripped = answer.strip()
+    if not stripped:
+        return ["corrected answer is empty"]
+    issues: list[str] = []
+    if stripped.count("**") % 2:
+        issues.append("unbalanced Markdown bold delimiter")
+    if stripped.count("```") % 2:
+        issues.append("unclosed Markdown code fence")
+    visible = re.sub(r"[*_`~]+$", "", stripped).rstrip()
+    if len(visible) >= 200 and visible[-1] not in _TERMINAL_PUNCTUATION:
+        issues.append("long corrected answer ends without sentence-closing punctuation")
+    return issues
+
+
+def requeue_incomplete_corrections(service: AssetService) -> dict[str, list[str]]:
+    """Move objectively incomplete pending corrections back to rework with audit evidence."""
+
+    requeued: dict[str, list[str]] = {}
+    for candidate in service.candidates.all():
+        if candidate.asset_status != AssetStatus.EXPERT_REVIEW_PENDING:
+            continue
+        correction = service.latest_correction(candidate.asset_id)
+        if correction is None:
+            continue
+        issues = correction_completeness_issues(correction.corrected_answer)
+        if not issues:
+            continue
+        check = run_asset_qa(service, candidate.asset_id, transition_after_check=False)
+        if check.passed:
+            raise RuntimeError("mechanically incomplete correction unexpectedly passed QA")
+        service.transition(
+            candidate.asset_id,
+            AssetStatus.REWORK_REQUIRED,
+            reason="mechanical completeness gate failed: " + "; ".join(issues),
+            actor_type="qa_system",
+        )
+        requeued[candidate.asset_id] = issues
+    return requeued
+
 
 def run_asset_qa(
     service: AssetService, asset_id: str, *, transition_after_check: bool = True
@@ -87,6 +137,8 @@ def run_asset_qa(
         type_ok = service.assertion_for(asset_id) is not None and not candidate.training_eligible
     else:
         type_ok = bool(correction.corrected_answer) and candidate.training_eligible
+    completeness_issues = correction_completeness_issues(correction.corrected_answer)
+    type_ok = type_ok and not completeness_issues
     sequence = 1 + sum(row.asset_id == asset_id for row in service.quality_checks.all())
     check = QualityCheck(
         quality_check_id=f"QA-{asset_id}-{sequence:02d}",
@@ -101,7 +153,9 @@ def run_asset_qa(
         correction_revision=correction.revision_number,
         source_snapshot_id=candidate.source_snapshot_id,
         corrected_answer_hash=answer_hash,
-        findings=findings + ([] if type_ok else ["asset type-specific validation failed"]),
+        findings=findings
+        + completeness_issues
+        + ([] if type_ok else ["asset type-specific validation failed"]),
         created_at=utc_now_iso(),
     )
     service.quality_checks.append(check)
