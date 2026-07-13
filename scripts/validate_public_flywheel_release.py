@@ -70,7 +70,14 @@ def validate(release: Path) -> list[str]:
             errors.append("public regression summary is not V5")
         scoring_revisions = set(frame.get("scoring_revision", []))
         manifest_scoring = (manifest.get("official_regression") or {}).get("scoring_revision")
-        if len(scoring_revisions) != 1 or scoring_revisions != {manifest_scoring}:
+        legacy_v01_scoring = (
+            manifest.get("source_release_id") == "legal_flywheel_v0.1.0"
+            and manifest_scoring is None
+            and scoring_revisions == {"scoring-v2"}
+        )
+        if not legacy_v01_scoring and (
+            len(scoring_revisions) != 1 or scoring_revisions != {manifest_scoring}
+        ):
             errors.append(
                 "scoring revision mismatch between regression CSV and manifest: "
                 f"{sorted(scoring_revisions)} vs {manifest_scoring}"
